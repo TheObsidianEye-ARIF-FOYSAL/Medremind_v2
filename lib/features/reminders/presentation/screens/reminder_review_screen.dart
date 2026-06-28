@@ -55,7 +55,7 @@ class ReminderReviewScreen extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 4, bottom: 16),
                     child: Text(
-                      '${_emoji(group.label)} ${group.label}',
+                      group.label,
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: _labelColor(group.label),
                       ),
@@ -200,14 +200,6 @@ class ReminderReviewScreen extends ConsumerWidget {
         MealRelation.beforeMeal => 'Before Meals',
         MealRelation.afterMeal => 'After Meals',
         MealRelation.none => 'Anytime',
-      };
-
-  static String _emoji(String label) => switch (label) {
-        'Morning' => '☀️',
-        'Afternoon' => '🌤️',
-        'Night' => '🌙',
-        'Evening' => '🌆',
-        _ => '⏰',
       };
 
   static Color _labelColor(String label) => switch (label) {
