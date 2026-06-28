@@ -285,7 +285,7 @@ class _MedicinesTab extends ConsumerWidget {
   }
 }
 
-class _MedicineTile extends StatelessWidget {
+class _MedicineTile extends ConsumerWidget {
   final Medicine med;
   const _MedicineTile({required this.med});
 
@@ -306,11 +306,10 @@ class _MedicineTile extends StatelessWidget {
   };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final iconColor =
-        _formColors[med.form] ?? theme.colorScheme.primary;
+    final iconColor = _formColors[med.form] ?? theme.colorScheme.primary;
 
     return Container(
       padding: const EdgeInsets.all(AppSizes.paddingMd),
@@ -373,9 +372,51 @@ class _MedicineTile extends StatelessWidget {
                   ?.copyWith(color: iconColor, fontWeight: FontWeight.w600),
             ),
           ),
+          const SizedBox(width: 4),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded, size: 20),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+            onSelected: (v) => _onMenu(context, ref, v),
+            itemBuilder: (_) => [
+              const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(children: [
+                    Icon(Icons.delete_outline_rounded, size: 18,
+                        color: Colors.redAccent),
+                    SizedBox(width: 10),
+                    Text('Remove'),
+                  ])),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _onMenu(
+      BuildContext context, WidgetRef ref, String action) async {
+    if (action == 'delete') {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Remove Medicine'),
+          content: Text('Remove "${med.brandName}" from your cabinet?'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Remove',
+                    style: TextStyle(color: Colors.redAccent))),
+          ],
+        ),
+      );
+      if (confirmed == true) {
+        await ref.read(medicineRepositoryProvider).delete(med.id);
+      }
+    }
   }
 }
 
@@ -414,7 +455,7 @@ class _SchedulesTab extends ConsumerWidget {
   }
 }
 
-class _GroupTile extends StatelessWidget {
+class _GroupTile extends ConsumerWidget {
   final DoseGroup group;
   const _GroupTile({required this.group});
 
@@ -433,7 +474,7 @@ class _GroupTile extends StatelessWidget {
   };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final color = _labelColors[group.label] ?? theme.colorScheme.primary;
@@ -537,8 +578,65 @@ class _GroupTile extends StatelessWidget {
                       color: theme.colorScheme.onSurfaceVariant)),
           ],
         ),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert_rounded, size: 20),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+          onSelected: (v) => _onMenu(context, ref, v),
+          itemBuilder: (_) => [
+            PopupMenuItem(
+                value: 'toggle',
+                child: Row(children: [
+                  Icon(
+                    group.isActive
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(group.isActive ? 'Pause' : 'Resume'),
+                ])),
+            const PopupMenuItem(
+                value: 'delete',
+                child: Row(children: [
+                  Icon(Icons.delete_outline_rounded, size: 18,
+                      color: Colors.redAccent),
+                  SizedBox(width: 10),
+                  Text('Remove'),
+                ])),
+          ],
+        ),
       ]),
     );
+  }
+
+  Future<void> _onMenu(
+      BuildContext context, WidgetRef ref, String action) async {
+    final repo = ref.read(doseGroupRepositoryProvider);
+    if (action == 'toggle') {
+      await repo.setActive(group.id, !group.isActive);
+    } else if (action == 'delete') {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Remove Dose Group'),
+          content: Text(
+              'Remove "${group.label}" dose group? This will also delete all logs for this group.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Remove',
+                    style: TextStyle(color: Colors.redAccent))),
+          ],
+        ),
+      );
+      if (confirmed == true) {
+        await repo.delete(group.id);
+      }
+    }
   }
 
   static String _fmtTime(String hhmm) {
