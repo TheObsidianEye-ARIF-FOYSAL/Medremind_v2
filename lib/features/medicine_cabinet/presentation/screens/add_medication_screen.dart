@@ -286,12 +286,15 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
 
   Future<void> _save(BuildContext context) async {
     final notifier = ref.read(addMedicineFormProvider.notifier);
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
     final ok = await notifier.save();
-    if (ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+    if (!mounted) return;
+    if (ok) {
+      messenger.showSnackBar(
         const SnackBar(content: Text('Medicine added successfully!')),
       );
-      Navigator.of(context).pop();
+      nav.pop();
     }
   }
 }

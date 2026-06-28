@@ -30,15 +30,6 @@ class _CircularTimeDialState extends State<CircularTimeDial> {
     super.didUpdateWidget(old);
   }
 
-  double _currentAngle() {
-    if (widget.isHourMode) {
-      final h = widget.value.hour % 12;
-      return (h / 12) * 2 * math.pi;
-    } else {
-      return (widget.value.minute / 60) * 2 * math.pi;
-    }
-  }
-
   void _onPanStart(DragStartDetails d) {
     final box = context.findRenderObject() as RenderBox;
     _center = box.size.center(Offset.zero);
