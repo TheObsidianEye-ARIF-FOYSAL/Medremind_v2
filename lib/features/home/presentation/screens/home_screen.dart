@@ -10,6 +10,7 @@ import '../../../../core/models/medicine.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../../../medicine_cabinet/presentation/screens/add_medication_screen.dart';
+import '../../../settings/presentation/screens/settings_screen.dart';
 import '../providers/today_pills_provider.dart';
 
 // ── Time filter ───────────────────────────────────────────────────────────────
@@ -177,9 +178,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 }
 
-// ── Gradient header ───────────────────────────────────────────────────────────
+// ── Header ────────────────────────────────────────────────────────────────────
 
-class _Header extends StatelessWidget {
+class _Header extends ConsumerWidget {
   final DayStats stats;
   final Color primary;
   final bool isDark;
@@ -187,86 +188,147 @@ class _Header extends StatelessWidget {
       {required this.stats, required this.primary, required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final now = DateTime.now();
+    final userName = ref.watch(userNameProvider);
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
 
+    final pct = stats.total > 0
+        ? (stats.taken / stats.total).clamp(0.0, 1.0)
+        : 0.0;
+    final motiveLine = _motiveLine(pct, stats);
+
     return Container(
+      margin: const EdgeInsets.fromLTRB(
+          AppSizes.paddingLg, 0, AppSizes.paddingLg, 0),
+      padding: EdgeInsets.fromLTRB(
+        AppSizes.paddingMd,
+        MediaQuery.of(context).padding.top + AppSizes.paddingMd,
+        AppSizes.paddingMd,
+        AppSizes.paddingLg,
+      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            primary.withValues(alpha: isDark ? 0.2 : 0.1),
-            (isDark ? DarkColors.background : LightColors.background)
-                .withValues(alpha: 0),
+            primary.withValues(alpha: isDark ? 0.25 : 0.14),
+            primary.withValues(alpha: isDark ? 0.08 : 0.04),
           ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(AppSizes.radiusCard),
+        border: Border.all(color: primary.withValues(alpha: 0.15)),
       ),
-      padding: EdgeInsets.fromLTRB(
-        AppSizes.paddingLg,
-        MediaQuery.of(context).padding.top + AppSizes.paddingMd,
-        AppSizes.paddingLg,
-        AppSizes.paddingLg,
-      ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Text(_emoji(), style: const TextStyle(fontSize: 22)),
-                  const SizedBox(width: 6),
-                  Text(
-                    _greet(),
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+          // ── Top row: greeting + ring ───────────────────────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Text(_emoji(), style: const TextStyle(fontSize: 20)),
+                      const SizedBox(width: 6),
+                      Text(
+                        _greet(),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(height: 4),
+                    Text(
+                      userName.isNotEmpty ? userName : "Today's Pills",
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
-                  ),
-                ]),
-                const SizedBox(height: 2),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${days[now.weekday - 1]}, ${months[now.month - 1]} ${now.day} · ${now.year}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSizes.paddingMd),
+              _Ring(stats: stats, primary: primary),
+            ],
+          ),
+
+          if (stats.total > 0) ...[
+            const SizedBox(height: AppSizes.paddingMd),
+
+            // ── Progress bar ─────────────────────────────────────────
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+              child: LinearProgressIndicator(
+                value: pct,
+                minHeight: 6,
+                backgroundColor: primary.withValues(alpha: 0.15),
+                color: pct == 1.0 ? TagColors.taken : primary,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // ── Stats row ─────────────────────────────────────────────
+            Row(
+              children: [
+                _Chip(label: '${stats.taken} taken', color: TagColors.taken),
+                const SizedBox(width: 6),
+                if (stats.pending > 0)
+                  _Chip(label: '${stats.pending} left', color: primary),
+                if (stats.pending > 0) const SizedBox(width: 6),
+                if (stats.missed > 0)
+                  _Chip(label: '${stats.missed} missed', color: TagColors.missed),
+                const Spacer(),
                 Text(
-                  "Today's Pills",
-                  style: theme.textTheme.headlineLarge?.copyWith(
+                  '${(pct * 100).round()}%',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: pct == 1.0 ? TagColors.taken : primary,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  '${days[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                if (stats.total > 0) ...[
-                  const SizedBox(height: AppSizes.paddingMd),
-                  Wrap(spacing: 6, runSpacing: 6, children: [
-                    _Chip(label: '${stats.taken} taken', color: TagColors.taken),
-                    _Chip(label: '${stats.pending} pending', color: primary),
-                    if (stats.skipped > 0)
-                      _Chip(
-                          label: '${stats.skipped} skipped',
-                          color: TagColors.skipped),
-                  ]),
-                ],
               ],
             ),
-          ),
-          if (stats.total > 0) ...[
-            const SizedBox(width: AppSizes.paddingMd),
-            _Ring(stats: stats, primary: primary),
+
+            const SizedBox(height: 8),
+
+            // ── Motivational message ──────────────────────────────────
+            Text(
+              motiveLine,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
           ],
         ],
       ),
     );
+  }
+
+  static String _motiveLine(double pct, DayStats s) {
+    if (s.total == 0) return 'No doses scheduled today.';
+    if (pct == 1.0) return '🎉 All doses done for today!';
+    if (s.taken == 0) return 'Start strong — take your first dose!';
+    if (pct >= 0.75) return 'Almost there — keep it up!';
+    if (pct >= 0.5) return 'Good progress — stay consistent!';
+    return 'Stay on track for better health.';
   }
 
   static String _emoji() {

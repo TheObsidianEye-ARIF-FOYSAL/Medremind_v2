@@ -29,9 +29,9 @@ const _tabs = [
   ),
   _NavTab(
     path: AppRoutes.calendar,
-    icon: Icons.calendar_month_outlined,
-    activeIcon: Icons.calendar_month_rounded,
-    label: 'Calendar',
+    icon: Icons.date_range_outlined,
+    activeIcon: Icons.date_range_rounded,
+    label: 'Planner',
   ),
   _NavTab(
     path: AppRoutes.medicines,
