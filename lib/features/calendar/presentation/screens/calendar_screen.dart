@@ -211,13 +211,6 @@ class CalendarScreen extends ConsumerWidget {
     );
   }
 
-  static String _monthLabel(DateTime d) {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
-    ];
-    return '${months[d.month - 1]} ${d.year}';
-  }
 }
 
 // ── Navigation button ─────────────────────────────────────────────────────────
