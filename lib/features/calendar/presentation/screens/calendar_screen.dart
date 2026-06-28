@@ -10,6 +10,14 @@ import '../providers/calendar_provider.dart';
 class CalendarScreen extends ConsumerWidget {
   const CalendarScreen({super.key});
 
+  static const _months = [
+    '', 'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+
+  static String _monthYearLabel(DateTime d) =>
+      '${_months[d.month]} ${d.year}';
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -95,6 +103,22 @@ class CalendarScreen extends ConsumerWidget {
                       isDark: isDark,
                     ),
                   ]),
+                ),
+              ),
+
+              // ── Month / year label ───────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSizes.paddingLg, 0, AppSizes.paddingLg,
+                      AppSizes.paddingSm),
+                  child: Text(
+                    _monthYearLabel(calState.viewedMonth),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: primary,
+                    ),
+                  ),
                 ),
               ),
 
