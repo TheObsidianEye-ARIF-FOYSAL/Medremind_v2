@@ -4,8 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/database/database_service.dart';
 import 'core/navigation/app_router.dart';
 import 'core/providers/theme_provider.dart';
+import 'core/repositories/dose_group_repository.dart';
 import 'core/services/alarm_service.dart';
 import 'core/services/notification_service.dart';
 import 'features/onboarding/permission_onboarding_screen.dart';
@@ -22,6 +24,17 @@ void main() async {
 
   await alarmService.initialize();
   await notificationService.initialize();
+
+  // Reschedule all active dose group alarms on every startup.
+  // This covers: fresh installs, app restarts, and device reboots.
+  try {
+    final db = AppDatabase.instance;
+    final repo = DoseGroupRepository(db);
+    final groups = await repo.getAll(activeOnly: true);
+    await alarmService.rescheduleAll(groups);
+  } catch (_) {
+    // Non-fatal — alarms reschedule on next interaction
+  }
 
   // Store alarm that fires while app is closed; handle in initState.
   Alarm.ringStream.stream.listen((s) => _pendingAlarmId = s.id);
