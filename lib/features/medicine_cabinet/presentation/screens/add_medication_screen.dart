@@ -430,59 +430,6 @@ class _TimeSlotCard extends StatelessWidget {
   }
 }
 
-// ── Minimal inline time picker (replaced by CircularTimePicker route) ─────────
-class _SimpleTimePicker extends StatefulWidget {
-  final TimeOfDay initial;
-  const _SimpleTimePicker({required this.initial});
-
-  @override
-  State<_SimpleTimePicker> createState() => _SimpleTimePickerState();
-}
-
-class _SimpleTimePickerState extends State<_SimpleTimePicker> {
-  late TimeOfDay _selected;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = widget.initial;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Delegate to the real CircularTimePickerScreen defined in Phase 3.
-    // For now show a Material time picker as a fallback.
-    return Scaffold(
-      appBar: AppBar(title: const Text('Select Time')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '${_selected.hour.toString().padLeft(2, '0')} : ${_selected.minute.toString().padLeft(2, '0')}',
-              style: Theme.of(context).textTheme.displayLarge,
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () async {
-                final picked = await showTimePicker(
-                    context: context, initialTime: _selected);
-                if (picked != null) setState(() => _selected = picked);
-              },
-              child: const Text('Pick time'),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(_selected),
-              child: const Text('Set Reminder'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ── Tiny helper ───────────────────────────────────────────────────────────────
 class _SectionLabel extends StatelessWidget {
   final String text;
