@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/haptic_feedback.dart';
+import 'package:flutter/services.dart';
 
 /// The circular drag-dial time picker matching the design (Images 2/3/4).
 ///
