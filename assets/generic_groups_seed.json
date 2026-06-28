@@ -1,0 +1,102 @@
+[
+  {
+    "generic": "Paracetamol",
+    "description": "Analgesic and antipyretic",
+    "brands": ["Napa", "Ace", "Fast", "Reset", "Paracin", "Renova", "Tylenol", "Panadol", "Xcel", "Paragen"]
+  },
+  {
+    "generic": "Omeprazole",
+    "description": "Proton pump inhibitor — reduces stomach acid",
+    "brands": ["Seclo", "Losectil", "Opton", "Omepra", "Gastroloc", "Prilosec"]
+  },
+  {
+    "generic": "Amlodipine",
+    "description": "Calcium channel blocker — blood pressure",
+    "brands": ["Amdocal", "Amlovas", "Amloking", "Norvasc", "Amcard", "Amlor"]
+  },
+  {
+    "generic": "Metformin",
+    "description": "Antidiabetic — type 2 diabetes",
+    "brands": ["Glucomin", "Obimet", "Glycomet", "Formin", "Diaformin", "Glumet"]
+  },
+  {
+    "generic": "Atorvastatin",
+    "description": "Statin — lowers cholesterol",
+    "brands": ["Atorva", "Lipitor", "Torvacard", "Atocor", "Storvas"]
+  },
+  {
+    "generic": "Amoxicillin",
+    "description": "Penicillin antibiotic",
+    "brands": ["Moxacil", "Amoclan", "Trimox", "Amoxil", "Novamox", "Cilamox"]
+  },
+  {
+    "generic": "Cetirizine",
+    "description": "Antihistamine — allergy relief",
+    "brands": ["Alatrol", "Cetrin", "Zyrtec", "Zirtec", "Cetzine", "Alerid"]
+  },
+  {
+    "generic": "Losartan",
+    "description": "ARB — blood pressure / heart failure",
+    "brands": ["Losacar", "Cozaar", "Losartan-K", "Repace", "Sartan"]
+  },
+  {
+    "generic": "Pantoprazole",
+    "description": "Proton pump inhibitor",
+    "brands": ["Pantop", "Protonix", "Pantocid", "Pantoloc", "Panto"]
+  },
+  {
+    "generic": "Azithromycin",
+    "description": "Macrolide antibiotic",
+    "brands": ["Zithromax", "Azithro", "Azimax", "Zithrox", "Azicip"]
+  },
+  {
+    "generic": "Metronidazole",
+    "description": "Antibiotic / antiprotozoal",
+    "brands": ["Flagyl", "Metro", "Metrogyl", "Filmet", "Rozex"]
+  },
+  {
+    "generic": "Ciprofloxacin",
+    "description": "Fluoroquinolone antibiotic",
+    "brands": ["Cipro", "Ciprocin", "Ciproflox", "Baycip", "Cifran"]
+  },
+  {
+    "generic": "Ranitidine",
+    "description": "H2 blocker — reduces stomach acid",
+    "brands": ["Rantac", "Zantac", "Ranison", "Aciloc", "Histac"]
+  },
+  {
+    "generic": "Diclofenac",
+    "description": "NSAID — pain and inflammation",
+    "brands": ["Voltaren", "Cataflam", "Diclofen", "Diclofenac-Na", "Voveran"]
+  },
+  {
+    "generic": "Montelukast",
+    "description": "Leukotriene modifier — asthma/allergy",
+    "brands": ["Singulair", "Montair", "Montek", "Zemont", "Lukotas"]
+  },
+  {
+    "generic": "Clopidogrel",
+    "description": "Antiplatelet — prevents blood clots",
+    "brands": ["Plavix", "Clopilet", "Deplatt", "Clopivas", "Clopi"]
+  },
+  {
+    "generic": "Esomeprazole",
+    "description": "Proton pump inhibitor (S-isomer of omeprazole)",
+    "brands": ["Nexium", "Esomac", "Raciper", "Emanera", "Sompraz"]
+  },
+  {
+    "generic": "Fexofenadine",
+    "description": "Non-drowsy antihistamine",
+    "brands": ["Allegra", "Fexo", "Altifex", "Fenadin", "Fexodine"]
+  },
+  {
+    "generic": "Salbutamol",
+    "description": "Beta-2 agonist bronchodilator — asthma",
+    "brands": ["Ventolin", "Asthalin", "Salbu", "Salbair", "Proventil"]
+  },
+  {
+    "generic": "Glimepiride",
+    "description": "Sulfonylurea — type 2 diabetes",
+    "brands": ["Amaryl", "Glimpid", "Glimy", "Glimestar", "Sozid"]
+  }
+]
