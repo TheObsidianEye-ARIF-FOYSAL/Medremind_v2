@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/theme/theme_constants.dart';
+import 'profile_screen.dart';
 
 // ── User name provider ────────────────────────────────────────────────────────
 
@@ -316,8 +317,8 @@ class _ProfileCard extends ConsumerWidget {
                 ),
                 Text(
                   hasName
-                      ? 'Tap to edit your name'
-                      : 'Tap to personalise your experience',
+                      ? 'View profile, name, account details'
+                      : 'Tap to set up your profile',
                   style: textTheme.bodySmall
                       ?.copyWith(color: onSurfaceVariant),
                 ),
