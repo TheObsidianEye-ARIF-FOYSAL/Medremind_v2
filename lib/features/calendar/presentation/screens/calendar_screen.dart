@@ -71,11 +71,11 @@ class CalendarScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Calendar',
+                          Text('Daily Planner',
                               style: theme.textTheme.headlineMedium
                                   ?.copyWith(fontWeight: FontWeight.w800)),
                           Text(
-                            _monthLabel(calState.viewedMonth),
+                            'Tap any day to see its dose schedule',
                             style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant),
                           ),
