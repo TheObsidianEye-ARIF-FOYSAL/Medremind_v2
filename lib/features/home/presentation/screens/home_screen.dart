@@ -293,8 +293,8 @@ class _Header extends ConsumerWidget {
                 if (stats.pending > 0)
                   _Chip(label: '${stats.pending} left', color: primary),
                 if (stats.pending > 0) const SizedBox(width: 6),
-                if (stats.missed > 0)
-                  _Chip(label: '${stats.missed} missed', color: TagColors.missed),
+                if (stats.skipped > 0)
+                  _Chip(label: '${stats.skipped} skipped', color: TagColors.skipped),
                 const Spacer(),
                 Text(
                   '${(pct * 100).round()}%',
