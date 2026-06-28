@@ -40,10 +40,10 @@ const _tabs = [
     label: 'Medicines',
   ),
   _NavTab(
-    path: AppRoutes.finder,
-    icon: Icons.compare_arrows_rounded,
-    activeIcon: Icons.compare_arrows_rounded,
-    label: 'Finder',
+    path: AppRoutes.history,
+    icon: Icons.history_outlined,
+    activeIcon: Icons.history_rounded,
+    label: 'History',
   ),
   _NavTab(
     path: AppRoutes.settings,

@@ -1,102 +1,80 @@
 [
-  {
-    "generic": "Paracetamol",
-    "description": "Analgesic and antipyretic",
-    "brands": ["Napa", "Ace", "Fast", "Reset", "Paracin", "Renova", "Tylenol", "Panadol", "Xcel", "Paragen"]
-  },
-  {
-    "generic": "Omeprazole",
-    "description": "Proton pump inhibitor — reduces stomach acid",
-    "brands": ["Seclo", "Losectil", "Opton", "Omepra", "Gastroloc", "Prilosec"]
-  },
-  {
-    "generic": "Amlodipine",
-    "description": "Calcium channel blocker — blood pressure",
-    "brands": ["Amdocal", "Amlovas", "Amloking", "Norvasc", "Amcard", "Amlor"]
-  },
-  {
-    "generic": "Metformin",
-    "description": "Antidiabetic — type 2 diabetes",
-    "brands": ["Glucomin", "Obimet", "Glycomet", "Formin", "Diaformin", "Glumet"]
-  },
-  {
-    "generic": "Atorvastatin",
-    "description": "Statin — lowers cholesterol",
-    "brands": ["Atorva", "Lipitor", "Torvacard", "Atocor", "Storvas"]
-  },
-  {
-    "generic": "Amoxicillin",
-    "description": "Penicillin antibiotic",
-    "brands": ["Moxacil", "Amoclan", "Trimox", "Amoxil", "Novamox", "Cilamox"]
-  },
-  {
-    "generic": "Cetirizine",
-    "description": "Antihistamine — allergy relief",
-    "brands": ["Alatrol", "Cetrin", "Zyrtec", "Zirtec", "Cetzine", "Alerid"]
-  },
-  {
-    "generic": "Losartan",
-    "description": "ARB — blood pressure / heart failure",
-    "brands": ["Losacar", "Cozaar", "Losartan-K", "Repace", "Sartan"]
-  },
-  {
-    "generic": "Pantoprazole",
-    "description": "Proton pump inhibitor",
-    "brands": ["Pantop", "Protonix", "Pantocid", "Pantoloc", "Panto"]
-  },
-  {
-    "generic": "Azithromycin",
-    "description": "Macrolide antibiotic",
-    "brands": ["Zithromax", "Azithro", "Azimax", "Zithrox", "Azicip"]
-  },
-  {
-    "generic": "Metronidazole",
-    "description": "Antibiotic / antiprotozoal",
-    "brands": ["Flagyl", "Metro", "Metrogyl", "Filmet", "Rozex"]
-  },
-  {
-    "generic": "Ciprofloxacin",
-    "description": "Fluoroquinolone antibiotic",
-    "brands": ["Cipro", "Ciprocin", "Ciproflox", "Baycip", "Cifran"]
-  },
-  {
-    "generic": "Ranitidine",
-    "description": "H2 blocker — reduces stomach acid",
-    "brands": ["Rantac", "Zantac", "Ranison", "Aciloc", "Histac"]
-  },
-  {
-    "generic": "Diclofenac",
-    "description": "NSAID — pain and inflammation",
-    "brands": ["Voltaren", "Cataflam", "Diclofen", "Diclofenac-Na", "Voveran"]
-  },
-  {
-    "generic": "Montelukast",
-    "description": "Leukotriene modifier — asthma/allergy",
-    "brands": ["Singulair", "Montair", "Montek", "Zemont", "Lukotas"]
-  },
-  {
-    "generic": "Clopidogrel",
-    "description": "Antiplatelet — prevents blood clots",
-    "brands": ["Plavix", "Clopilet", "Deplatt", "Clopivas", "Clopi"]
-  },
-  {
-    "generic": "Esomeprazole",
-    "description": "Proton pump inhibitor (S-isomer of omeprazole)",
-    "brands": ["Nexium", "Esomac", "Raciper", "Emanera", "Sompraz"]
-  },
-  {
-    "generic": "Fexofenadine",
-    "description": "Non-drowsy antihistamine",
-    "brands": ["Allegra", "Fexo", "Altifex", "Fenadin", "Fexodine"]
-  },
-  {
-    "generic": "Salbutamol",
-    "description": "Beta-2 agonist bronchodilator — asthma",
-    "brands": ["Ventolin", "Asthalin", "Salbu", "Salbair", "Proventil"]
-  },
-  {
-    "generic": "Glimepiride",
-    "description": "Sulfonylurea — type 2 diabetes",
-    "brands": ["Amaryl", "Glimpid", "Glimy", "Glimestar", "Sozid"]
-  }
+  {"generic":"Paracetamol","description":"Analgesic and antipyretic","brands":["Napa","Ace","Fast","Reset","Paracin","Renova","Tylenol","Panadol","Xcel","Dolo","Napa Extra","Paragen"]},
+  {"generic":"Omeprazole","description":"Proton pump inhibitor for acid reflux and ulcers","brands":["Seclo","Losectil","Omepral","Omidon","Zolten","Omezol","Pepticum","Gastrex","Omesec","Opaz"]},
+  {"generic":"Amlodipine","description":"Calcium channel blocker for hypertension and angina","brands":["Amdocal","Amlovas","Norvasc","Amlong","Amlopin","Calchek","Amlod","Stamlo","Amlopres","Emlod"]},
+  {"generic":"Metformin","description":"First-line treatment for type 2 diabetes","brands":["Glucomet","Metforal","Glumin XR","Diabex","Metmin","Glycomet","Fortamet","Riomet","Metfor","Glucomin"]},
+  {"generic":"Losartan","description":"ARB for hypertension and kidney protection in diabetes","brands":["Losatan","Losakar","Cozaar","Cosaar","Lostatin","Losa","Losar","Angizaar","Lortaan","Lozap"]},
+  {"generic":"Atorvastatin","description":"Statin for high cholesterol and cardiovascular prevention","brands":["Torva","Avas","Atorlip","Lipitor","Atocor","Atorva","Stator","Cholvast","Atorfit","Atova"]},
+  {"generic":"Azithromycin","description":"Macrolide antibiotic for respiratory and skin infections","brands":["Azithrin","Zimax","Azax","Azimax","Azimyc","Zithromax","Aziwok","Azibest","Sumamed","Zithrox"]},
+  {"generic":"Amoxicillin","description":"Penicillin antibiotic for bacterial infections","brands":["Amoxil","Fimoxyl","Moxacil","Monamox","Trimox","Amoxi","Novamox","Ospamox","Fimox","Flamox"]},
+  {"generic":"Ciprofloxacin","description":"Fluoroquinolone antibiotic for urinary tract and other infections","brands":["Ciprocin","Cipro","Neofloxin","Cifran","Ciplox","Baycip","Quintor","Cicloflox","Cipex","Ciprox"]},
+  {"generic":"Metronidazole","description":"Antibiotic and antiprotozoal for anaerobic infections","brands":["Flagyl","Amodis","Metro","Metrozine","Efloran","Metrogyl","Rozex","Orvagil","Metronid","Metryl"]},
+  {"generic":"Sildenafil","description":"PDE5 inhibitor for erectile dysfunction and pulmonary hypertension","brands":["Vigorex","Intimate","Malegra","Silvagra","Sildegra","Sildin","Penegra","Sildaristo","Suhagra","Caverta","Vigore","Sildigra","Fildena","Vegro"]},
+  {"generic":"Tadalafil","description":"PDE5 inhibitor for erectile dysfunction and BPH","brands":["Tadalis","Intagra","Tadarise","Tadalista","Cialis","Forzest","Megalis","Tadacip","Apcalis","Vidalista","Tadala","Erectafil","Cenforce-D"]},
+  {"generic":"Vardenafil","description":"PDE5 inhibitor for erectile dysfunction","brands":["Levitra","Valif","Zhewitra","Vilitra","Staxyn","Levon","Vardenal","Vard"]},
+  {"generic":"Cetirizine","description":"Second-generation antihistamine for allergies and urticaria","brands":["Alatrol","Cetrin","Teczine","Zyrtec","Alzin","Rotizy","Cetzine","Zyncet","Allercet","Cetalerg"]},
+  {"generic":"Fexofenadine","description":"Non-drowsy antihistamine for allergic rhinitis and urticaria","brands":["Fexet","Telfast","Allegra","Fexofen","Fexo","Fexotab","Telfexo","Altifex","Fixal","Fexofed"]},
+  {"generic":"Loratadine","description":"Non-sedating antihistamine for seasonal allergies","brands":["Loratin","Lorfast","Claritin","Alavert","Loraday","Loratab","Clarityn","Lormir","Roletra","Lorda"]},
+  {"generic":"Esomeprazole","description":"Proton pump inhibitor for GERD and peptic ulcers","brands":["Esopral","Nexpro","Nexium","Esoz","Somac","Sompraz","Inexium","Esomac","Axomet","Esotac"]},
+  {"generic":"Pantoprazole","description":"Proton pump inhibitor for acid-related disorders","brands":["Pantoc","Pantosec","Protonix","Pantium","Nupenta","Panto","Pantodac","Controloc","Tecta","Pantozol"]},
+  {"generic":"Domperidone","description":"Prokinetic and antiemetic for nausea and gastroparesis","brands":["Domstal","Domtac","Motilium","Domperi","Dom","Motinorm","Gastropen","Vomidon","Domper","Doml"]},
+  {"generic":"Ondansetron","description":"5-HT3 antagonist antiemetic for severe nausea and vomiting","brands":["Zofran","Emeset","Ondet","Ondem","Ondaz","Ondantron","Vomikind","Setrogen","Ondasetron","Ondavel"]},
+  {"generic":"Bisoprolol","description":"Cardioselective beta-blocker for hypertension and heart failure","brands":["Bisocor","Concor","Cardiosel","Bisocard","Emcor","Soprol","Biso","Zebeta","Monocor","Cardicor"]},
+  {"generic":"Atenolol","description":"Beta-blocker for hypertension and angina","brands":["Atenix","Tenormin","Atehexal","Betablock","Aten","Normiten","Tenoblock","Prenolol","Atennolol","Ateno"]},
+  {"generic":"Metoprolol","description":"Cardioselective beta-blocker for hypertension and heart conditions","brands":["Betaloc","Metolar","Lopressor","Toprol-XL","Seloken","Corvitol","Metocard","Metobeta","Metobet","Beloc"]},
+  {"generic":"Enalapril","description":"ACE inhibitor for hypertension and heart failure","brands":["Enaril","Enaloc","Vasotec","Renitec","Pres","Enam","Converten","Renivace","Neovasil","Enap"]},
+  {"generic":"Valsartan","description":"ARB for hypertension and heart failure","brands":["Valtan","Valsacor","Diovan","Valzaar","Valforce","Vart","Tareg","Nisis","Vanatex","Valpress"]},
+  {"generic":"Diclofenac","description":"NSAID for pain, inflammation and arthritis","brands":["Difen","Voren","Cataflam","Diclofen","Voltaren","Voltarol","Rhumapax","Diklofen","Diclac","Defenac"]},
+  {"generic":"Ibuprofen","description":"NSAID for pain, fever and inflammation","brands":["Brufen","Ibufen","Nurofen","Advil","Motrin","Ibumax","Ibuprom","Dolfen","Ibuprofen BD","Ibufin"]},
+  {"generic":"Naproxen","description":"NSAID for arthritis, pain and dysmenorrhoea","brands":["Naprosyn","Naprex","Aleve","Synflex","Naprofen","Naproval","Proxen","Naproc","Anaprox","Napronax"]},
+  {"generic":"Mefenamic Acid","description":"NSAID for pain and dysmenorrhoea","brands":["Ponstan","Meftal","Feminax","Mefnac","Ponstel","Coslan","Mefac","Mefenix","Mefast","Pontalgin"]},
+  {"generic":"Doxycycline","description":"Tetracycline antibiotic for acne, infections and malaria prophylaxis","brands":["Vibramycin","Doxytet","Doxicap","Doxin","Monodox","Acticlate","Oracea","Doxicycline BD","Doxytab"]},
+  {"generic":"Cephalexin","description":"First-generation cephalosporin antibiotic","brands":["Keflex","Ceporex","Ospexin","Cephin","Cephadex","Cephalin","Biocef","Cefalin","Keforal","Cefalex"]},
+  {"generic":"Cloxacillin","description":"Penicillinase-resistant antibiotic for staphylococcal infections","brands":["Clox","Orbenin","Cloxacap","Klox","Cloxil","Cloxapen","Tegopen","Bactopen"]},
+  {"generic":"Salbutamol","description":"Short-acting beta-2 agonist for asthma and COPD","brands":["Broncholin","Salbu","Ventolin","Proventil","AccuNeb","Salbutol","Asthalin","Volmax","Asmalin","Salbetol"]},
+  {"generic":"Montelukast","description":"Leukotriene receptor antagonist for asthma and allergic rhinitis","brands":["Montika","Montelair","Singulair","Montair","Aeromont","Romilast","Lukair","Montiget","Montekast"]},
+  {"generic":"Levothyroxine","description":"Thyroid hormone replacement for hypothyroidism","brands":["Euthyrox","Thyrox","Eltroxin","Synthroid","Levoxyl","Tirosint","Unithroid","Oroxine","Thyronorm","Levothyr"]},
+  {"generic":"Glibenclamide","description":"Sulfonylurea for type 2 diabetes mellitus","brands":["Daonil","Gliben","Betanase","Euglucon","Diabeta","Micronase","Glynase","Glimel","Daonil BD"]},
+  {"generic":"Sitagliptin","description":"DPP-4 inhibitor for type 2 diabetes","brands":["Januvia","Sitagra","Sitagen","Xelevia","Tesavel","Ristaben","Januvis","Sitaday","Sitaglucon"]},
+  {"generic":"Rosuvastatin","description":"Potent statin for dyslipidaemia and cardiovascular risk reduction","brands":["Rosuvas","Rosulip","Crestor","Razel","Rosucard","Zyrova","Rozavel","Rosulor","Rosuvast"]},
+  {"generic":"Clonazepam","description":"Benzodiazepine for epilepsy and panic disorder","brands":["Rivotril","Clonotril","Clonex","Klonopin","Antelepsin","Iktorivil","Clonapam","Lorsilan"]},
+  {"generic":"Diazepam","description":"Benzodiazepine for anxiety, muscle spasm and seizures","brands":["Valium","Diapam","Seduxen","Calmpose","Diazep","Stesolid","Ducene","Anxium","Diazemuls"]},
+  {"generic":"Vitamin D3","description":"Essential vitamin for calcium absorption and bone health","brands":["Natu-D","D-Cal","Celin D","D-Rise","Uprise D3","D3 Must","Cholecalciferol BD","Develin","D-Vital"]},
+  {"generic":"Vitamin B Complex","description":"B vitamins for nerve health and energy metabolism","brands":["Neurovit","B-Plex","Becadex","Neurobion","Berocca","Nervobion","Metanx","B-Total","Neurofort"]},
+  {"generic":"Folic Acid","description":"B9 vitamin for neural tube defect prevention and anaemia","brands":["Folate","Folvite","Folinext","Folina","Acfol","Folvin","Folic Acid BD","Folimax","Folron"]},
+  {"generic":"Calcium Carbonate + Vitamin D3","description":"Calcium supplement for bone health","brands":["Calcimax","OsteoCal","Caltrate","Os-Cal","Calcitab","Cal-D","Calbo-D","OsteoTab","Bonplex"]},
+  {"generic":"Ferrous Sulphate","description":"Iron supplement for iron deficiency anaemia","brands":["Feron","Iberet","Fersamal","Tardyferon","Ferro-Grad","Irospan","Ferosig","Fesovit","Hemofer"]},
+  {"generic":"Loperamide","description":"Antidiarrhoeal for acute and chronic diarrhoea","brands":["Imodium","Loparal","Loper","Imosec","Lopex","Diareze","Lopera","Diatabs","Lopemid"]},
+  {"generic":"Ranitidine","description":"H2 blocker for acid reflux and stomach ulcers","brands":["Rantac","Histac","Zantac","Ranison","Ranic","Aciloc","Rani","Ulcin","Raniben"]},
+  {"generic":"Nifedipine","description":"Calcium channel blocker for hypertension and angina","brands":["Adalat","Nifedical","Procardia","Corinfar","Nifecard","Nifedi","Oxcord","Nifelan","Nifecard XL"]},
+  {"generic":"Spironolactone","description":"Potassium-sparing diuretic for hypertension and heart failure","brands":["Aldactone","Spiractin","Aldoron","Spirol","Spiro","Spimax","Verospiron","Spironol"]},
+  {"generic":"Furosemide","description":"Loop diuretic for oedema and hypertension","brands":["Lasix","Frusemide","Furix","Salix","Mycofur","Diurin","Frumex","Fabofurox","Urosemide"]},
+  {"generic":"Aspirin","description":"Low-dose antiplatelet for cardiovascular prevention","brands":["Ecosprin","Aspenta","Disprin","Cardiprin","Aspicor","Bayaspirin","Aspilets","Aspirin BD","Miniaspirin"]},
+  {"generic":"Clopidogrel","description":"Antiplatelet agent for coronary syndrome and stroke prevention","brands":["Plavix","Deplatt","Clopilet","Clovas","Thrombo-Clo","Plagril","Tyclid","Ateplax","Clopid"]},
+  {"generic":"Glimepiride","description":"Sulfonylurea for type 2 diabetes mellitus","brands":["Amaryl","Glimco","Glimy","Glimpid","Glimirel","Diapride","Glimer","Glimepil","Glimy BD"]},
+  {"generic":"Empagliflozin","description":"SGLT2 inhibitor for type 2 diabetes and heart failure","brands":["Jardiance","Empagli","Empacef","Empa","Empalor","Empagliflozin BD","Glyxambi"]},
+  {"generic":"Dapagliflozin","description":"SGLT2 inhibitor for type 2 diabetes and chronic kidney disease","brands":["Farxiga","Forxiga","Dapaford","Dapamed","Dapacef","Dapaglu","Xigduo","Dapaflow"]},
+  {"generic":"Pregabalin","description":"Anticonvulsant for neuropathic pain, epilepsy and anxiety","brands":["Lyrica","Pregabid","Pregarica","Pregalin","Pregamet","PregaStar","PregaGard","Nervigesic","Pregabid SR"]},
+  {"generic":"Gabapentin","description":"Anticonvulsant for neuropathic pain and epilepsy","brands":["Gabapin","Neurontin","Gabin","Gapentek","Gapentin","Gabarent","Gaba","Neurentin","Gabacap"]},
+  {"generic":"Sertraline","description":"SSRI antidepressant for depression, anxiety and OCD","brands":["Zoloft","Serlift","Daxid","Serotena","Lustral","Serta","Serlain","Serline","Serenata"]},
+  {"generic":"Escitalopram","description":"SSRI for depression and generalised anxiety disorder","brands":["Lexapro","Cipralex","Escita","Rexipra","Nexito","Escitab","S Cital","Ciplar","Citoles"]},
+  {"generic":"Fluoxetine","description":"SSRI for depression, OCD, bulimia and panic disorder","brands":["Prozac","Fluox","Flutin","Oxit","Fludac","Fluctin","Lovan","Oxactin","Flucotin"]},
+  {"generic":"Amitriptyline","description":"Tricyclic antidepressant for depression and neuropathic pain","brands":["Tryptizol","Elavil","Saroten","Amitid","Amitrilyn","Endep","Laroxyl","Mutabon","Amitriptyl"]},
+  {"generic":"Fluconazole","description":"Antifungal for Candida and cryptococcal infections","brands":["Diflucan","Flucozole","Funcan","Biozole","Fluzole","Flucos","Flustat","Flucand","Flucoral"]},
+  {"generic":"Albendazole","description":"Anthelmintic for intestinal worms and parasitic infections","brands":["Zentel","Almex","Eskazole","Bendex","Alben","Wormin","Wormex","Albend","Alworm"]},
+  {"generic":"Acyclovir","description":"Antiviral for herpes simplex and varicella zoster infections","brands":["Zovirax","Acivir","Herpex","Cyclovir","Acymax","Imavir","Lovir","Aciclovir BD","Herpesox"]},
+  {"generic":"Prednisolone","description":"Corticosteroid for inflammatory, allergic and autoimmune diseases","brands":["Prelone","Prednitab","Deltacortril","Predosal","Predsol","Omnipred","Econopred","Pred BD"]},
+  {"generic":"Dexamethasone","description":"Potent corticosteroid for severe inflammation and oedema","brands":["Decadron","Dexacort","Dexo","Dexam","Maxidex","Dexa","Ozurdex","Hemady","Dexamed"]},
+  {"generic":"Tamsulosin","description":"Alpha-blocker for benign prostatic hyperplasia","brands":["Flomax","Urimax","Tamsulin","Tamsin","Harnal","Tamsil","Contiflo","Uptamol","Tamsuflow"]},
+  {"generic":"Finasteride","description":"5-alpha reductase inhibitor for BPH and male pattern baldness","brands":["Propecia","Proscar","Finpecia","Finast","Fincar","Finara","Finar","Finide","Propecia BD"]},
+  {"generic":"Tramadol","description":"Opioid analgesic for moderate to severe pain","brands":["Tramal","Ultram","Tradol","Tramasol","Contramal","Zydol","Dolol","Ryzolt","Tramacet"]},
+  {"generic":"Warfarin","description":"Anticoagulant for stroke prevention and DVT treatment","brands":["Coumadin","Warf","Warfarin BD","Warfilone","Panwarfin","Sofarin","Cardiprin","Waran"]},
+  {"generic":"Vitamin C","description":"Antioxidant vitamin for immune support and collagen synthesis","brands":["Celin","Ascorbicap","Redoxon","Chewvit C","Ascotabs","Ascoril","Vitamin C BD","C-Vit"]},
+  {"generic":"Zinc","description":"Essential mineral for immune function and wound healing","brands":["Zinkid","Zinc BD","Zitoprim","Zincovit","Zinotab","ZnPlex","ZincMax","Zincof"]},
+  {"generic":"Omega-3 Fatty Acids","description":"Lipid-lowering supplement and cardiovascular protectant","brands":["Omacor","Lovaza","Tri-Omega","Fishmol","Omega-3 Plus","Vasonorm","OmegaBest","Omega-3 BD"]},
+  {"generic":"Pioglitazone","description":"Thiazolidinedione insulin sensitiser for type 2 diabetes","brands":["Actos","Piozone","Pioglibay","Glitazone","Piomed","Acpiozone","Piotaz","Pioglit"]},
+  {"generic":"Linagliptin","description":"DPP-4 inhibitor for type 2 diabetes","brands":["Trajenta","Linaday","Linafil","Linaglip","Glyxambi","Jentadueto","Lina","Linatab"]},
+  {"generic":"Furosemide + Spironolactone","description":"Combined loop and potassium-sparing diuretic for oedema","brands":["Lasilactone","Frusamal","Furospiro","Spirolasix","Furospir","Spirosal"]},
+  {"generic":"Rabeprazole","description":"Proton pump inhibitor for GERD and H. pylori","brands":["Rabenil","Rabepraz","Razo","Aciphex","Veloz","Rabex","Pariet","Rabeprazol BD","Rabeloc"]},
+  {"generic":"Levocetirizine","description":"Active enantiomer of cetirizine for allergic rhinitis","brands":["Levocet","Levorid","Xyzal","Levoriz","Loceriz","Levi","Teczine L","Lefex","Levofex"]}
 ]
