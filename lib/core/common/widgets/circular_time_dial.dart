@@ -25,12 +25,9 @@ class CircularTimeDial extends StatefulWidget {
 
 class _CircularTimeDialState extends State<CircularTimeDial> {
   Offset? _center;
-  double _dragAngle = 0;
-
   @override
   void didUpdateWidget(CircularTimeDial old) {
     super.didUpdateWidget(old);
-    _dragAngle = _currentAngle();
   }
 
   double _currentAngle() {

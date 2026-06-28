@@ -43,12 +43,13 @@ class AlarmServiceImpl {
   }
 
   Future<void> cancelAll() async {
-    for (final alarm in Alarm.getAlarms()) {
+    final alarms = await Alarm.getAlarms();
+    for (final alarm in alarms) {
       await Alarm.stop(alarm.id);
     }
   }
 
-  List<AlarmSettings> getActive() => Alarm.getAlarms();
+  Future<List<AlarmSettings>> getActive() => Alarm.getAlarms();
 
   /// Derive a stable integer ID from a dose group id string + date.
   static int alarmId(String doseGroupId, DateTime date) {
