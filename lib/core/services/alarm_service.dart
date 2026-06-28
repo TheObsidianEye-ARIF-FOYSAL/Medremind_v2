@@ -3,7 +3,8 @@ import 'package:alarm/alarm.dart';
 /// Wraps the `alarm` package with app-specific logic.
 /// All alarm IDs are derived from dose group + scheduled date to be stable.
 class AlarmServiceImpl {
-  static const _defaultSoundPath = 'assets/audio/alarm.mp3';
+  // Uses the alarm package's bundled asset (no custom file required)
+  static const _defaultSoundPath = 'packages/alarm/assets/not_blank.mp3';
 
   Future<void> initialize() async {
     await Alarm.init();
