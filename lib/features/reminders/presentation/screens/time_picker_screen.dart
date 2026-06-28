@@ -68,16 +68,16 @@ class _TimePickerScreenState extends State<TimePickerScreen> {
     }
   }
 
-  String get _periodEmoji {
+  IconData get _periodIcon {
     switch (_periodLabel) {
       case 'Morning':
-        return '🌅';
+        return Icons.wb_twilight_rounded;
       case 'Afternoon':
-        return '☀️';
+        return Icons.wb_sunny_rounded;
       case 'Evening':
-        return '🌆';
+        return Icons.wb_cloudy_rounded;
       default:
-        return '🌙';
+        return Icons.bedtime_rounded;
     }
   }
 
@@ -171,8 +171,7 @@ class _TimePickerScreenState extends State<TimePickerScreen> {
                     border: Border.all(color: periodColor.withValues(alpha: 0.3)),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Text(_periodEmoji,
-                        style: const TextStyle(fontSize: 14)),
+                    Icon(_periodIcon, size: 16, color: periodColor),
                     const SizedBox(width: 6),
                     Text(
                       _periodLabel,
