@@ -19,7 +19,6 @@ enum _TF { all, morning, afternoon, evening, night }
 
 extension _TFX on _TF {
   String get label => ['All', 'Morning', 'Afternoon', 'Evening', 'Night'][index];
-  String get emoji => ['✦', '🌅', '☀️', '🌆', '🌙'][index];
   String? get groupLabel =>
       index == 0 ? null : ['Morning', 'Afternoon', 'Evening', 'Night'][index - 1];
 }
