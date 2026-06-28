@@ -614,7 +614,7 @@ class _GroupTile extends ConsumerWidget {
       BuildContext context, WidgetRef ref, String action) async {
     final repo = ref.read(doseGroupRepositoryProvider);
     if (action == 'toggle') {
-      await repo.setActive(group.id, !group.isActive);
+      await repo.setActive(group.id, active: !group.isActive);
     } else if (action == 'delete') {
       final confirmed = await showDialog<bool>(
         context: context,

@@ -9,7 +9,6 @@ import '../../../../core/models/dose_log.dart';
 import '../../../../core/models/medicine.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
-import '../../../medicine_cabinet/presentation/screens/add_medication_screen.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
 import '../providers/today_pills_provider.dart';
 
@@ -1152,42 +1151,3 @@ class _TomorrowCard extends StatelessWidget {
   }
 }
 
-class _GlowFAB extends StatelessWidget {
-  final Color primary;
-  final VoidCallback onTap;
-  const _GlowFAB({required this.primary, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 52,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-                colors: [primary, primary.withValues(alpha: 0.75)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight),
-            borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-            boxShadow: [
-              BoxShadow(
-                  color: primary.withValues(alpha: 0.5),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6)),
-            ],
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.add_rounded, color: Colors.white, size: 22),
-              SizedBox(width: 6),
-              Text('Add Medicine',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14)),
-            ],
-          ),
-        ),
-      );
-}
