@@ -6,6 +6,7 @@ import '../../../../core/models/dose_group.dart';
 import '../../../../core/models/medicine.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
+import '../../../reminders/presentation/screens/time_picker_screen.dart';
 import '../providers/medicine_cabinet_provider.dart';
 import '../widgets/dose_stepper.dart';
 import '../widgets/meal_relation_chip.dart';
@@ -270,7 +271,10 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
     // Push the custom circular time picker
     final picked = await Navigator.of(context).push<TimeOfDay>(
       MaterialPageRoute(
-        builder: (_) => _SimpleTimePicker(initial: initial),
+        builder: (_) => TimePickerScreen(
+          initial: initial,
+          label: '${slot.label} ⏰',
+        ),
       ),
     );
 
