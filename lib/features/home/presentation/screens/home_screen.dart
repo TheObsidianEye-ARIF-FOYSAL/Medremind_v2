@@ -615,7 +615,7 @@ class _FilterTabs extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  '${f.emoji} ${f.label}',
+                  f.label,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: sel ? Colors.white : theme.colorScheme.onSurfaceVariant,
                     fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
@@ -980,6 +980,175 @@ class _Empty extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// ── Section divider ───────────────────────────────────────────────────────────
+
+class _SectionDivider extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _SectionDivider({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(children: [
+      Container(
+        width: 3,
+        height: 14,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+      const SizedBox(width: 8),
+      Text(
+        label,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.4,
+        ),
+      ),
+      const SizedBox(width: 8),
+      Expanded(child: Divider(color: color.withValues(alpha: 0.2), height: 1)),
+    ]);
+  }
+}
+
+// ── Completed card (taken/skipped today) ──────────────────────────────────────
+
+class _CompletedCard extends StatelessWidget {
+  final ResolvedDoseGroup resolved;
+  final bool isDark;
+  const _CompletedCard({required this.resolved, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final g = resolved.group;
+    final isT = resolved.status == DoseStatus.taken;
+    final color = isT ? TagColors.taken : TagColors.skipped;
+
+    return Opacity(
+      opacity: 0.6,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.paddingMd, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? DarkColors.surface : LightColors.surface,
+          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        ),
+        child: Row(children: [
+          Icon(
+            isT ? Icons.check_circle_rounded : Icons.cancel_rounded,
+            color: color,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '${g.label} · ${_fmt(g.timeOfDay)} · '
+              '${resolved.items.map((i) => i.medicineName).join(", ")}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                decoration: TextDecoration.lineThrough,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+            ),
+            child: Text(isT ? 'Done' : 'Skipped',
+                style: theme.textTheme.labelSmall
+                    ?.copyWith(color: color, fontWeight: FontWeight.w600)),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  static String _fmt(String hhmm) {
+    final p = hhmm.split(':');
+    final h = int.parse(p[0]);
+    final m = int.parse(p[1]);
+    final per = h < 12 ? 'AM' : 'PM';
+    final dh = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+    return '${dh.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')} $per';
+  }
+}
+
+// ── Tomorrow card ─────────────────────────────────────────────────────────────
+
+class _TomorrowCard extends StatelessWidget {
+  final ResolvedDoseGroup resolved;
+  final bool isDark;
+  final Color primary;
+  const _TomorrowCard(
+      {required this.resolved, required this.isDark, required this.primary});
+
+  static const _labelColors = {
+    'Morning': TagColors.morning,
+    'Afternoon': TagColors.afternoon,
+    'Evening': TagColors.evening,
+    'Night': TagColors.night,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final g = resolved.group;
+    final color = _labelColors[g.label] ?? primary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.paddingMd, vertical: 10),
+      decoration: BoxDecoration(
+        color: (isDark ? DarkColors.surface : LightColors.surface)
+            .withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        border: Border(left: BorderSide(color: color.withValues(alpha: 0.5), width: 3)),
+      ),
+      child: Row(children: [
+        Icon(Icons.schedule_rounded, color: color.withValues(alpha: 0.7), size: 18),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            '${g.label} · ${_fmt(g.timeOfDay)} · '
+            '${resolved.items.map((i) => i.medicineName).join(", ")}',
+            style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+          ),
+          child: Text('Tomorrow',
+              style: theme.textTheme.labelSmall?.copyWith(
+                  color: primary, fontWeight: FontWeight.w600)),
+        ),
+      ]),
+    );
+  }
+
+  static String _fmt(String hhmm) {
+    final p = hhmm.split(':');
+    final h = int.parse(p[0]);
+    final m = int.parse(p[1]);
+    final per = h < 12 ? 'AM' : 'PM';
+    final dh = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+    return '${dh.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')} $per';
   }
 }
 
