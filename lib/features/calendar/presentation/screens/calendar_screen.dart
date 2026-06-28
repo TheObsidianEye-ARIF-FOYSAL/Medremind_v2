@@ -45,28 +45,28 @@ class CalendarScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Gradient header ────────────────────────────────────────
-            Container(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSizes.paddingLg, AppSizes.paddingMd,
-                  AppSizes.paddingLg, AppSizes.paddingMd),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    primary.withValues(alpha: isDark ? 0.15 : 0.08),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-              child: Column(
-                children: [
-                  // Title + Month nav
-                  Row(children: [
+        child: selectedGroupsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Error: $e')),
+          data: (groups) => CustomScrollView(
+            slivers: [
+              // ── Gradient header ──────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSizes.paddingLg, AppSizes.paddingMd,
+                      AppSizes.paddingLg, AppSizes.paddingMd),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        primary.withValues(alpha: isDark ? 0.15 : 0.08),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                  child: Row(children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,7 +77,8 @@ class CalendarScreen extends ConsumerWidget {
                           Text(
                             'Tap any day to see its dose schedule',
                             style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant),
+                                color:
+                                    theme.colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -94,118 +95,133 @@ class CalendarScreen extends ConsumerWidget {
                       isDark: isDark,
                     ),
                   ]),
-                ],
-              ),
-            ),
-
-            // ── Day-of-week headers ────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLg),
-              child: Row(
-                children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-                    .map((d) => Expanded(
-                          child: Center(
-                            child: Text(d,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w600,
-                                )),
-                          ),
-                        ))
-                    .toList(),
-              ),
-            ),
-            const SizedBox(height: 6),
-
-            // ── Month grid ─────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMd),
-              child: _MonthGrid(
-                month: calState.viewedMonth,
-                selectedDate: calState.selectedDate,
-                daysWithData: daysWithLogs,
-                isDark: isDark,
-                primary: primary,
-                onDayTap: notifier.selectDate,
-              ),
-            ),
-
-            const SizedBox(height: AppSizes.paddingMd),
-
-            // ── Selected date stats card ───────────────────────────────
-            if (selectedStats.total > 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.paddingLg),
-                child: _StatsCard(
-                  date: calState.selectedDate,
-                  stats: selectedStats,
-                  isDark: isDark,
-                  primary: primary,
                 ),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.paddingLg),
-                child: _DateLabel(
-                    date: calState.selectedDate, primary: primary),
               ),
 
-            const SizedBox(height: AppSizes.paddingSm),
+              // ── Day-of-week row ──────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.paddingLg),
+                  child: Row(
+                    children:
+                        ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                            .map((d) => Expanded(
+                                  child: Center(
+                                    child: Text(d,
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
+                                          color: theme.colorScheme
+                                              .onSurfaceVariant,
+                                          fontWeight: FontWeight.w600,
+                                        )),
+                                  ),
+                                ))
+                            .toList(),
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 6)),
 
-            Divider(
-                height: 1,
-                color: isDark
-                    ? DarkColors.outlineVariant
-                    : LightColors.outlineVariant),
+              // ── Month grid ───────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.paddingMd),
+                  child: _MonthGrid(
+                    month: calState.viewedMonth,
+                    selectedDate: calState.selectedDate,
+                    daysWithData: daysWithLogs,
+                    isDark: isDark,
+                    primary: primary,
+                    onDayTap: notifier.selectDate,
+                  ),
+                ),
+              ),
 
-            // ── Agenda for selected date ───────────────────────────────
-            Expanded(
-              child: selectedGroupsAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
-                data: (groups) => groups.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.event_available_rounded,
+              const SliverToBoxAdapter(
+                  child: SizedBox(height: AppSizes.paddingMd)),
+
+              // ── Stats card or date label ─────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.paddingLg),
+                  child: selectedStats.total > 0
+                      ? _StatsCard(
+                          date: calState.selectedDate,
+                          stats: selectedStats,
+                          isDark: isDark,
+                          primary: primary,
+                        )
+                      : _DateLabel(
+                          date: calState.selectedDate, primary: primary),
+                ),
+              ),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: AppSizes.paddingSm),
+                  child: Divider(
+                      height: 1,
+                      color: isDark
+                          ? DarkColors.outlineVariant
+                          : LightColors.outlineVariant),
+                ),
+              ),
+
+              // ── Agenda items ─────────────────────────────────────────
+              if (groups.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSizes.paddingXl),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.event_available_rounded,
                               size: 52,
-                              color: primary.withValues(alpha: 0.3),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No doses scheduled',
+                              color: primary.withValues(alpha: 0.3)),
+                          const SizedBox(height: 12),
+                          Text('No doses scheduled',
                               style: theme.textTheme.titleSmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Add medicines and schedules to see them here',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(
-                            AppSizes.paddingLg,
-                            AppSizes.paddingMd,
-                            AppSizes.paddingLg, 110),
-                        itemCount: groups.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: AppSizes.paddingSm),
-                        itemBuilder: (ctx, i) =>
-                            _AgendaCard(resolved: groups[i]),
+                                  color: theme
+                                      .colorScheme.onSurfaceVariant)),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Add medicines and schedules to see them here',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme
+                                    .colorScheme.onSurfaceVariant),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
-              ),
-            ),
-          ],
+                    ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSizes.paddingLg,
+                      AppSizes.paddingMd,
+                      AppSizes.paddingLg,
+                      110),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (ctx, i) => Padding(
+                        padding: const EdgeInsets.only(
+                            bottom: AppSizes.paddingSm),
+                        child: _AgendaCard(resolved: groups[i]),
+                      ),
+                      childCount: groups.length,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
