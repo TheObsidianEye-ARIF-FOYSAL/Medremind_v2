@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/models/dose_group.dart';
 import '../../../../core/models/medicine.dart';
 import '../../../../core/providers/repository_providers.dart';
+import '../../../../core/services/alarm_service.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../../../reminders/presentation/screens/time_picker_screen.dart';
 
@@ -447,7 +448,7 @@ class _AddDoseGroupScreenState extends ConsumerState<AddDoseGroupScreen> {
 
     try {
       final repo = ref.read(doseGroupRepositoryProvider);
-      await repo.insert(
+      final group = await repo.insert(
         label: _label,
         timeOfDay: timeStr,
         mealRelation: _meal,
@@ -456,6 +457,8 @@ class _AddDoseGroupScreenState extends ConsumerState<AddDoseGroupScreen> {
             .map((s) => (medicineId: s.med.id, quantity: s.quantity))
             .toList(),
       );
+      // Auto-schedule the alarm for this group
+      await alarmService.scheduleForGroup(group);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
