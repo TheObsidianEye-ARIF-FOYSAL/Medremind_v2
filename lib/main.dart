@@ -8,6 +8,7 @@ import 'core/navigation/app_router.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/services/alarm_service.dart';
 import 'core/services/notification_service.dart';
+import 'features/onboarding/permission_onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

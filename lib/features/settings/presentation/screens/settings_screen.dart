@@ -24,10 +24,69 @@ class SettingsScreen extends ConsumerWidget {
               AppSizes.paddingLg, 120),
           children: [
             Text('Settings', style: theme.textTheme.headlineMedium),
+            const SizedBox(height: AppSizes.paddingMd),
+
+            // ── Profile / hero card ─────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(AppSizes.paddingMd),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary.withValues(alpha: 0.22),
+                    theme.colorScheme.primary.withValues(alpha: 0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(AppSizes.radiusCard),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.person_rounded,
+                      color: Colors.white, size: 28),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('MedRemind User',
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700)),
+                      Text(
+                        'Manage your medicine schedule',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded,
+                    color: theme.colorScheme.onSurfaceVariant),
+              ]),
+            ),
+
             const SizedBox(height: AppSizes.paddingXl),
 
             // ── Appearance section ──────────────────────────────────────────
-            _SectionHeader('Appearance'),
+            _SectionHeader('Appearance', icon: Icons.palette_rounded),
             const SizedBox(height: AppSizes.paddingMd),
 
             // Theme mode
@@ -96,7 +155,8 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: AppSizes.paddingXl),
 
             // ── Notifications & permissions ─────────────────────────────────
-            _SectionHeader('Notifications & Alarms'),
+            _SectionHeader('Notifications & Alarms',
+                icon: Icons.notifications_rounded),
             const SizedBox(height: AppSizes.paddingMd),
 
             _SettingsCard(
@@ -145,7 +205,7 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: AppSizes.paddingXl),
 
             // ── About section ───────────────────────────────────────────────
-            _SectionHeader('About'),
+            _SectionHeader('About', icon: Icons.info_outline_rounded),
             const SizedBox(height: AppSizes.paddingMd),
 
             _SettingsCard(
@@ -267,16 +327,36 @@ class _RadioTile extends StatelessWidget {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
-  const _SectionHeader(this.title);
+  final IconData? icon;
+  const _SectionHeader(this.title, {this.icon});
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title.toUpperCase(),
-      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            letterSpacing: 1.2,
-            color: Theme.of(context).colorScheme.primary,
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    return Row(
+      children: [
+        if (icon != null) ...[
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+            ),
+            child: Icon(icon, size: 14, color: primary),
           ),
+          const SizedBox(width: 8),
+        ],
+        Text(
+          title.toUpperCase(),
+          style: theme.textTheme.labelSmall?.copyWith(
+            letterSpacing: 1.4,
+            color: primary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -398,12 +478,22 @@ class _PermissionTileState extends State<_PermissionTile> {
   }
 
   Future<void> _request() async {
-    if (_status.isPermanentlyDenied) {
+    // scheduleExactAlarm requires system settings on Android 12+;
+    // runtime dialog never works for it. Always open settings for it.
+    final needsSettings = widget.permission == Permission.scheduleExactAlarm ||
+        widget.permission == Permission.ignoreBatteryOptimizations ||
+        _status.isPermanentlyDenied ||
+        _status.isRestricted;
+
+    if (needsSettings) {
       await openAppSettings();
+      // Brief delay to let the user return, then re-check.
+      await Future.delayed(const Duration(milliseconds: 800));
     } else {
       final s = await widget.permission.request();
       if (mounted) setState(() => _status = s);
     }
+    await _check();
   }
 
   @override
