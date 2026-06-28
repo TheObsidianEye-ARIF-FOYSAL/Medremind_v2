@@ -18,28 +18,18 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Load SharedPreferences for theme persistence
   final prefs = await SharedPreferences.getInstance();
 
-  // Initialize alarm and notification services
   await alarmService.initialize();
   await notificationService.initialize();
 
-  // Listen for alarms firing — navigate to ActiveAlarmScreen.
-  // The router needs to be ready first, so we store pending alarms
-  // and navigate after the app is running.
-  Alarm.ringStream.stream.listen((alarmSettings) {
-    _pendingAlarmId = alarmSettings.id;
-  });
+  // Store alarm that fires while app is closed; handle in initState.
+  Alarm.ringStream.stream.listen((s) => _pendingAlarmId = s.id);
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        sharedPrefsProvider.overrideWithValue(prefs),
-      ],
-      child: const MedRemindApp(),
-    ),
-  );
+  runApp(ProviderScope(
+    overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+    child: const MedRemindApp(),
+  ));
 }
 
 int? _pendingAlarmId;
@@ -52,19 +42,20 @@ class MedRemindApp extends ConsumerStatefulWidget {
 }
 
 class _MedRemindAppState extends ConsumerState<MedRemindApp> {
+  bool? _onboardingDone;
+
   @override
   void initState() {
     super.initState();
-    // Check for pending alarm after first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final done = await isOnboardingDone();
+      if (mounted) setState(() => _onboardingDone = done);
+
       if (_pendingAlarmId != null) {
-        appRouter.go(
-          AppRoutes.activeAlarm,
-          extra: {
-            'alarmId': _pendingAlarmId!,
-            'doseGroupId': '',
-          },
-        );
+        appRouter.go(AppRoutes.activeAlarm, extra: {
+          'alarmId': _pendingAlarmId!,
+          'doseGroupId': '',
+        });
         _pendingAlarmId = null;
       }
     });
@@ -75,6 +66,20 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
     final lightTheme = ref.watch(lightThemeProvider);
     final darkTheme = ref.watch(darkThemeProvider);
     final themeMode = ref.watch(themeModeProvider);
+
+    // Show permission onboarding exactly once on fresh install.
+    if (_onboardingDone == false) {
+      return MaterialApp(
+        title: 'MedRemind',
+        debugShowCheckedModeBanner: false,
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: themeMode,
+        home: PermissionOnboardingScreen(
+          onComplete: () => setState(() => _onboardingDone = true),
+        ),
+      );
+    }
 
     return MaterialApp.router(
       title: 'MedRemind',
