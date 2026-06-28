@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/theme/theme_constants.dart';
@@ -94,6 +95,55 @@ class SettingsScreen extends ConsumerWidget {
 
             const SizedBox(height: AppSizes.paddingXl),
 
+            // ── Notifications & permissions ─────────────────────────────────
+            _SectionHeader('Notifications & Alarms'),
+            const SizedBox(height: AppSizes.paddingMd),
+
+            _SettingsCard(
+              isDark: isDark,
+              child: Column(
+                children: [
+                  _PermissionTile(
+                    icon: Icons.notifications_rounded,
+                    label: 'Notifications',
+                    subtitle: 'Required for dose reminders',
+                    permission: Permission.notification,
+                    primaryColor: theme.colorScheme.primary,
+                    isDark: isDark,
+                  ),
+                  Divider(
+                      height: 1,
+                      color: isDark
+                          ? DarkColors.outlineVariant
+                          : LightColors.outlineVariant),
+                  _PermissionTile(
+                    icon: Icons.alarm_rounded,
+                    label: 'Exact alarms',
+                    subtitle: 'Required for on-time alarm ringing',
+                    permission: Permission.scheduleExactAlarm,
+                    primaryColor: theme.colorScheme.primary,
+                    isDark: isDark,
+                  ),
+                  Divider(
+                      height: 1,
+                      color: isDark
+                          ? DarkColors.outlineVariant
+                          : LightColors.outlineVariant),
+                  _PermissionTile(
+                    icon: Icons.battery_saver_rounded,
+                    label: 'Battery optimization',
+                    subtitle: 'Keep alarms alive in background',
+                    permission:
+                        Permission.ignoreBatteryOptimizations,
+                    primaryColor: theme.colorScheme.primary,
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: AppSizes.paddingXl),
+
             // ── About section ───────────────────────────────────────────────
             _SectionHeader('About'),
             const SizedBox(height: AppSizes.paddingMd),
@@ -114,9 +164,20 @@ class SettingsScreen extends ConsumerWidget {
                           ? DarkColors.outlineVariant
                           : LightColors.outlineVariant),
                   _InfoTile(
-                    icon: Icons.info_outline_rounded,
-                    label: 'Phase',
-                    value: 'Phase 0 — Scaffold',
+                    icon: Icons.layers_rounded,
+                    label: 'Build',
+                    value: 'Phases 0–6',
+                    primaryColor: theme.colorScheme.primary,
+                  ),
+                  Divider(
+                      height: 1,
+                      color: isDark
+                          ? DarkColors.outlineVariant
+                          : LightColors.outlineVariant),
+                  _InfoTile(
+                    icon: Icons.place_rounded,
+                    label: 'Region',
+                    value: 'Bangladesh',
                     primaryColor: theme.colorScheme.primary,
                   ),
                 ],
