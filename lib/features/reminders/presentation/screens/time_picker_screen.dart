@@ -37,7 +37,6 @@ class _TimePickerScreenState extends State<TimePickerScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
 
     return Scaffold(
