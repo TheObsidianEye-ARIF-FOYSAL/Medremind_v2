@@ -330,31 +330,6 @@ class _ProfileCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _editName(BuildContext ctx, WidgetRef ref, String current) async {
-    final ctrl = TextEditingController(text: current);
-    final result = await showDialog<String>(
-      context: ctx,
-      builder: (dCtx) => AlertDialog(
-        title: const Text('Your Name'),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(hintText: 'Enter your name'),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dCtx),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(dCtx, ctrl.text),
-              child: const Text('Save')),
-        ],
-      ),
-    );
-    ctrl.dispose();
-    if (result != null) await ref.read(userNameProvider.notifier).set(result);
-  }
 }
 
 class _RadioTile extends StatelessWidget {
