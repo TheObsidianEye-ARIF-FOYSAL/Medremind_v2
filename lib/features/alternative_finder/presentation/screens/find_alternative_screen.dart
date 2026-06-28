@@ -442,11 +442,9 @@ class _NoResults extends StatelessWidget {
 
 class _Debouncer {
   final Duration duration;
-  Future<void>? _future;
-
   _Debouncer({required this.duration});
 
   void run(void Function() fn) {
-    _future = Future.delayed(duration).then((_) => fn());
+    Future.delayed(duration).then((_) => fn());
   }
 }

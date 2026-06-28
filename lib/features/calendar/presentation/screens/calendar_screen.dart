@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/models/dose_group.dart';
 import '../../../../core/models/dose_log.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../../../home/presentation/providers/today_pills_provider.dart';

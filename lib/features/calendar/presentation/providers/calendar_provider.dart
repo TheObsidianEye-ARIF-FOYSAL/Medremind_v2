@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/models/dose_group.dart';
+import '../../../../core/models/dose_group.dart' show MedicineForm;
 import '../../../../core/models/dose_log.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../home/presentation/providers/today_pills_provider.dart';

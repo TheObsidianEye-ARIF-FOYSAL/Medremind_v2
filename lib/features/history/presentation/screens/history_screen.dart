@@ -404,8 +404,9 @@ class _HeatCell extends StatelessWidget {
           : LightColors.surfaceVariant;
     }
     if (adhere!.rate >= 1.0) return TagColors.taken;
-    if (adhere!.rate > 0.5)
+    if (adhere!.rate > 0.5) {
       return TagColors.taken.withValues(alpha: 0.5);
+    }
     if (adhere!.rate > 0) return TagColors.missed.withValues(alpha: 0.5);
     return TagColors.missed;
   }
