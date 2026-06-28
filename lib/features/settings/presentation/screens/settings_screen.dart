@@ -362,6 +362,117 @@ class _PaletteTile extends StatelessWidget {
   }
 }
 
+class _PermissionTile extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Permission permission;
+  final Color primaryColor;
+  final bool isDark;
+
+  const _PermissionTile({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.permission,
+    required this.primaryColor,
+    required this.isDark,
+  });
+
+  @override
+  State<_PermissionTile> createState() => _PermissionTileState();
+}
+
+class _PermissionTileState extends State<_PermissionTile> {
+  PermissionStatus _status = PermissionStatus.denied;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    final s = await widget.permission.status;
+    if (mounted) setState(() => _status = s);
+  }
+
+  Future<void> _request() async {
+    if (_status.isPermanentlyDenied) {
+      await openAppSettings();
+    } else {
+      final s = await widget.permission.request();
+      if (mounted) setState(() => _status = s);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final granted = _status.isGranted;
+    final statusColor =
+        granted ? TagColors.taken : TagColors.missed;
+    final statusLabel = granted
+        ? 'Granted'
+        : _status.isPermanentlyDenied
+            ? 'Denied'
+            : 'Not granted';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.paddingMd, vertical: AppSizes.paddingMd),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: widget.primaryColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+            ),
+            child: Icon(widget.icon, size: 18, color: widget.primaryColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(widget.label, style: theme.textTheme.bodyMedium),
+                Text(
+                  widget.subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: granted ? null : _request,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius:
+                    BorderRadius.circular(AppSizes.radiusPill),
+              ),
+              child: Text(
+                granted ? statusLabel : 'Grant',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: statusColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _InfoTile extends StatelessWidget {
   final IconData icon;
   final String label;
