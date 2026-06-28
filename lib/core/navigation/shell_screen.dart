@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -39,15 +41,15 @@ const _tabs = [
   ),
   _NavTab(
     path: AppRoutes.finder,
-    icon: Icons.search_outlined,
-    activeIcon: Icons.search_rounded,
+    icon: Icons.compare_arrows_rounded,
+    activeIcon: Icons.compare_arrows_rounded,
     label: 'Finder',
   ),
   _NavTab(
     path: AppRoutes.settings,
-    icon: Icons.person_outline_rounded,
-    activeIcon: Icons.person_rounded,
-    label: 'Profile',
+    icon: Icons.settings_outlined,
+    activeIcon: Icons.settings_rounded,
+    label: 'Settings',
   ),
 ];
 
@@ -90,38 +92,53 @@ class _FloatingNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.colorScheme.primary;
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSizes.navBarPaddingH,
-          0,
-          AppSizes.navBarPaddingH,
-          AppSizes.navBarPaddingB,
-        ),
-        child: Container(
-          height: AppSizes.navBarHeight,
-          decoration: BoxDecoration(
-            color: isDark ? DarkColors.surfaceHigh : LightColors.surface,
-            borderRadius: BorderRadius.circular(AppSizes.navBarRadius),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: Container(
+              height: 72,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? DarkColors.surfaceHigh.withValues(alpha: 0.88)
+                    : Colors.white.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.white.withValues(alpha: 0.6),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+                    blurRadius: 32,
+                    offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: primary.withValues(alpha: 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(
-              _tabs.length,
-              (i) => _NavItem(
-                tab: _tabs[i],
-                isSelected: selectedIndex == i,
-                primaryColor: theme.colorScheme.primary,
-                isDark: isDark,
-                onTap: () => onTap(i),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(
+                  _tabs.length,
+                  (i) => _NavItem(
+                    tab: _tabs[i],
+                    isSelected: selectedIndex == i,
+                    primary: primary,
+                    isDark: isDark,
+                    onTap: () => onTap(i),
+                  ),
+                ),
               ),
             ),
           ),
@@ -134,48 +151,79 @@ class _FloatingNavBar extends StatelessWidget {
 class _NavItem extends StatelessWidget {
   final _NavTab tab;
   final bool isSelected;
-  final Color primaryColor;
+  final Color primary;
   final bool isDark;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.tab,
     required this.isSelected,
-    required this.primaryColor,
+    required this.primary,
     required this.isDark,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 56,
-        height: AppSizes.navBarHeight,
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeInOut,
-            width: isSelected ? 48 : 40,
-            height: isSelected ? 48 : 40,
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? primaryColor.withValues(alpha: 0.18)
-                  : Colors.transparent,
-              shape: BoxShape.circle,
+        width: 60,
+        height: 72,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              width: isSelected ? 44 : 38,
+              height: isSelected ? 36 : 32,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? primary.withValues(alpha: 0.15)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(isSelected ? 14 : 12),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: primary.withValues(alpha: 0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Center(
+                child: Icon(
+                  isSelected ? tab.activeIcon : tab.icon,
+                  size: isSelected ? 22 : 20,
+                  color: isSelected
+                      ? primary
+                      : (isDark
+                          ? DarkColors.onSurfaceMuted
+                          : LightColors.onSurfaceMuted),
+                ),
+              ),
             ),
-            child: Icon(
-              isSelected ? tab.activeIcon : tab.icon,
-              size: 24,
-              color: isSelected
-                  ? primaryColor
-                  : (isDark
-                      ? DarkColors.onSurfaceMuted
-                      : LightColors.onSurfaceMuted),
+            const SizedBox(height: 3),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: theme.textTheme.labelSmall!.copyWith(
+                color: isSelected
+                    ? primary
+                    : (isDark
+                        ? DarkColors.onSurfaceMuted
+                        : LightColors.onSurfaceMuted),
+                fontWeight:
+                    isSelected ? FontWeight.w700 : FontWeight.w400,
+                fontSize: 10,
+              ),
+              child: Text(tab.label),
             ),
-          ),
+          ],
         ),
       ),
     );
