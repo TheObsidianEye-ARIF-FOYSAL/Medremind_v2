@@ -257,7 +257,8 @@ class _ProfileCard extends ConsumerWidget {
     final hasName = name.isNotEmpty;
 
     return GestureDetector(
-      onTap: () => _editName(context, ref, name),
+      onTap: () => Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const ProfileScreen())),
       child: Container(
         padding: const EdgeInsets.all(AppSizes.paddingMd),
         decoration: BoxDecoration(
@@ -323,7 +324,7 @@ class _ProfileCard extends ConsumerWidget {
               ],
             ),
           ),
-          Icon(Icons.edit_rounded, size: 18, color: onSurfaceVariant),
+          Icon(Icons.arrow_forward_ios_rounded, size: 16, color: onSurfaceVariant),
         ]),
       ),
     );

@@ -85,6 +85,13 @@ class DoseGroupRepository {
     _notify();
   }
 
+  Future<void> setActive(String id, bool active) async {
+    final db = await _db.database;
+    await db.update('dose_groups', {'is_active': active ? 1 : 0},
+        where: 'id = ?', whereArgs: [id]);
+    _notify();
+  }
+
   Future<void> delete(String id) async {
     final db = await _db.database;
     await db.delete('dose_groups', where: 'id = ?', whereArgs: [id]);
