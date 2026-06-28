@@ -1,9 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/theme/theme_constants.dart';
+
+// ── User name provider ────────────────────────────────────────────────────────
+
+const _kUserName = 'user_name_v2';
+
+final _userNameProvider =
+    StateNotifierProvider<_UserNameNotifier, String>(_UserNameNotifier.new);
+
+class _UserNameNotifier extends StateNotifier<String> {
+  _UserNameNotifier(Ref ref) : super('') {
+    _load();
+  }
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getString(_kUserName) ?? '';
+  }
+
+  Future<void> set(String name) async {
+    state = name.trim();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kUserName, state);
+  }
+}
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -26,61 +50,12 @@ class SettingsScreen extends ConsumerWidget {
             Text('Settings', style: theme.textTheme.headlineMedium),
             const SizedBox(height: AppSizes.paddingMd),
 
-            // ── Profile / hero card ─────────────────────────────────────────
-            Container(
-              padding: const EdgeInsets.all(AppSizes.paddingMd),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    theme.colorScheme.primary.withValues(alpha: 0.22),
-                    theme.colorScheme.primary.withValues(alpha: 0.05),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(AppSizes.radiusCard),
-                border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Row(children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.4),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.person_rounded,
-                      color: Colors.white, size: 28),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('MedRemind User',
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700)),
-                      Text(
-                        'Manage your medicine schedule',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right_rounded,
-                    color: theme.colorScheme.onSurfaceVariant),
-              ]),
+            // ── Profile card ────────────────────────────────────────────────
+            _ProfileCard(
+              isDark: isDark,
+              primary: theme.colorScheme.primary,
+              onSurfaceVariant: theme.colorScheme.onSurfaceVariant,
+              textTheme: theme.textTheme,
             ),
 
             const SizedBox(height: AppSizes.paddingXl),
@@ -128,13 +103,6 @@ class SettingsScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Color Theme', style: theme.textTheme.titleSmall),
-                    const SizedBox(height: 4),
-                    Text(
-                      '3 palettes × 2 modes = 6 total theme combinations',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
                     const SizedBox(height: AppSizes.paddingMd),
                     Row(
                       children: AppColorPalette.values
