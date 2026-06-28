@@ -64,100 +64,208 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final stats = ref.watch(dayStatsProvider);
 
     return Scaffold(
-      body: resolvedAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (allGroups) {
-          final filtered = _filter.groupLabel == null
-              ? allGroups
-              : allGroups
-                  .where((g) => g.group.label == _filter.groupLabel)
-                  .toList();
+      body: SafeArea(
+        bottom: false,
+        child: resolvedAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Error: $e')),
+          data: (allGroups) {
+            // Pending / snoozed → show in main list
+            final pending = allGroups
+                .where((g) =>
+                    g.status == DoseStatus.pending ||
+                    g.status == DoseStatus.snoozed)
+                .where((g) =>
+                    _filter.groupLabel == null ||
+                    g.group.label == _filter.groupLabel)
+                .toList();
 
-          return CustomScrollView(
-            slivers: [
-              // ── Header ──────────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: FadeTransition(
-                  opacity: _fade,
-                  child: _Header(stats: stats, primary: primary, isDark: isDark),
-                ),
-              ),
+            // Completed today (taken / skipped)
+            final done = allGroups
+                .where((g) =>
+                    g.status == DoseStatus.taken ||
+                    g.status == DoseStatus.skipped)
+                .toList();
 
-              // ── Filter tabs ──────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: _FilterTabs(
-                  selected: _filter,
-                  primary: primary,
-                  isDark: isDark,
-                  onChanged: (f) => setState(() => _filter = f),
-                ),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: AppSizes.paddingMd)),
-
-              // ── Dose cards or empty ──────────────────────────────────
-              if (filtered.isEmpty)
+            return CustomScrollView(
+              slivers: [
+                // ── Header ──────────────────────────────────────────────
                 SliverToBoxAdapter(
-                    child: _Empty(primary: primary, filter: _filter))
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.paddingLg),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (ctx, i) => Padding(
-                        padding:
-                            const EdgeInsets.only(bottom: AppSizes.paddingMd),
-                        child: _DoseCard(
-                          resolved: filtered[i],
-                          isDark: isDark,
-                          primary: primary,
-                          onTaken: () => _act(filtered[i], DoseStatus.taken),
-                          onSkip: () => _act(filtered[i], DoseStatus.skipped),
-                          onSnooze: () => _act(filtered[i], DoseStatus.snoozed),
+                  child: FadeTransition(
+                    opacity: _fade,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSizes.paddingLg, AppSizes.paddingMd,
+                          AppSizes.paddingLg, 0),
+                      child: _Header(
+                          stats: stats, primary: primary, isDark: isDark),
+                    ),
+                  ),
+                ),
+
+                // ── Filter tabs ──────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: _FilterTabs(
+                    selected: _filter,
+                    primary: primary,
+                    isDark: isDark,
+                    onChanged: (f) => setState(() => _filter = f),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSizes.paddingMd)),
+
+                // ── Pending dose cards ───────────────────────────────────
+                if (pending.isEmpty && done.isEmpty)
+                  SliverToBoxAdapter(
+                      child: _Empty(primary: primary, filter: _filter))
+                else if (pending.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSizes.paddingLg),
+                      child: Column(children: [
+                        Icon(Icons.check_circle_rounded,
+                            size: 52,
+                            color: TagColors.taken.withValues(alpha: 0.6)),
+                        const SizedBox(height: 8),
+                        Text('All doses done for today!',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(color: TagColors.taken)),
+                        const SizedBox(height: 4),
+                        Text('Your tomorrow\'s doses are shown below.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant)),
+                        const SizedBox(height: AppSizes.paddingLg),
+                      ]),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.paddingLg),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (ctx, i) => Padding(
+                          padding: const EdgeInsets.only(
+                              bottom: AppSizes.paddingMd),
+                          child: _DoseCard(
+                            resolved: pending[i],
+                            isDark: isDark,
+                            primary: primary,
+                            onTaken: () =>
+                                _act(pending[i], DoseStatus.taken),
+                            onSkip: () =>
+                                _act(pending[i], DoseStatus.skipped),
+                            onSnooze: () =>
+                                _act(pending[i], DoseStatus.snoozed),
+                          ),
+                        ),
+                        childCount: pending.length,
+                      ),
+                    ),
+                  ),
+
+                // ── Done today section (collapsible) ─────────────────────
+                if (done.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSizes.paddingLg, 0,
+                          AppSizes.paddingLg, AppSizes.paddingSm),
+                      child: _SectionDivider(
+                          label: 'Completed Today (${done.length})',
+                          color: TagColors.taken),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.paddingLg),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (ctx, i) => Padding(
+                          padding: const EdgeInsets.only(
+                              bottom: AppSizes.paddingSm),
+                          child: _CompletedCard(
+                              resolved: done[i], isDark: isDark),
+                        ),
+                        childCount: done.length,
+                      ),
+                    ),
+                  ),
+                ],
+
+                // ── Tomorrow section ──────────────────────────────────────
+                if (done.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSizes.paddingLg, AppSizes.paddingSm,
+                          AppSizes.paddingLg, AppSizes.paddingSm),
+                      child: _SectionDivider(
+                          label: 'Tomorrow', color: primary),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.paddingLg),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (ctx, i) => Padding(
+                          padding: const EdgeInsets.only(
+                              bottom: AppSizes.paddingSm),
+                          child: _TomorrowCard(
+                              resolved: done[i],
+                              isDark: isDark,
+                              primary: primary),
+                        ),
+                        childCount: done.length,
+                      ),
+                    ),
+                  ),
+                ],
+
+                // ── Mini calendar strip ───────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSizes.paddingLg, AppSizes.paddingMd,
+                        AppSizes.paddingLg, 0),
+                    child: Container(
+                      padding: const EdgeInsets.all(AppSizes.paddingMd),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? DarkColors.surface
+                            : LightColors.surface,
+                        borderRadius:
+                            BorderRadius.circular(AppSizes.radiusCard),
+                        border: Border.all(
+                          color: isDark
+                              ? DarkColors.outlineVariant
+                              : LightColors.outlineVariant,
                         ),
                       ),
-                      childCount: filtered.length,
-                    ),
-                  ),
-                ),
-
-              // ── Mini calendar ────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                      AppSizes.paddingLg, 0,
-                      AppSizes.paddingLg, 0),
-                  child: Container(
-                    padding: const EdgeInsets.all(AppSizes.paddingMd),
-                    decoration: BoxDecoration(
-                      color: isDark ? DarkColors.surface : LightColors.surface,
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusCard),
-                      border: Border.all(
-                        color: isDark
-                            ? DarkColors.outlineVariant
-                            : LightColors.outlineVariant,
+                      child: MiniCalendarStrip(
+                        selectedDate: _selectedDay,
+                        onDayTap: (d) => setState(() => _selectedDay = d),
                       ),
                     ),
-                    child: MiniCalendarStrip(
-                      selectedDate: _selectedDay,
-                      onDayTap: (d) => setState(() => _selectedDay = d),
-                    ),
                   ),
                 ),
-              ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 110)),
-            ],
-          );
-        },
-      ),
-      floatingActionButton: _GlowFAB(
-        primary: primary,
-        onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const AddMedicationScreen())),
+                const SliverToBoxAdapter(child: SizedBox(height: 110)),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
