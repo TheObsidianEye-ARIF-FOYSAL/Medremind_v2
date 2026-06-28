@@ -97,7 +97,7 @@ class AppTheme {
       ),
 
       // Card
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: isDark ? DarkColors.surface : LightColors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
@@ -247,7 +247,7 @@ class AppTheme {
       ),
 
       // Dialog
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: isDark ? DarkColors.surface : LightColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusCard),
