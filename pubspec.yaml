@@ -47,4 +47,4 @@ flutter:
 
   assets:
     - assets/generic_groups_seed.json
-    - assets/audio/
+    # - assets/audio/
