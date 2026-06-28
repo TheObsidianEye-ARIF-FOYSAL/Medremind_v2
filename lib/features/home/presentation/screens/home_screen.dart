@@ -1,29 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/common/widgets/mini_calendar_strip.dart';
 import '../../../../core/models/dose_group.dart';
 import '../../../../core/models/dose_log.dart';
+import '../../../../core/models/medicine.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../../../medicine_cabinet/presentation/screens/add_medication_screen.dart';
+import '../providers/today_pills_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  DateTime _selectedDay = DateTime.now();
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final groupsAsync = ref.watch(doseGroupsStreamProvider);
-    final logsAsync = ref.watch(todayLogsStreamProvider);
-
-    final greeting = _greeting();
+    final resolvedAsync = ref.watch(resolvedDoseGroupsProvider);
+    final stats = ref.watch(dayStatsProvider);
 
     return Scaffold(
       body: SafeArea(
         bottom: false,
         child: CustomScrollView(
           slivers: [
-            // ── App bar ──────────────────────────────────────────────────
+            // ── Header ───────────────────────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
@@ -35,10 +44,12 @@ class HomeScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(greeting,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              )),
+                          Text(
+                            _greeting(),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
                           const SizedBox(height: 2),
                           Text("Today's Pills",
                               style: theme.textTheme.headlineMedium),
@@ -60,66 +71,86 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
 
-            // ── Dose group list or empty state ──────────────────────────
-            groupsAsync.when(
-              loading: () => const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (e, _) => SliverFillRemaining(
-                child: Center(child: Text('Error: $e')),
-              ),
-              data: (groups) {
-                if (groups.isEmpty) {
-                  return SliverFillRemaining(
-                    child: _EmptyState(primary: theme.colorScheme.primary),
-                  );
-                }
-                return SliverPadding(
+            // ── Day stats strip ──────────────────────────────────────────
+            if (stats.total > 0)
+              SliverToBoxAdapter(
+                child: Padding(
                   padding: const EdgeInsets.fromLTRB(
-                      AppSizes.paddingLg, AppSizes.paddingLg,
-                      AppSizes.paddingLg, 120),
-                  sliver: SliverList(
+                      AppSizes.paddingLg, AppSizes.paddingMd,
+                      AppSizes.paddingLg, 0),
+                  child: _StatsRow(stats: stats),
+                ),
+              ),
+
+            // ── Dose cards ───────────────────────────────────────────────
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSizes.paddingLg, AppSizes.paddingLg,
+                  AppSizes.paddingLg, 0),
+              sliver: resolvedAsync.when(
+                loading: () => const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator())),
+                error: (e, _) => SliverToBoxAdapter(
+                    child: Center(child: Text('Error: $e'))),
+                data: (groups) {
+                  if (groups.isEmpty) {
+                    return SliverToBoxAdapter(
+                      child: _EmptyState(
+                          primary: theme.colorScheme.primary),
+                    );
+                  }
+                  return SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (ctx, i) {
-                        final group = groups[i];
-                        return logsAsync.when(
-                          loading: () => const SizedBox.shrink(),
-                          error: (_, __) => const SizedBox.shrink(),
-                          data: (logs) {
-                            final log = logs.where(
-                                    (l) => l.doseGroupId == group.id)
-                                .toList()
-                                .firstOrNull;
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                  bottom: AppSizes.paddingMd),
-                              child: _DoseGroupCard(
-                                group: group,
-                                log: log,
-                                isDark: isDark,
-                                onTaken: () => _markStatus(
-                                    context, ref, group, log,
-                                    DoseStatus.taken),
-                                onSkip: () => _markStatus(
-                                    context, ref, group, log,
-                                    DoseStatus.skipped),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                      (ctx, i) => Padding(
+                        padding:
+                            const EdgeInsets.only(bottom: AppSizes.paddingMd),
+                        child: _DoseGroupCard(
+                          resolved: groups[i],
+                          isDark: isDark,
+                          onTaken: () =>
+                              _act(groups[i], DoseStatus.taken),
+                          onSkip: () =>
+                              _act(groups[i], DoseStatus.skipped),
+                          onSnooze: () =>
+                              _act(groups[i], DoseStatus.snoozed),
+                        ),
+                      ),
                       childCount: groups.length,
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
+
+            // ── Mini calendar strip ──────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(
+                    AppSizes.paddingLg, AppSizes.paddingMd,
+                    AppSizes.paddingLg, 0),
+                padding: const EdgeInsets.all(AppSizes.paddingMd),
+                decoration: BoxDecoration(
+                  color:
+                      isDark ? DarkColors.surface : LightColors.surface,
+                  borderRadius:
+                      BorderRadius.circular(AppSizes.radiusCard),
+                ),
+                child: MiniCalendarStrip(
+                  selectedDate: _selectedDay,
+                  onDayTap: (d) => setState(() => _selectedDay = d),
+                ),
+              ),
+            ),
+
+            // Bottom padding for floating nav bar
+            const SliverToBoxAdapter(child: SizedBox(height: 110)),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const AddMedicationScreen()),
+          MaterialPageRoute(
+              builder: (_) => const AddMedicationScreen()),
         ),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Add Medicine'),
@@ -127,30 +158,23 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _markStatus(
-    BuildContext context,
-    WidgetRef ref,
-    DoseGroup group,
-    DoseLog? existingLog,
-    DoseStatus status,
-  ) async {
+  Future<void> _act(ResolvedDoseGroup resolved, DoseStatus status) async {
     final logRepo = ref.read(doseLogRepositoryProvider);
-    if (existingLog == null) {
+    if (resolved.log == null) {
       final log = await logRepo.createPending(
-        doseGroupId: group.id,
-        scheduledFor: _todayAt(group.timeOfDay),
+        doseGroupId: resolved.group.id,
+        scheduledFor: _todayAt(resolved.group.timeOfDay),
       );
       await logRepo.updateStatus(log.id, status);
     } else {
-      await logRepo.updateStatus(existingLog.id, status);
+      await logRepo.updateStatus(resolved.log!.id, status);
     }
   }
 
   static DateTime _todayAt(String hhmm) {
-    final now = DateTime.now();
-    final parts = hhmm.split(':');
-    return DateTime(
-        now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
+    final n = DateTime.now();
+    final p = hhmm.split(':');
+    return DateTime(n.year, n.month, n.day, int.parse(p[0]), int.parse(p[1]));
   }
 
   static String _greeting() {
@@ -161,20 +185,84 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+// ── Stats row ─────────────────────────────────────────────────────────────────
+class _StatsRow extends StatelessWidget {
+  final DayStats stats;
+  const _StatsRow({required this.stats});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Row(
+      children: [
+        _StatChip(
+          label: '${stats.taken} Taken',
+          color: TagColors.taken,
+          isDark: isDark,
+        ),
+        const SizedBox(width: 8),
+        _StatChip(
+          label: '${stats.pending} Pending',
+          color: TagColors.pending,
+          isDark: isDark,
+        ),
+        if (stats.skipped > 0) ...[
+          const SizedBox(width: 8),
+          _StatChip(
+            label: '${stats.skipped} Skipped',
+            color: TagColors.skipped,
+            isDark: isDark,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool isDark;
+  const _StatChip(
+      {required this.label, required this.color, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
+  }
+}
+
 // ── Dose group card ───────────────────────────────────────────────────────────
 class _DoseGroupCard extends StatelessWidget {
-  final DoseGroup group;
-  final DoseLog? log;
+  final ResolvedDoseGroup resolved;
   final bool isDark;
   final VoidCallback onTaken;
   final VoidCallback onSkip;
+  final VoidCallback onSnooze;
 
   const _DoseGroupCard({
-    required this.group,
-    this.log,
+    required this.resolved,
     required this.isDark,
     required this.onTaken,
     required this.onSkip,
+    required this.onSnooze,
   });
 
   static const _labelColors = {
@@ -184,22 +272,36 @@ class _DoseGroupCard extends StatelessWidget {
     'Evening': TagColors.evening,
   };
 
+  static const _formIcons = {
+    MedicineForm.tablet: Icons.circle_outlined,
+    MedicineForm.pill: Icons.medication_rounded,
+    MedicineForm.syrup: Icons.local_drink_rounded,
+    MedicineForm.syringe: Icons.vaccines_rounded,
+    MedicineForm.other: Icons.more_horiz_rounded,
+  };
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final labelColor = _labelColors[group.label] ?? primary;
-    final status = log?.status ?? DoseStatus.pending;
-    final isTaken = status == DoseStatus.taken;
+    final group = resolved.group;
+    final isTaken = resolved.isTaken;
+    final labelColor =
+        _labelColors[group.label] ?? primary;
+
+    final cardBg = isTaken
+        ? primary
+        : (isDark ? DarkColors.surface : LightColors.surface);
 
     return Container(
       decoration: BoxDecoration(
-        color: isTaken ? primary : (isDark ? DarkColors.surface : LightColors.surface),
+        color: cardBg,
         borderRadius: BorderRadius.circular(AppSizes.radiusCard),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Time row
+          // ── Header row ───────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(
                 AppSizes.paddingMd, 10, AppSizes.paddingMd, 0),
@@ -210,7 +312,8 @@ class _DoseGroupCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
-                    color: labelColor.withValues(alpha: isTaken ? 0.2 : 0.15),
+                    color: labelColor
+                        .withValues(alpha: isTaken ? 0.2 : 0.14),
                     borderRadius:
                         BorderRadius.circular(AppSizes.radiusPill),
                   ),
@@ -223,10 +326,10 @@ class _DoseGroupCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  _formatTime(group.timeOfDay),
+                  _fmt(group.timeOfDay),
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: isTaken
-                        ? Colors.white70
+                        ? Colors.white60
                         : theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -234,71 +337,103 @@ class _DoseGroupCard extends StatelessWidget {
             ),
           ),
 
-          // Medicine info
-          Padding(
-            padding: const EdgeInsets.all(AppSizes.paddingMd),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: isTaken
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : primary.withValues(alpha: 0.12),
-                    borderRadius:
-                        BorderRadius.circular(AppSizes.radiusSm),
+          // ── Medicine items ───────────────────────────────────────────
+          ...resolved.items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSizes.paddingMd, AppSizes.paddingSm,
+                  AppSizes.paddingMd, 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isTaken
+                          ? Colors.white.withValues(alpha: 0.2)
+                          : primary.withValues(alpha: 0.12),
+                      borderRadius:
+                          BorderRadius.circular(AppSizes.radiusSm),
+                    ),
+                    child: Icon(
+                      _formIcons[item.form] ??
+                          Icons.medication_rounded,
+                      size: 18,
+                      color: isTaken ? Colors.white : primary,
+                    ),
                   ),
-                  child: Icon(
-                    Icons.medication_rounded,
-                    size: 20,
-                    color: isTaken ? Colors.white : primary,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${group.items.length} medicine${group.items.length != 1 ? 's' : ''}',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: isTaken ? Colors.white : null,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.medicineName,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: isTaken ? Colors.white : null,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.restaurant_rounded,
-                            size: 12,
-                            color: isTaken
-                                ? Colors.white70
-                                : theme.colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _mealText(group.mealRelation),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: isTaken
-                                  ? Colors.white70
-                                  : theme.colorScheme.onSurfaceVariant,
+                        Row(
+                          children: [
+                            Text(
+                              '${_qty(item.quantity)} ${item.form.name}',
+                              style:
+                                  theme.textTheme.bodySmall?.copyWith(
+                                color: isTaken
+                                    ? Colors.white70
+                                    : theme
+                                        .colorScheme.onSurfaceVariant,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            if (group.mealRelation !=
+                                MealRelation.none) ...[
+                              Text(
+                                ' · ',
+                                style:
+                                    theme.textTheme.bodySmall?.copyWith(
+                                  color: isTaken
+                                      ? Colors.white54
+                                      : theme.colorScheme
+                                          .onSurfaceVariant,
+                                ),
+                              ),
+                              Icon(
+                                Icons.restaurant_rounded,
+                                size: 10,
+                                color: isTaken
+                                    ? Colors.white70
+                                    : theme.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                _mealText(group.mealRelation),
+                                style:
+                                    theme.textTheme.bodySmall?.copyWith(
+                                  color: isTaken
+                                      ? Colors.white70
+                                      : theme.colorScheme
+                                          .onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                // Status badge
-                _StatusBadge(status: status, isTaken: isTaken),
-              ],
+                  // Status badge
+                  if (!resolved.isPending)
+                    _StatusBadge(
+                        status: resolved.status, isTaken: isTaken),
+                ],
+              ),
             ),
           ),
 
-          // Action button
+          // ── Action buttons ───────────────────────────────────────────
           if (!isTaken) ...[
+            const SizedBox(height: AppSizes.paddingSm),
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -306,62 +441,91 @@ class _DoseGroupCard extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
+                    flex: 3,
                     child: SizedBox(
                       height: 40,
                       child: ElevatedButton.icon(
                         onPressed: onTaken,
-                        icon: const Icon(Icons.check_rounded, size: 18),
+                        icon: const Icon(Icons.check_rounded, size: 16),
                         label: const Text('Taken'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppSizes.radiusPill),
+                            borderRadius: BorderRadius.circular(
+                                AppSizes.radiusPill),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    height: 40,
-                    child: OutlinedButton(
-                      onPressed: onSkip,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor:
-                            theme.colorScheme.onSurfaceVariant,
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSizes.radiusPill),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    flex: 2,
+                    child: SizedBox(
+                      height: 40,
+                      child: OutlinedButton(
+                        onPressed: onSnooze,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor:
+                              theme.colorScheme.onSurfaceVariant,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                AppSizes.radiusPill),
+                          ),
                         ),
+                        child: const Text('Snooze'),
                       ),
-                      child: const Text('Skip'),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    flex: 2,
+                    child: SizedBox(
+                      height: 40,
+                      child: OutlinedButton(
+                        onPressed: onSkip,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: TagColors.missed,
+                          side: BorderSide(
+                              color: TagColors.missed
+                                  .withValues(alpha: 0.5)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                AppSizes.radiusPill),
+                          ),
+                        ),
+                        child: const Text('Skip'),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ],
+          ] else
+            const SizedBox(height: AppSizes.paddingMd),
         ],
       ),
     );
   }
 
-  static String _formatTime(String hhmm) {
-    final parts = hhmm.split(':');
-    final h = int.parse(parts[0]);
-    final m = int.parse(parts[1]);
+  String _fmt(String hhmm) {
+    final p = hhmm.split(':');
+    final h = int.parse(p[0]);
+    final m = int.parse(p[1]);
     final period = h < 12 ? 'AM' : 'PM';
     final dh = h == 0 ? 12 : (h > 12 ? h - 12 : h);
     return '${dh.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')} $period';
   }
 
-  static String _mealText(MealRelation r) => switch (r) {
-        MealRelation.beforeMeal => 'Before Meals',
-        MealRelation.afterMeal => 'After Meals',
-        MealRelation.none => 'Anytime',
+  String _mealText(MealRelation r) => switch (r) {
+        MealRelation.beforeMeal => 'Before',
+        MealRelation.afterMeal => 'After',
+        _ => '',
       };
+
+  String _qty(double q) =>
+      q == q.truncateToDouble() ? q.toInt().toString() : q.toString();
 }
 
 class _StatusBadge extends StatelessWidget {
@@ -371,26 +535,24 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (status == DoseStatus.pending) return const SizedBox.shrink();
     final (color, icon, label) = switch (status) {
-      DoseStatus.taken => (TagColors.taken, Icons.check_circle_rounded, 'Taken'),
-      DoseStatus.skipped => (
-          TagColors.skipped,
-          Icons.cancel_rounded,
-          'Skipped'
-        ),
-      DoseStatus.missed => (TagColors.missed, Icons.error_rounded, 'Missed'),
-      DoseStatus.snoozed => (
-          TagColors.snoozed,
-          Icons.snooze_rounded,
-          'Snoozed'
-        ),
-      _ => (TagColors.pending, Icons.pending_rounded, 'Pending'),
+      DoseStatus.taken =>
+        (TagColors.taken, Icons.check_circle_rounded, 'Taken'),
+      DoseStatus.skipped =>
+        (TagColors.skipped, Icons.cancel_rounded, 'Skipped'),
+      DoseStatus.missed =>
+        (TagColors.missed, Icons.error_rounded, 'Missed'),
+      DoseStatus.snoozed =>
+        (TagColors.snoozed, Icons.snooze_rounded, 'Snoozed'),
+      _ => (TagColors.pending, Icons.pending_rounded, ''),
     };
+    if (label.isEmpty) return const SizedBox.shrink();
     return Row(
       children: [
-        Icon(icon, size: 16, color: isTaken ? Colors.white70 : color),
-        const SizedBox(width: 4),
+        Icon(icon,
+            size: 14,
+            color: isTaken ? Colors.white70 : color),
+        const SizedBox(width: 3),
         Text(
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -403,7 +565,6 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-// ── Empty state ───────────────────────────────────────────────────────────────
 class _EmptyState extends StatelessWidget {
   final Color primary;
   const _EmptyState({required this.primary});
@@ -411,34 +572,35 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+    return SizedBox(
+      height: 260,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.medication_liquid_rounded,
+                  size: 38, color: primary),
             ),
-            child: Icon(Icons.medication_liquid_rounded,
-                size: 44, color: primary),
-          ),
-          const SizedBox(height: 24),
-          Text('No medicines scheduled',
-              style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            'Tap "+ Add Medicine" to get started',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            const SizedBox(height: 16),
+            Text('No medicines scheduled',
+                style: theme.textTheme.titleSmall),
+            const SizedBox(height: 6),
+            Text(
+              'Tap "+ Add Medicine" to get started',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-          const SizedBox(height: 120),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
-
