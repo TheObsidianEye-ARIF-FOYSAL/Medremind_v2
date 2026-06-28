@@ -45,22 +45,12 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                   ...ThemeMode.values.map(
-                    (mode) => RadioListTile<ThemeMode>(
-                      dense: true,
-                      title: Text(
-                        _themeModeLabel(mode),
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                      subtitle: Text(
-                        _themeModeSubtitle(mode),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      value: mode,
-                      groupValue: settings.mode,
+                    (mode) => _RadioTile(
+                      title: _themeModeLabel(mode),
+                      subtitle: _themeModeSubtitle(mode),
+                      selected: settings.mode == mode,
                       activeColor: theme.colorScheme.primary,
-                      onChanged: (v) => notifier.setMode(v!),
+                      onTap: () => notifier.setMode(mode),
                     ),
                   ),
                 ],
