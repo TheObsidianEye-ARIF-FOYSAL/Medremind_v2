@@ -151,15 +151,19 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
       WidgetsBinding.instance
           .addPostFrameCallback((_) => setState(() => _flow = 'login'));
     }
-    // BdApps subscription confirmed → re-resolve (will check Firebase next)
+    // BdApps subscription confirmed → advance to login check
     if (_flow == 'sub' && auth.isAuthenticated) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _resolveFlow());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _flow = null); // show loader briefly
+        _resolveFlow();
+      });
     }
     // Firebase login confirmed → advance flow
     if (_flow == 'login' && firebase.isLoggedIn) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _resolveFlow());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _flow = null); // show loader briefly
+        _resolveFlow();
+      });
     }
 
     Widget home;
