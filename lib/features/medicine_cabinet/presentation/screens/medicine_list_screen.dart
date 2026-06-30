@@ -551,35 +551,8 @@ class _GroupTile extends ConsumerWidget {
             ],
           ),
         ),
-        // Medicine pill chips
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            for (final item in group.items.take(2))
-              Padding(
-                padding: const EdgeInsets.only(bottom: 3),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius:
-                        BorderRadius.circular(AppSizes.radiusPill),
-                  ),
-                  child: Text(
-                    _qty(item.quantity),
-                    style: theme.textTheme.labelSmall
-                        ?.copyWith(color: color, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-            if (group.items.length > 2)
-              Text('+${group.items.length - 2} more',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant)),
-          ],
-        ),
+        // Medicine pill chips with names
+        _MedChips(group: group, color: color),
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert_rounded, size: 20),
           shape: RoundedRectangleBorder(
