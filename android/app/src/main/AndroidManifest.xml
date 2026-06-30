@@ -1,18 +1,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- ── Network permissions ───────────────────────────────────────────── -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
     <!-- ── Alarm & Notification permissions ─────────────────────────────── -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
-    <!-- Android 13+ -->
+    <!-- Android 13+ notification permission (runtime required) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <!-- Android 12 exact alarm permission -->
+    <!-- Exact alarm: API 31-32 requires runtime grant; API 33+ auto-granted via USE_EXACT_ALARM -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"
         android:maxSdkVersion="32"/>
-    <!-- Android 13+ exact alarm (replaces SCHEDULE_EXACT_ALARM on API 33+) -->
+    <!-- Android 13+ exact alarm — granted automatically, no runtime dialog -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
-    <!-- Battery optimization exemption (keeps alarms alive) -->
+    <!-- Battery optimization exemption (keeps alarms alive in background) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 
     <application

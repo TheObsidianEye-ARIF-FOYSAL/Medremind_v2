@@ -254,35 +254,93 @@ class _GradientFAB extends StatelessWidget {
 
 // ── Medicines Tab ─────────────────────────────────────────────────────────────
 
-class _MedicinesTab extends ConsumerWidget {
+class _MedicinesTab extends ConsumerStatefulWidget {
   const _MedicinesTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_MedicinesTab> createState() => _MedicinesTabState();
+}
+
+class _MedicinesTabState extends ConsumerState<_MedicinesTab> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
     final medsAsync = ref.watch(medicinesStreamProvider);
 
-    return medsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
-      data: (meds) {
-        if (meds.isEmpty) {
-          return _EmptyState(
-            icon: Icons.medication_rounded,
-            title: 'No medicines yet',
-            subtitle: 'Tap "+ Add Medicine" below to add your first medicine',
-            primary: theme.colorScheme.primary,
-          );
-        }
-        return ListView.separated(
+    return Column(
+      children: [
+        Padding(
           padding: const EdgeInsets.fromLTRB(
-              AppSizes.paddingLg, 0, AppSizes.paddingLg, 150),
-          itemCount: meds.length,
-          separatorBuilder: (_, __) =>
-              const SizedBox(height: AppSizes.paddingSm),
-          itemBuilder: (ctx, i) => _MedicineTile(med: meds[i]),
-        );
-      },
+              AppSizes.paddingLg, 0, AppSizes.paddingLg, AppSizes.paddingMd),
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Search medicines…',
+              prefixIcon: Icon(Icons.search_rounded, color: primary, size: 20),
+              suffixIcon: _query.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear_rounded, size: 18),
+                      onPressed: () => setState(() => _query = ''),
+                    )
+                  : null,
+              isDense: true,
+              filled: true,
+              fillColor:
+                  isDark ? DarkColors.surfaceVariant : LightColors.surfaceVariant,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            onChanged: (v) => setState(() => _query = v),
+          ),
+        ),
+        Expanded(
+          child: medsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+            data: (allMeds) {
+              final meds = _query.isEmpty
+                  ? allMeds
+                  : allMeds
+                      .where((m) => m.brandName
+                          .toLowerCase()
+                          .contains(_query.toLowerCase()))
+                      .toList();
+
+              if (allMeds.isEmpty) {
+                return _EmptyState(
+                  icon: Icons.medication_rounded,
+                  title: 'No medicines yet',
+                  subtitle:
+                      'Tap "+ Add Medicine" below to add your first medicine',
+                  primary: primary,
+                );
+              }
+              if (meds.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No results for "$_query"',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                );
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(
+                    AppSizes.paddingLg, 0, AppSizes.paddingLg, 150),
+                itemCount: meds.length,
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: AppSizes.paddingSm),
+                itemBuilder: (ctx, i) => _MedicineTile(med: meds[i]),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

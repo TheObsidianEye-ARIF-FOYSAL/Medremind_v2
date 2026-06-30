@@ -74,12 +74,20 @@ class _PermissionOnboardingScreenState
   Future<void> _grantAll() async {
     setState(() => _requesting = true);
 
-    // Notification — can use runtime request
+    // 1. Notification — runtime dialog (Android 13+)
     await Permission.notification.request();
 
-    // Exact alarm & battery optimization — must go through app settings
-    await openAppSettings();
-    await Future.delayed(const Duration(seconds: 1));
+    // 2. Exact alarm — runtime dialog on API 31-32; auto-granted on API 33+
+    final alarmStatus = await Permission.scheduleExactAlarm.status;
+    if (!alarmStatus.isGranted) {
+      await Permission.scheduleExactAlarm.request();
+    }
+
+    // 3. Battery optimization — system intent dialog
+    final batteryStatus = await Permission.ignoreBatteryOptimizations.status;
+    if (!batteryStatus.isGranted) {
+      await Permission.ignoreBatteryOptimizations.request();
+    }
 
     await markOnboardingDone();
     if (mounted) widget.onComplete();
