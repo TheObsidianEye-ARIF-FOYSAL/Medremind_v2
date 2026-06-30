@@ -1,219 +1,180 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/theme_constants.dart';
 import 'phone_screen.dart';
-
-// ── Subscription / landing screen ─────────────────────────────────────────────
-// Design matches bdapps login guidelines:
-//   - App name, pricing (2.78/5.56 BDT + VAT+SC+SD), feature list
-//   - Robi (018) & Airtel (016) only
-//   - "Subscribe with Mobile" → phone entry → OTP
 
 class SubscriptionScreen extends StatelessWidget {
   const SubscriptionScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
+    final bg = isDark ? DarkColors.background : LightColors.background;
+    final surface = isDark ? DarkColors.surface : LightColors.surface;
+    final muted = isDark ? DarkColors.onSurfaceMuted : LightColors.onSurfaceMuted;
+
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0D0B2A), Color(0xFF1A1650), Color(0xFF0D0B2A)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
+      backgroundColor: bg,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.paddingLg, vertical: AppSizes.paddingLg),
+          child: Column(children: [
+            const SizedBox(height: AppSizes.paddingXl),
 
-                // ── App icon ───────────────────────────────────────────────
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const RadialGradient(colors: [
-                      Color(0xFF7C6EEA),
-                      Color(0xFF5547C8),
-                    ]),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF7C6EEA).withValues(alpha: 0.5),
-                        blurRadius: 30,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
+            // ── App icon ─────────────────────────────────────────────────────
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: primary.withValues(alpha: 0.15),
+                border: Border.all(color: primary.withValues(alpha: 0.4), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: primary.withValues(alpha: 0.3),
+                    blurRadius: 32,
+                    offset: const Offset(0, 10),
                   ),
-                  child: const Icon(Icons.medication_rounded,
-                      color: Colors.white, size: 48),
-                ),
-
-                const SizedBox(height: 20),
-
-                // ── App name & tagline ─────────────────────────────────────
-                const Text(
-                  'MedRemind',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 30,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Your Smart Medicine Reminder',
-                  style: TextStyle(
-                    color: Color(0xFFAAAFD8),
-                    fontSize: 15,
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                // ── Pricing card ───────────────────────────────────────────
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 16),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                        color: const Color(0xFF7C6EEA).withValues(alpha: 0.4)),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Column(children: [
-                    Text('ONLY',
-                        style: TextStyle(
-                            color: Color(0xFFAAAFD8),
-                            fontSize: 12,
-                            letterSpacing: 2)),
-                    SizedBox(height: 4),
-                    Text(
-                      '৳2.78 / ৳5.56',
-                      style: TextStyle(
-                        color: Color(0xFF7EE8C8),
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      '+VAT+SD+SC per day',
-                      style: TextStyle(
-                          color: Color(0xFFAAAFD8), fontSize: 13),
-                    ),
-                  ]),
-                ),
-
-                const SizedBox(height: 28),
-
-                // ── Feature list ───────────────────────────────────────────
-                ..._features.map((f) => _FeatureTile(
-                    icon: f.$1, title: f.$2, subtitle: f.$3)),
-
-                const SizedBox(height: 32),
-
-                // ── Subscribe button ───────────────────────────────────────
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [
-                        Color(0xFF7C6EEA),
-                        Color(0xFF5547C8),
-                      ]),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF7C6EEA)
-                              .withValues(alpha: 0.45),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton.icon(
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (_) => const PhoneScreen()),
-                      ),
-                      icon: const Icon(Icons.smartphone_rounded,
-                          color: Colors.white),
-                      label: const Text(
-                        'Subscribe with Mobile',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // ── Network notice ─────────────────────────────────────────
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E1B4B).withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: const Color(0xFF7C6EEA)
-                            .withValues(alpha: 0.25)),
-                  ),
-                  child: const Row(children: [
-                    Icon(Icons.verified_rounded,
-                        color: Color(0xFF7EE8C8), size: 20),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Subscription: ৳2.78 (Robi) / ৳5.56 (Airtel) '
-                        '+VAT+SD+SC/day\nvia Robi/Airtel mobile billing',
-                        style: TextStyle(
-                            color: Color(0xFFAAAFD8), fontSize: 12),
-                      ),
-                    ),
-                  ]),
-                ),
-
-                const SizedBox(height: 12),
-
-                const Text(
-                  'Supported: Android | Robi (018) & Airtel (016) only',
-                  style: TextStyle(color: Color(0xFF7A7DAA), fontSize: 11),
-                  textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: 24),
-              ],
+                ],
+              ),
+              child: Icon(Icons.medication_rounded, color: primary, size: 48),
             ),
-          ),
+
+            const SizedBox(height: AppSizes.paddingLg),
+
+            Text('MedRemind',
+                style: theme.textTheme.headlineLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                )),
+            const SizedBox(height: 6),
+            Text(
+              'Your Smart Medicine Reminder',
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: muted),
+            ),
+
+            const SizedBox(height: AppSizes.paddingXl),
+
+            // ── Pricing card ──────────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingLg, vertical: AppSizes.paddingMd),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppSizes.radiusCard),
+                border:
+                    Border.all(color: primary.withValues(alpha: 0.25)),
+              ),
+              child: Column(children: [
+                Text('ONLY',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                        color: muted, letterSpacing: 2)),
+                const SizedBox(height: 4),
+                Text(
+                  '৳2.78 / ৳5.56',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text('+VAT+SD+SC per day',
+                    style: theme.textTheme.bodySmall?.copyWith(color: muted)),
+              ]),
+            ),
+
+            const SizedBox(height: AppSizes.paddingLg),
+
+            // ── Feature list ──────────────────────────────────────────────────
+            ..._features.map((f) => _FeatureTile(
+                  icon: f.$1,
+                  title: f.$2,
+                  subtitle: f.$3,
+                  surface: surface,
+                  primary: primary,
+                  muted: muted,
+                  theme: theme,
+                )),
+
+            const SizedBox(height: AppSizes.paddingXl),
+
+            // ── Subscribe button ──────────────────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PhoneScreen()),
+                ),
+                icon: const Icon(Icons.smartphone_rounded),
+                label: const Text('Subscribe with Mobile',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  shadowColor: primary.withValues(alpha: 0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(AppSizes.radiusPill),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: AppSizes.paddingMd),
+
+            // ── Network / billing notice ──────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(AppSizes.paddingMd),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius:
+                    BorderRadius.circular(AppSizes.radiusCard),
+                border: Border.all(
+                    color: isDark
+                        ? DarkColors.outlineVariant
+                        : LightColors.outlineVariant),
+              ),
+              child: Row(children: [
+                Icon(Icons.verified_rounded,
+                    color: TagColors.taken, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '৳2.78 (Robi) / ৳5.56 (Airtel) +VAT+SD+SC/day\n'
+                    'via Robi/Airtel mobile billing',
+                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                  ),
+                ),
+              ]),
+            ),
+
+            const SizedBox(height: AppSizes.paddingMd),
+
+            Text(
+              'Supported: Android  |  Robi (018) & Airtel (016) only',
+              style: theme.textTheme.labelSmall?.copyWith(color: muted),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: AppSizes.paddingXl),
+          ]),
         ),
       ),
     );
   }
 }
 
-// Feature tuples: (icon, title, subtitle)
 const _features = [
   (Icons.alarm_rounded, 'Never Miss a Dose',
-      'Full-screen alarm with sound even when screen is off'),
+      'Full-screen alarm with sound even when your screen is off'),
   (Icons.medication_liquid_rounded, 'Medicine Cabinet',
-      'Track all medicines with dosage and schedule'),
+      'Track all medicines with dosage and daily schedule'),
   (Icons.bar_chart_rounded, 'Adherence History',
       'View daily & weekly dose-taking statistics'),
 ];
@@ -222,44 +183,51 @@ class _FeatureTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final Color surface;
+  final Color primary;
+  final Color muted;
+  final ThemeData theme;
 
-  const _FeatureTile(
-      {required this.icon, required this.title, required this.subtitle});
+  const _FeatureTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.surface,
+    required this.primary,
+    required this.muted,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: AppSizes.paddingSm),
+        padding: const EdgeInsets.all(AppSizes.paddingMd),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1860).withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-              color: const Color(0xFF7C6EEA).withValues(alpha: 0.2)),
+          color: surface,
+          borderRadius: BorderRadius.circular(AppSizes.radiusCard),
         ),
         child: Row(children: [
           Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF7C6EEA).withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
+              color: primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusSm),
             ),
-            child: Icon(icon, color: const Color(0xFF9B8EF0), size: 20),
+            child: Icon(icon, color: primary, size: 20),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSizes.paddingMd),
           Expanded(
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14)),
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
                   Text(subtitle,
-                      style: const TextStyle(
-                          color: Color(0xFFAAAFD8), fontSize: 12)),
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: muted)),
                 ]),
           ),
         ]),

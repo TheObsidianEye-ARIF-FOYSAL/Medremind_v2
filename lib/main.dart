@@ -170,7 +170,10 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
       );
     }
 
+    // ValueKey forces a brand-new Navigator (clearing any pushed routes)
+    // every time _flow changes — e.g. 'sub' → 'intro' after OTP success.
     return MaterialApp(
+      key: ValueKey(_flow),
       title: 'MedRemind',
       debugShowCheckedModeBanner: false,
       theme: lightTheme,

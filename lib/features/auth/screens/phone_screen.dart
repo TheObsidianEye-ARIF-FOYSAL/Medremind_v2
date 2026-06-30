@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/theme_constants.dart';
 import '../providers/auth_provider.dart';
 import 'otp_screen.dart';
 
@@ -30,7 +31,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(error),
-        backgroundColor: const Color(0xFFE05C5C),
+        backgroundColor: TagColors.missed,
       ));
     } else {
       Navigator.of(context).push(MaterialPageRoute(
@@ -42,243 +43,181 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(authProvider).isLoading;
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
+    final bg = isDark ? DarkColors.background : LightColors.background;
+    final surface = isDark ? DarkColors.surface : LightColors.surface;
+    final muted = isDark ? DarkColors.onSurfaceMuted : LightColors.onSurfaceMuted;
+    final outline = isDark ? DarkColors.outline : LightColors.outline;
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0D0B2A), Color(0xFF1A1650), Color(0xFF0D0B2A)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Back button ────────────────────────────────────────────
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1860).withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: const Color(0xFF7C6EEA)
-                              .withValues(alpha: 0.3)),
-                    ),
-                    child: const Icon(Icons.arrow_back_ios_rounded,
-                        color: Colors.white, size: 18),
-                  ),
+      backgroundColor: bg,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSizes.paddingLg),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // ── Back button ─────────────────────────────────────────────────
+            IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.arrow_back_rounded),
+              style: IconButton.styleFrom(
+                backgroundColor: surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                 ),
+              ),
+              padding: const EdgeInsets.all(10),
+            ),
 
-                const SizedBox(height: 40),
+            const SizedBox(height: AppSizes.paddingXl),
 
-                // ── Phone icon ─────────────────────────────────────────────
+            // ── Icon ────────────────────────────────────────────────────────
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: primary.withValues(alpha: 0.12),
+                border: Border.all(color: primary.withValues(alpha: 0.3), width: 2),
+              ),
+              child: Icon(Icons.smartphone_rounded, color: primary, size: 34),
+            ),
+
+            const SizedBox(height: AppSizes.paddingLg),
+
+            Text('Enter Your Mobile',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800, letterSpacing: -0.3)),
+            const SizedBox(height: 8),
+            Text(
+              "We'll send an OTP to your Robi/Airtel number\nfor subscription verification",
+              style: theme.textTheme.bodyMedium?.copyWith(
+                  color: muted, height: 1.5),
+            ),
+
+            const SizedBox(height: AppSizes.paddingXl),
+
+            // ── Phone input ─────────────────────────────────────────────────
+            Form(
+              key: _formKey,
+              child: Column(children: [
                 Container(
-                  width: 80,
-                  height: 80,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const RadialGradient(colors: [
-                      Color(0xFF7C6EEA),
-                      Color(0xFF5547C8),
-                    ]),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF7C6EEA)
-                            .withValues(alpha: 0.5),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                    color: surface,
+                    borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                    border: Border.all(color: outline),
                   ),
-                  child: const Icon(Icons.smartphone_rounded,
-                      color: Colors.white, size: 36),
-                ),
-
-                const SizedBox(height: 24),
-
-                const Text(
-                  'Enter Your Mobile',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "We'll send an OTP to your Robi/Airtel number\nfor subscription verification",
-                  style: TextStyle(color: Color(0xFFAAAFD8), height: 1.5),
-                ),
-
-                const SizedBox(height: 32),
-
-                // ── Phone input ────────────────────────────────────────────
-                Form(
-                  key: _formKey,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1860).withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                          color: const Color(0xFF7C6EEA)
-                              .withValues(alpha: 0.3)),
-                    ),
-                    child: Row(children: [
-                      // Flag + prefix
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 16),
-                        child: Row(children: [
-                          Image.asset('assets/images/bd_flag.png',
-                              width: 24,
-                              height: 16,
-                              errorBuilder: (_, __, ___) => const Text(
-                                    '🇧🇩',
-                                    style: TextStyle(fontSize: 16),
-                                  )),
-                          const SizedBox(width: 8),
-                          const Text('|',
-                              style: TextStyle(
-                                  color: Color(0xFF4A4878), fontSize: 20)),
-                        ]),
-                      ),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _ctrl,
-                          keyboardType: TextInputType.phone,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(11),
-                          ],
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 16),
-                          decoration: const InputDecoration(
-                            hintText: '01XXXXXXXXX',
-                            hintStyle: TextStyle(color: Color(0xFF5A5888)),
-                            border: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            contentPadding:
-                                EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          validator: (v) {
-                            final d =
-                                (v ?? '').replaceAll(RegExp(r'[^0-9]'), '');
-                            if (d.length < 11) return 'Enter 11-digit number';
-                            // Robi: 018, Airtel: 016
-                            final prefix = d.substring(0, 3);
-                            if (prefix != '018' && prefix != '016') {
-                              return 'Robi (018) or Airtel (016) only';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                    ]),
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-                const Row(children: [
-                  Icon(Icons.info_outline_rounded,
-                      size: 14, color: Color(0xFF7A7DAA)),
-                  SizedBox(width: 4),
-                  Text(
-                    'Supported: Robi (018) & Airtel (016) only',
-                    style: TextStyle(color: Color(0xFF7A7DAA), fontSize: 12),
-                  ),
-                ]),
-
-                const SizedBox(height: 28),
-
-                // ── Send OTP button ────────────────────────────────────────
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [
-                        Color(0xFF7C6EEA),
-                        Color(0xFF5547C8),
+                  child: Row(children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSizes.paddingMd),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        const Text('🇧🇩',
+                            style: TextStyle(fontSize: 18)),
+                        const SizedBox(width: 8),
+                        Container(width: 1, height: 24, color: outline),
                       ]),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF7C6EEA)
-                              .withValues(alpha: 0.45),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
                     ),
-                    child: ElevatedButton.icon(
-                      onPressed: isLoading ? null : _sendOtp,
-                      icon: isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2))
-                          : const Icon(Icons.send_rounded,
-                              color: Colors.white),
-                      label: Text(
-                        isLoading ? 'Sending...' : 'Send OTP',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // ── Subscription info ──────────────────────────────────────
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E1B4B).withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: const Color(0xFF7C6EEA)
-                            .withValues(alpha: 0.25)),
-                  ),
-                  child: const Row(children: [
-                    Icon(Icons.verified_rounded,
-                        color: Color(0xFF7EE8C8), size: 20),
-                    SizedBox(width: 10),
                     Expanded(
-                      child: Text(
-                        'Subscription: ৳2.78 (Robi) / ৳5.56 (Airtel) '
-                        '+VAT+SD+SC/day\nvia Robi/Airtel mobile billing',
-                        style: TextStyle(
-                            color: Color(0xFFAAAFD8), fontSize: 12),
+                      child: TextFormField(
+                        controller: _ctrl,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(11),
+                        ],
+                        decoration: InputDecoration(
+                          hintText: '01XXXXXXXXX',
+                          hintStyle: TextStyle(color: muted),
+                          border: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 16, horizontal: 4),
+                        ),
+                        validator: (v) {
+                          final d = (v ?? '').replaceAll(RegExp(r'[^0-9]'), '');
+                          if (d.length < 11) return 'Enter 11-digit number';
+                          final prefix = d.substring(0, 3);
+                          if (prefix != '018' && prefix != '016') {
+                            return 'Robi (018) or Airtel (016) only';
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ]),
                 ),
-              ],
+
+                const SizedBox(height: 6),
+                Row(children: [
+                  Icon(Icons.info_outline_rounded, size: 13, color: muted),
+                  const SizedBox(width: 4),
+                  Text('Supported: Robi (018) & Airtel (016) only',
+                      style: theme.textTheme.labelSmall?.copyWith(color: muted)),
+                ]),
+              ]),
             ),
-          ),
+
+            const SizedBox(height: AppSizes.paddingXl),
+
+            // ── Send OTP button ─────────────────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton.icon(
+                onPressed: isLoading ? null : _sendOtp,
+                icon: isLoading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5),
+                      )
+                    : const Icon(Icons.send_rounded),
+                label: Text(isLoading ? 'Sending…' : 'Send OTP',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  shadowColor: primary.withValues(alpha: 0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: AppSizes.paddingLg),
+
+            // ── Billing notice ──────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(AppSizes.paddingMd),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(AppSizes.radiusCard),
+                border: Border.all(
+                    color: isDark
+                        ? DarkColors.outlineVariant
+                        : LightColors.outlineVariant),
+              ),
+              child: Row(children: [
+                Icon(Icons.verified_rounded,
+                    color: TagColors.taken, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '৳2.78 (Robi) / ৳5.56 (Airtel) +VAT+SD+SC/day\n'
+                    'via Robi/Airtel mobile billing',
+                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                  ),
+                ),
+              ]),
+            ),
+          ]),
         ),
       ),
     );
