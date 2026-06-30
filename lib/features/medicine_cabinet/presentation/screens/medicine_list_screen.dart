@@ -627,6 +627,57 @@ class _GroupTile extends ConsumerWidget {
       q == q.truncateToDouble() ? '×${q.toInt()}' : '×$q';
 }
 
+// ── Medicine chips with resolved names ───────────────────────────────────────
+
+class _MedChips extends ConsumerWidget {
+  final DoseGroup group;
+  final Color color;
+  const _MedChips({required this.group, required this.color});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final medsAsync = ref.watch(medicinesStreamProvider);
+    final medMap = medsAsync.maybeWhen(
+      data: (meds) => {for (final m in meds) m.id: m.brandName},
+      orElse: () => <String, String>{},
+    );
+
+    final items = group.items;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        for (final item in items.take(2))
+          Padding(
+            padding: const EdgeInsets.only(bottom: 3),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+              ),
+              child: Text(
+                '${medMap[item.medicineId] ?? '—'} ×${_qty(item.quantity)}',
+                style: theme.textTheme.labelSmall
+                    ?.copyWith(color: color, fontWeight: FontWeight.w600),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        if (items.length > 2)
+          Text('+${items.length - 2} more',
+              style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant)),
+      ],
+    );
+  }
+
+  static String _qty(double q) =>
+      q == q.truncateToDouble() ? q.toInt().toString() : q.toString();
+}
+
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
