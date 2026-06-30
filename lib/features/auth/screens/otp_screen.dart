@@ -131,6 +131,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                         border: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         enabledBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                        isDense: true,
                       ),
                       onChanged: (v) {
                         if (v.isNotEmpty && i < 5) {

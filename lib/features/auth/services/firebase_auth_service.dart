@@ -3,7 +3,12 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 class FirebaseAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  // serverClientId comes from the Web OAuth client in google-services.json
+  // (oauth_client entry with client_type: 3)
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId:
+        '798717939681-mij6dfmkkjqgtg1rj2ptb34khab5dfpd.apps.googleusercontent.com',
+  );
 
   User? get currentUser => _auth.currentUser;
 
@@ -62,6 +67,9 @@ class FirebaseAuthService {
     );
     await _auth.currentUser!.reauthenticateWithCredential(credential);
   }
+
+  Future<void> sendPasswordReset(String email) =>
+      _auth.sendPasswordResetEmail(email: email);
 
   Future<void> deleteAccount() async => _auth.currentUser!.delete();
 }

@@ -75,6 +75,18 @@ class FirebaseAuthNotifier extends StateNotifier<FirebaseAuthState> {
     }
   }
 
+  Future<bool> sendPasswordReset(String email) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _service.sendPasswordReset(email.trim());
+      state = state.copyWith(isLoading: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: _friendly(e));
+      return false;
+    }
+  }
+
   Future<void> signOut() async {
     await _service.signOut();
     state = const FirebaseAuthState();

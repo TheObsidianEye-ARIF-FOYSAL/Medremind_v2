@@ -174,6 +174,19 @@ class _LoginTabState extends ConsumerState<_LoginTab> {
     }
   }
 
+  void _showForgotPassword() {
+    final emailCtrl = TextEditingController(text: _emailCtrl.text.trim());
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _ForgotPasswordSheet(
+        emailCtrl: emailCtrl,
+        notifier: ref.read(firebaseAuthProvider.notifier),
+      ),
+    );
+  }
+
   Future<void> _googleSignIn() async {
     final ok = await ref.read(firebaseAuthProvider.notifier).signInWithGoogle();
     if (!mounted) return;
@@ -238,7 +251,25 @@ class _LoginTabState extends ConsumerState<_LoginTab> {
             },
           ),
 
-          const SizedBox(height: AppSizes.paddingXl),
+          const SizedBox(height: AppSizes.paddingSm),
+
+          // Forgot password
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: _showForgotPassword,
+              style: TextButton.styleFrom(
+                foregroundColor: widget.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text('Forgot Password?',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            ),
+          ),
+
+          const SizedBox(height: AppSizes.paddingMd),
 
           // Login button
           _PrimaryButton(
