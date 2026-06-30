@@ -259,25 +259,14 @@ class SettingsScreen extends ConsumerWidget {
                 icon: Icons.account_circle_rounded),
             const SizedBox(height: AppSizes.paddingMd),
 
-            if (authState.phone != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSizes.paddingMd),
-                child: Text(
-                  'Logged in as: ${authState.phone}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-
             SettingsCard(
               isDark: isDark,
               child: Column(children: [
-                // Logout
+                // ── Logout (Firebase only — keeps BdApps subscription)
                 _AccountTile(
                   icon: Icons.logout_rounded,
                   label: 'Logout',
-                  subtitle: 'Sign out and return to login',
+                  subtitle: 'Sign out — subscription stays active',
                   color: theme.colorScheme.primary,
                   isDark: isDark,
                   onTap: () async {
@@ -285,10 +274,10 @@ class SettingsScreen extends ConsumerWidget {
                       context,
                       title: 'Logout?',
                       message:
-                          'You will be signed out and redirected to the login screen.',
+                          'You will be signed out and redirected to the login screen. Your BdApps subscription remains active.',
                       confirmLabel: 'Logout',
                     );
-                    if (confirm == true) await authNotifier.logout();
+                    if (confirm == true) await fbNotifier.signOut();
                   },
                 ),
                 Divider(
@@ -296,36 +285,66 @@ class SettingsScreen extends ConsumerWidget {
                     color: isDark
                         ? DarkColors.outlineVariant
                         : LightColors.outlineVariant),
-                // Unsubscribe
+                // ── Unsubscribe (BdApps + Firebase signOut)
                 _AccountTile(
                   icon: Icons.unsubscribe_rounded,
                   label: 'Unsubscribe',
-                  subtitle: 'Cancel BdApps subscription and logout',
-                  color: TagColors.missed,
+                  subtitle: 'Cancel BdApps subscription and sign out',
+                  color: Colors.orange,
                   isDark: isDark,
                   onTap: () async {
                     final confirm = await _confirmDialog(
                       context,
                       title: 'Unsubscribe?',
                       message:
-                          'Your BdApps subscription will be cancelled. You will be logged out immediately.',
+                          'Your BdApps subscription will be cancelled. You will need to subscribe again to use the app.',
                       confirmLabel: 'Unsubscribe',
                       destructive: true,
                     );
                     if (confirm == true) {
                       final ok = await authNotifier.unsubscribe();
-                      if (!ok && context.mounted) {
+                      if (ok) {
+                        await fbNotifier.signOut();
+                      } else if (context.mounted) {
                         final err = ref.read(authProvider).error;
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text(err ?? 'Unsubscribe failed')),
+                          SnackBar(content: Text(err ?? 'Unsubscribe failed')),
                         );
                       }
                     }
                   },
                 ),
+                Divider(
+                    height: 1,
+                    color: isDark
+                        ? DarkColors.outlineVariant
+                        : LightColors.outlineVariant),
+                // ── Delete Account
+                _AccountTile(
+                  icon: Icons.delete_forever_rounded,
+                  label: 'Delete Account',
+                  subtitle: 'Permanently delete your account and all data',
+                  color: TagColors.missed,
+                  isDark: isDark,
+                  onTap: () async => _handleDeleteAccount(
+                      context, ref, authNotifier, fbNotifier,
+                      isGoogleUser: fbUser != null &&
+                          fbUser.providerData
+                              .any((p) => p.providerId == 'google.com')),
+                ),
               ]),
             ),
+
+            if (authState.phone != null)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSizes.paddingSm),
+                child: Text(
+                  'BdApps: ${authState.phone}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
 
             const SizedBox(height: AppSizes.paddingXl),
 
