@@ -1,35 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/models/dose_group.dart';
 import '../../../../core/models/dose_log.dart';
+import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../providers/history_provider.dart';
 
-class HistoryScreen extends ConsumerWidget {
+class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends ConsumerState<HistoryScreen> {
+  // null = show all days
+  int? _selectedDay;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
 
     final histState = ref.watch(historyProvider);
     final notifier = ref.read(historyProvider.notifier);
-    final logsAsync =
-        ref.watch(historyLogsProvider(histState.viewedMonth));
+    final logsAsync = ref.watch(historyLogsProvider(histState.viewedMonth));
+    final groupsAsync = ref.watch(doseGroupsStreamProvider);
+
+    // Build a map groupId → label from dose groups stream
+    final groupLabels = groupsAsync.when(
+      data: (groups) => {for (final g in groups) g.id: g.label},
+      loading: () => <String, String>{},
+      error: (_, __) => <String, String>{},
+    );
 
     return Scaffold(
       body: SafeArea(
         bottom: false,
         child: logsAsync.when(
-          loading: () =>
-              const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Error: $e')),
           data: (logs) {
-            final adherence =
-                ref.read(historyAdherenceProvider(logs));
+            final adherence = ref.read(historyAdherenceProvider(logs));
             final week = computeWeekSummary(logs);
+
+            // Filter by selected day if set
+            final displayedLogs = _selectedDay == null
+                ? logs
+                : logs.where((l) {
+                    final d = l.scheduledFor;
+                    return d.day == _selectedDay &&
+                        d.month == histState.viewedMonth.month &&
+                        d.year == histState.viewedMonth.year;
+                  }).toList();
 
             return CustomScrollView(
               slivers: [
@@ -65,31 +90,32 @@ class HistoryScreen extends ConsumerWidget {
                         AppSizes.paddingLg, AppSizes.paddingMd,
                         AppSizes.paddingLg, 0),
                     child: Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Adherence heatmap',
                             style: theme.textTheme.titleSmall),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                  Icons.chevron_left_rounded),
-                              onPressed: notifier.prevMonth,
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            Text(
-                              _monthLabel(histState.viewedMonth),
-                              style: theme.textTheme.labelLarge,
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                  Icons.chevron_right_rounded),
-                              onPressed: notifier.nextMonth,
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ],
-                        ),
+                        Row(children: [
+                          IconButton(
+                            icon: const Icon(Icons.chevron_left_rounded),
+                            onPressed: () {
+                              notifier.prevMonth();
+                              setState(() => _selectedDay = null);
+                            },
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          Text(
+                            _monthLabel(histState.viewedMonth),
+                            style: theme.textTheme.labelLarge,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.chevron_right_rounded),
+                            onPressed: () {
+                              notifier.nextMonth();
+                              setState(() => _selectedDay = null);
+                            },
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ]),
                       ],
                     ),
                   ),
@@ -106,6 +132,10 @@ class HistoryScreen extends ConsumerWidget {
                       adherence: adherence,
                       isDark: isDark,
                       primary: primary,
+                      selectedDay: _selectedDay,
+                      onDayTap: (day) => setState(() {
+                        _selectedDay = _selectedDay == day ? null : day;
+                      }),
                     ),
                   ),
                 ),
@@ -120,60 +150,82 @@ class HistoryScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // ── Recent logs list ────────────────────────────────
-                if (logs.isNotEmpty) ...[
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                          AppSizes.paddingLg, AppSizes.paddingLg,
-                          AppSizes.paddingLg, AppSizes.paddingSm),
-                      child: Text('Dose log',
-                          style: theme.textTheme.titleSmall),
+                // ── Dose log header ─────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSizes.paddingLg, AppSizes.paddingLg,
+                        AppSizes.paddingLg, AppSizes.paddingSm),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Dose log', style: theme.textTheme.titleSmall),
+                        if (_selectedDay != null)
+                          TextButton.icon(
+                            onPressed: () =>
+                                setState(() => _selectedDay = null),
+                            icon: const Icon(Icons.clear_rounded, size: 16),
+                            label: Text(
+                              'Day $_selectedDay only',
+                              style: theme.textTheme.labelSmall,
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: primary,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
+                ),
+
+                // ── Log entries ─────────────────────────────────────
+                if (displayedLogs.isNotEmpty)
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(
-                        AppSizes.paddingLg, 0,
-                        AppSizes.paddingLg, 110),
+                        AppSizes.paddingLg, 0, AppSizes.paddingLg, 110),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (ctx, i) {
-                          final log = logs.reversed.toList()[i];
+                          final log =
+                              displayedLogs.reversed.toList()[i];
                           return Padding(
                             padding: const EdgeInsets.only(
                                 bottom: AppSizes.paddingSm),
                             child: _LogEntry(
-                                log: log,
-                                isDark: isDark,
-                                primary: primary),
+                              log: log,
+                              isDark: isDark,
+                              primary: primary,
+                              groupLabels: groupLabels,
+                            ),
                           );
                         },
-                        childCount: logs.length,
+                        childCount: displayedLogs.length,
                       ),
                     ),
-                  ),
-                ] else
+                  )
+                else
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 40),
+                      padding: const EdgeInsets.only(top: 40, bottom: 110),
                       child: Center(
-                        child: Column(
-                          children: [
-                            Icon(Icons.history_rounded,
-                                size: 56,
-                                color:
-                                    primary.withValues(alpha: 0.3)),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No logs for this month',
-                              style: theme.textTheme.bodyMedium
-                                  ?.copyWith(
-                                color: theme.colorScheme
-                                    .onSurfaceVariant,
-                              ),
+                        child: Column(children: [
+                          Icon(Icons.history_rounded,
+                              size: 56,
+                              color: primary.withValues(alpha: 0.3)),
+                          const SizedBox(height: 12),
+                          Text(
+                            _selectedDay != null
+                                ? 'No logs for day $_selectedDay'
+                                : 'No logs for this month',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
-                          ],
-                        ),
+                          ),
+                        ]),
                       ),
                     ),
                   ),
@@ -202,9 +254,7 @@ class _WeekSummaryCard extends StatelessWidget {
   final Color primary;
 
   const _WeekSummaryCard(
-      {required this.summary,
-      required this.isDark,
-      required this.primary});
+      {required this.summary, required this.isDark, required this.primary});
 
   @override
   Widget build(BuildContext context) {
@@ -224,69 +274,52 @@ class _WeekSummaryCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(AppSizes.radiusCard),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('This week',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    )),
-                const SizedBox(height: 4),
-                Text(
-                  '$pct% adherence',
-                  style: theme.textTheme.headlineSmall
-                      ?.copyWith(color: primary),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    _Pill(
-                        label: '${summary.taken} Taken',
-                        color: TagColors.taken),
-                    _Pill(
-                        label: '${summary.missed} Missed',
-                        color: TagColors.missed),
-                    _Pill(
-                        label: '${summary.skipped} Skipped',
-                        color: TagColors.skipped),
-                  ],
-                ),
-              ],
-            ),
+      child: Row(children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('This week',
+                  style: theme.textTheme.labelMedium
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 4),
+              Text('$pct% adherence',
+                  style:
+                      theme.textTheme.headlineSmall?.copyWith(color: primary)),
+              const SizedBox(height: 8),
+              Wrap(spacing: 6, runSpacing: 4, children: [
+                _Pill(label: '${summary.taken} Taken', color: TagColors.taken),
+                _Pill(
+                    label: '${summary.missed} Missed', color: TagColors.missed),
+                _Pill(
+                    label: '${summary.skipped} Skipped',
+                    color: TagColors.skipped),
+              ]),
+            ],
           ),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 60,
-            height: 60,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                CircularProgressIndicator(
-                  value: summary.rate,
-                  strokeWidth: 6,
-                  backgroundColor: primary.withValues(alpha: 0.15),
-                  color: primary,
-                  strokeCap: StrokeCap.round,
-                ),
-                Center(
-                  child: Text(
-                    '$pct%',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
+        ),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 60,
+          height: 60,
+          child: Stack(fit: StackFit.expand, children: [
+            CircularProgressIndicator(
+              value: summary.rate,
+              strokeWidth: 6,
+              backgroundColor: primary.withValues(alpha: 0.15),
+              color: primary,
+              strokeCap: StrokeCap.round,
             ),
-          ),
-        ],
-      ),
+            Center(
+              child: Text('$pct%',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: primary,
+                    fontWeight: FontWeight.w700,
+                  )),
+            ),
+          ]),
+        ),
+      ]),
     );
   }
 }
@@ -303,13 +336,11 @@ class _Pill extends StatelessWidget {
           color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(AppSizes.radiusPill),
         ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
-        ),
+        child: Text(label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                )),
       );
 }
 
@@ -320,12 +351,16 @@ class _AdherenceHeatmap extends StatelessWidget {
   final List<DayAdherence> adherence;
   final bool isDark;
   final Color primary;
+  final int? selectedDay;
+  final ValueChanged<int> onDayTap;
 
   const _AdherenceHeatmap({
     required this.month,
     required this.adherence,
     required this.isDark,
     required this.primary,
+    required this.selectedDay,
+    required this.onDayTap,
   });
 
   @override
@@ -342,16 +377,14 @@ class _AdherenceHeatmap extends StatelessWidget {
       children: [
         Row(
           children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-              .map(
-                (d) => Expanded(
-                  child: Center(
-                    child: Text(d,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        )),
-                  ),
-                ),
-              )
+              .map((d) => Expanded(
+                    child: Center(
+                      child: Text(d,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          )),
+                    ),
+                  ))
               .toList(),
         ),
         const SizedBox(height: 6),
@@ -362,8 +395,7 @@ class _AdherenceHeatmap extends StatelessWidget {
           mainAxisSpacing: 4,
           crossAxisSpacing: 4,
           children: [
-            for (var i = 0; i < leadingBlanks; i++)
-              const SizedBox.shrink(),
+            for (var i = 0; i < leadingBlanks; i++) const SizedBox.shrink(),
             for (var d = 1; d <= daysInMonth; d++)
               _HeatCell(
                 day: d,
@@ -372,6 +404,8 @@ class _AdherenceHeatmap extends StatelessWidget {
                 primary: primary,
                 theme: theme,
                 month: month,
+                isSelected: selectedDay == d,
+                onTap: () => onDayTap(d),
               ),
           ],
         ),
@@ -387,6 +421,8 @@ class _HeatCell extends StatelessWidget {
   final Color primary;
   final ThemeData theme;
   final DateTime month;
+  final bool isSelected;
+  final VoidCallback onTap;
 
   const _HeatCell({
     required this.day,
@@ -395,18 +431,16 @@ class _HeatCell extends StatelessWidget {
     required this.primary,
     required this.theme,
     required this.month,
+    required this.isSelected,
+    required this.onTap,
   });
 
   Color _cellColor() {
     if (adhere == null) {
-      return isDark
-          ? DarkColors.surfaceVariant
-          : LightColors.surfaceVariant;
+      return isDark ? DarkColors.surfaceVariant : LightColors.surfaceVariant;
     }
     if (adhere!.rate >= 1.0) return TagColors.taken;
-    if (adhere!.rate > 0.5) {
-      return TagColors.taken.withValues(alpha: 0.5);
-    }
+    if (adhere!.rate > 0.5) return TagColors.taken.withValues(alpha: 0.5);
     if (adhere!.rate > 0) return TagColors.missed.withValues(alpha: 0.5);
     return TagColors.missed;
   }
@@ -418,22 +452,37 @@ class _HeatCell extends StatelessWidget {
         today.month == month.month &&
         today.year == month.year;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: _cellColor(),
-        borderRadius: BorderRadius.circular(6),
-        border: isToday
-            ? Border.all(color: primary, width: 1.5)
-            : null,
-      ),
-      child: Center(
-        child: Text(
-          day.toString(),
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: adhere != null
-                ? Colors.white
-                : theme.colorScheme.onSurfaceVariant,
-            fontSize: 10,
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        decoration: BoxDecoration(
+          color: _cellColor(),
+          borderRadius: BorderRadius.circular(6),
+          border: isSelected
+              ? Border.all(color: primary, width: 2.5)
+              : isToday
+                  ? Border.all(color: primary, width: 1.5)
+                  : null,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                      color: primary.withValues(alpha: 0.4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2))
+                ]
+              : null,
+        ),
+        child: Center(
+          child: Text(
+            day.toString(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: adhere != null
+                  ? Colors.white
+                  : theme.colorScheme.onSurfaceVariant,
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.normal,
+            ),
           ),
         ),
       ),
@@ -450,27 +499,19 @@ class _HeatmapLegend extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 6,
-      children: [
-        _LegendItem(
-          color: isDark
-              ? DarkColors.surfaceVariant
-              : LightColors.surfaceVariant,
-          label: 'No data',
-          theme: theme,
-        ),
-        _LegendItem(
-            color: TagColors.taken, label: 'All taken', theme: theme),
-        _LegendItem(
-            color: TagColors.taken.withValues(alpha: 0.5),
-            label: 'Partial',
-            theme: theme),
-        _LegendItem(
-            color: TagColors.missed, label: 'Missed', theme: theme),
-      ],
-    );
+    return Wrap(spacing: 12, runSpacing: 6, children: [
+      _LegendItem(
+        color: isDark ? DarkColors.surfaceVariant : LightColors.surfaceVariant,
+        label: 'No data',
+        theme: theme,
+      ),
+      _LegendItem(color: TagColors.taken, label: 'All taken', theme: theme),
+      _LegendItem(
+          color: TagColors.taken.withValues(alpha: 0.5),
+          label: 'Partial',
+          theme: theme),
+      _LegendItem(color: TagColors.missed, label: 'Missed', theme: theme),
+    ]);
   }
 }
 
@@ -505,11 +546,14 @@ class _LogEntry extends StatelessWidget {
   final DoseLog log;
   final bool isDark;
   final Color primary;
+  final Map<String, String> groupLabels;
 
-  const _LogEntry(
-      {required this.log,
-      required this.isDark,
-      required this.primary});
+  const _LogEntry({
+    required this.log,
+    required this.isDark,
+    required this.primary,
+    required this.groupLabels,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -528,6 +572,10 @@ class _LogEntry extends StatelessWidget {
         (TagColors.pending, Icons.radio_button_unchecked, 'Pending'),
     };
 
+    // Resolve group label — fall back to a shorter form of the ID
+    final groupLabel = groupLabels[log.doseGroupId] ??
+        _shortId(log.doseGroupId);
+
     return Container(
       padding: const EdgeInsets.symmetric(
           horizontal: AppSizes.paddingMd, vertical: 12),
@@ -535,46 +583,44 @@ class _LogEntry extends StatelessWidget {
         color: isDark ? DarkColors.surface : LightColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
       ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  log.doseGroupId,
-                  style: theme.textTheme.labelMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+      child: Row(children: [
+        Icon(icon, color: color, size: 22),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                groupLabel,
+                style: theme.textTheme.labelMedium,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                _fmt(log.scheduledFor),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-                Text(
-                  _fmt(log.scheduledFor),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius:
-                  BorderRadius.circular(AppSizes.radiusPill),
-            ),
-            child: Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(color: color),
-            ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusPill),
           ),
-        ],
-      ),
+          child: Text(label,
+              style: theme.textTheme.labelSmall?.copyWith(color: color)),
+        ),
+      ]),
     );
   }
+
+  // Show first 8 chars of the UID as fallback (deleted group)
+  static String _shortId(String id) =>
+      id.length > 8 ? '(deleted) ${id.substring(0, 8)}' : id;
 
   static String _fmt(DateTime d) {
     final h = d.hour;
