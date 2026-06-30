@@ -18,12 +18,15 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <!-- Battery optimization exemption (keeps alarms alive in background) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+    <!-- Foreground service required for alarm audio playback in background -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
 
     <application
         android:label="MedRemind"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="false">
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"
@@ -51,6 +54,24 @@
                 <action android:name="ALARM_TRIGGER"/>
             </intent-filter>
         </activity>
+
+        <!-- alarm package: full-screen activity shown even when screen is locked -->
+        <activity
+            android:name="com.gdelataillade.alarm.AlarmActivity"
+            android:exported="true"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:launchMode="singleInstance"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize"/>
+
+        <!-- alarm package: foreground service that plays the alarm audio -->
+        <service
+            android:name="com.gdelataillade.alarm.AlarmService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback"
+            android:stopWithTask="false"/>
 
         <!-- Boot-completed receiver: reschedules alarms after device reboot -->
         <receiver
