@@ -40,6 +40,11 @@ dependencies:
   # HTTP client (BdApps auth)
   http: ^1.2.2
 
+  # Firebase
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  google_sign_in: ^6.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
