@@ -406,8 +406,18 @@ class _AddDoseGroupScreenState extends ConsumerState<AddDoseGroupScreen> {
       ),
     );
     if (result != null && mounted) {
-      setState(() => _time = result);
+      setState(() {
+        _time = result;
+        _label = _labelFromHour(result.hour);
+      });
     }
+  }
+
+  static String _labelFromHour(int h) {
+    if (h >= 5 && h < 12) return 'Morning';
+    if (h >= 12 && h < 17) return 'Afternoon';
+    if (h >= 17 && h < 21) return 'Evening';
+    return 'Night';
   }
 
   Future<void> _pickMedicine() async {

@@ -4,8 +4,8 @@ import '../models/dose_group.dart';
 /// Wraps the `alarm` package with app-specific logic.
 /// All alarm IDs are derived from dose group + scheduled date to be stable.
 class AlarmServiceImpl {
-  // Uses the alarm package's bundled asset (no custom file required)
-  static const _defaultSoundPath = 'packages/alarm/assets/not_blank.mp3';
+  static const _defaultSoundPath =
+      'assets/audio/universfield-digital-alarm-clock-151920.mp3';
 
   Future<void> initialize() async {
     await Alarm.init();
