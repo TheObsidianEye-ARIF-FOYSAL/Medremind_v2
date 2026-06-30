@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/theme_constants.dart';
+import '../providers/calendar_provider.dart';
 
 // ── Calendar day cell ──────────────────────────────────────────────────────────
 
@@ -7,7 +9,7 @@ class CalendarDayCell extends StatelessWidget {
   final int day;
   final bool isToday;
   final bool isSelected;
-  final bool hasDoses;
+  final CalendarDayStatus status;
   final Color primary;
   final bool isDark;
   final VoidCallback onTap;
@@ -18,12 +20,25 @@ class CalendarDayCell extends StatelessWidget {
     required this.day,
     required this.isToday,
     required this.isSelected,
-    required this.hasDoses,
+    required this.status,
     required this.primary,
     required this.isDark,
     required this.onTap,
     required this.theme,
   });
+
+  Color get _dotColor {
+    if (isSelected) return Colors.white;
+    return switch (status) {
+      CalendarDayStatus.taken => TagColors.taken,
+      CalendarDayStatus.partial => TagColors.snoozed,
+      CalendarDayStatus.missed => TagColors.missed,
+      CalendarDayStatus.scheduled => primary.withValues(alpha: 0.6),
+      CalendarDayStatus.none => Colors.transparent,
+    };
+  }
+
+  bool get _hasDot => status != CalendarDayStatus.none;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +54,18 @@ class CalendarDayCell extends StatelessWidget {
             ? primary
             : theme.colorScheme.onSurface;
 
+    // Border for today (if not selected)
+    final Border? border = !isSelected && isToday
+        ? Border.all(color: primary, width: 1.5)
+        : (!isSelected && (status == CalendarDayStatus.taken ||
+                status == CalendarDayStatus.partial))
+            ? Border.all(
+                color: status == CalendarDayStatus.taken
+                    ? TagColors.taken.withValues(alpha: 0.35)
+                    : TagColors.snoozed.withValues(alpha: 0.35),
+                width: 1)
+            : null;
+
     return GestureDetector(
       onTap: onTap,
       child: Center(
@@ -52,14 +79,11 @@ class CalendarDayCell extends StatelessWidget {
               decoration: BoxDecoration(
                 color: bg,
                 shape: BoxShape.circle,
-                border: hasDoses && !isSelected && !isToday
-                    ? Border.all(
-                        color: primary.withValues(alpha: 0.5), width: 1.5)
-                    : null,
+                border: border,
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: primary.withValues(alpha: 0.35),
+                          color: primary.withValues(alpha: 0.4),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         )
@@ -71,23 +95,23 @@ class CalendarDayCell extends StatelessWidget {
                   day.toString(),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: textColor,
-                    fontWeight: isToday || isSelected || hasDoses
-                        ? FontWeight.w700
-                        : FontWeight.w400,
+                    fontWeight:
+                        isToday || isSelected || _hasDot
+                            ? FontWeight.w700
+                            : FontWeight.w400,
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 2),
+            // Dot indicator
             AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              width: 4,
-              height: 4,
+              width: status == CalendarDayStatus.partial ? 6 : 4,
+              height: status == CalendarDayStatus.partial ? 4 : 4,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: hasDoses
-                    ? (isSelected ? Colors.white : primary)
-                    : Colors.transparent,
+                color: _hasDot ? _dotColor : Colors.transparent,
               ),
             ),
           ],
@@ -102,7 +126,7 @@ class CalendarDayCell extends StatelessWidget {
 class CalendarMonthGrid extends StatelessWidget {
   final DateTime month;
   final DateTime selectedDate;
-  final Set<int> daysWithData;
+  final Map<int, CalendarDayStatus> dayStatuses;
   final bool isDark;
   final Color primary;
   final ValueChanged<DateTime> onDayTap;
@@ -111,7 +135,7 @@ class CalendarMonthGrid extends StatelessWidget {
     super.key,
     required this.month,
     required this.selectedDate,
-    required this.daysWithData,
+    required this.dayStatuses,
     required this.isDark,
     required this.primary,
     required this.onDayTap,
@@ -137,7 +161,7 @@ class CalendarMonthGrid extends StatelessWidget {
           isSelected: selectedDate.year == month.year &&
               selectedDate.month == month.month &&
               selectedDate.day == d,
-          hasDoses: daysWithData.contains(d),
+          status: dayStatuses[d] ?? CalendarDayStatus.none,
           primary: primary,
           isDark: isDark,
           onTap: () => onDayTap(DateTime(month.year, month.month, d)),
