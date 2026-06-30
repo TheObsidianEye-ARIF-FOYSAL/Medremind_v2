@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../../../core/providers/app_settings_provider.dart';
 import '../../../../core/providers/theme_provider.dart';
+import '../../../../core/services/app_settings_service.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/profile_card.dart';
@@ -17,6 +19,8 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(themeSettingsProvider);
     final notifier = ref.read(themeSettingsProvider.notifier);
+    final appSettings = ref.watch(appSettingsProvider);
+    final appSettingsNotifier = ref.read(appSettingsProvider.notifier);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -147,6 +151,99 @@ class SettingsScreen extends ConsumerWidget {
                     isDark: isDark,
                   ),
                 ],
+              ),
+            ),
+
+            const SizedBox(height: AppSizes.paddingXl),
+
+            // ── Reminder behaviour ──────────────────────────────────────────
+            SettingsSectionHeader('Reminder Behaviour',
+                icon: Icons.tune_rounded),
+            const SizedBox(height: AppSizes.paddingMd),
+
+            SettingsCard(
+              isDark: isDark,
+              child: Column(children: [
+                // Notification toggle
+                _ToggleTile(
+                  icon: Icons.notifications_active_rounded,
+                  label: 'Push Notifications',
+                  subtitle: 'Show a silent notification when it\'s dose time',
+                  value: appSettings.notificationEnabled,
+                  primaryColor: theme.colorScheme.primary,
+                  isDark: isDark,
+                  onChanged: appSettingsNotifier.setNotificationEnabled,
+                ),
+                Divider(
+                    height: 1,
+                    color: isDark
+                        ? DarkColors.outlineVariant
+                        : LightColors.outlineVariant),
+                // Alarm toggle
+                _ToggleTile(
+                  icon: Icons.alarm_rounded,
+                  label: 'Ringing Alarm',
+                  subtitle: 'Play alarm sound and show full-screen alert',
+                  value: appSettings.alarmEnabled,
+                  primaryColor: theme.colorScheme.primary,
+                  isDark: isDark,
+                  onChanged: appSettingsNotifier.setAlarmEnabled,
+                ),
+              ]),
+            ),
+
+            const SizedBox(height: AppSizes.paddingMd),
+
+            // Alarm sound picker
+            SettingsCard(
+              isDark: isDark,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSizes.paddingMd),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary
+                              .withValues(alpha: 0.12),
+                          borderRadius:
+                              BorderRadius.circular(AppSizes.radiusSm),
+                        ),
+                        child: Icon(Icons.music_note_rounded,
+                            size: 18,
+                            color: theme.colorScheme.primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Alarm Sound',
+                                  style: theme.textTheme.bodyMedium),
+                              Text(
+                                appSettings.alarmSoundLabel,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme
+                                        .colorScheme.onSurfaceVariant),
+                              ),
+                            ]),
+                      ),
+                    ]),
+                    const SizedBox(height: AppSizes.paddingMd),
+                    ...alarmSoundOptions.map((opt) => _SoundTile(
+                          option: opt,
+                          isSelected:
+                              appSettings.alarmSoundPath == opt.assetPath,
+                          primaryColor: theme.colorScheme.primary,
+                          isDark: isDark,
+                          onTap: () =>
+                              appSettingsNotifier.setAlarmSound(opt.assetPath),
+                        )),
+                  ],
+                ),
               ),
             ),
 
