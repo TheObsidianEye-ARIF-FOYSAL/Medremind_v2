@@ -28,8 +28,7 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   }
 
   Future<void> _loadSuggestions() async {
-    final groups =
-        await ref.read(genericGroupRepositoryProvider).searchByName('');
+    final groups = await ref.read(genericGroupRepositoryProvider).getAll();
     if (!mounted) return;
     final brands = <String>{};
     for (final g in groups) {
