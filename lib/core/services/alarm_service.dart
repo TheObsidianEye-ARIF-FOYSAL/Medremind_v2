@@ -36,7 +36,12 @@ class AlarmServiceImpl {
     await Alarm.init();
   }
 
-  /// Schedule a ringing alarm. Returns false if [scheduledAt] is in the past.
+  Future<bool> _alarmEnabled() async {
+    final p = await SharedPreferences.getInstance();
+    return p.getBool('alarm_enabled') ?? true;
+  }
+
+  /// Schedule a ringing alarm. Returns false if past or alarm mode disabled.
   Future<bool> scheduleAlarm({
     required int id,
     required DateTime scheduledAt,
@@ -45,6 +50,7 @@ class AlarmServiceImpl {
     String? groupId,
   }) async {
     if (scheduledAt.isBefore(DateTime.now())) return false;
+    if (!await _alarmEnabled()) return false;
 
     final sound = await _soundPath();
 

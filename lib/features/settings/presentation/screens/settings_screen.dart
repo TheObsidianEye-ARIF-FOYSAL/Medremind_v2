@@ -310,3 +310,127 @@ class SettingsScreen extends ConsumerWidget {
     };
   }
 }
+
+// ── Toggle tile ───────────────────────────────────────────────────────────────
+
+class _ToggleTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final bool value;
+  final Color primaryColor;
+  final bool isDark;
+  final ValueChanged<bool> onChanged;
+
+  const _ToggleTile({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    required this.primaryColor,
+    required this.isDark,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.paddingMd, vertical: 10),
+      child: Row(children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: (value ? primaryColor : theme.colorScheme.onSurfaceVariant)
+                .withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+          ),
+          child: Icon(icon,
+              size: 18,
+              color: value
+                  ? primaryColor
+                  : theme.colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(label, style: theme.textTheme.bodyMedium),
+            Text(subtitle,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          ]),
+        ),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeColor: primaryColor,
+        ),
+      ]),
+    );
+  }
+}
+
+// ── Sound tile ────────────────────────────────────────────────────────────────
+
+class _SoundTile extends StatelessWidget {
+  final AlarmSoundOption option;
+  final bool isSelected;
+  final Color primaryColor;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _SoundTile({
+    required this.option,
+    required this.isSelected,
+    required this.primaryColor,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        child: Row(children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected
+                    ? primaryColor
+                    : theme.colorScheme.outlineVariant,
+                width: isSelected ? 6 : 2,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Icon(Icons.music_note_rounded,
+              size: 16,
+              color: isSelected
+                  ? primaryColor
+                  : theme.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              option.label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: isSelected ? primaryColor : null,
+                fontWeight:
+                    isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
