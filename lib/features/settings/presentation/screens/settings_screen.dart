@@ -6,6 +6,8 @@ import '../../../../core/providers/app_settings_provider.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/services/app_settings_service.dart';
 import '../../../../core/theme/theme_constants.dart';
+import '../../../auth/providers/auth_provider.dart';
+import '../providers/settings_provider.dart';
 import '../widgets/profile_card.dart';
 import '../widgets/settings_tiles.dart';
 
@@ -20,6 +22,8 @@ class SettingsScreen extends ConsumerWidget {
     final notifier = ref.read(themeSettingsProvider.notifier);
     final appSettings = ref.watch(appSettingsProvider);
     final appSettingsNotifier = ref.read(appSettingsProvider.notifier);
+    final authNotifier = ref.read(authProvider.notifier);
+    final authState = ref.watch(authProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
