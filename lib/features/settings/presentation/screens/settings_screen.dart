@@ -469,7 +469,7 @@ class _ToggleTile extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: primaryColor,
+          activeTrackColor: primaryColor,
         ),
       ]),
     );

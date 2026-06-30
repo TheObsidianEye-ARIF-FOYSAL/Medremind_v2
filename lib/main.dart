@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/database/database_service.dart';
 import 'core/navigation/app_router.dart';
-import 'core/providers/app_settings_provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/repositories/dose_group_repository.dart';
 import 'core/services/alarm_service.dart';
