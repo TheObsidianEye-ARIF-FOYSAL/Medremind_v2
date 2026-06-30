@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "798717939681",
+    "project_id": "medremind-373b6",
+    "storage_bucket": "medremind-373b6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:798717939681:android:c71df09a8df3398b6e4ca0",
+        "android_client_info": {
+          "package_name": "com.example.med_remind_v1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "798717939681-mij6dfmkkjqgtg1rj2ptb34khab5dfpd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwroqsLpeZcj7Kt5sL-0zCYEyN-hAQ8fA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "798717939681-mij6dfmkkjqgtg1rj2ptb34khab5dfpd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "798717939681-77040fsataah4defjp65nec6tkgshbv4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.medRemindV1"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:798717939681:android:f75d541eaf11e8096e4ca0",
+        "android_client_info": {
+          "package_name": "com.example.med_remind_v2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "798717939681-mij6dfmkkjqgtg1rj2ptb34khab5dfpd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwroqsLpeZcj7Kt5sL-0zCYEyN-hAQ8fA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "798717939681-mij6dfmkkjqgtg1rj2ptb34khab5dfpd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "798717939681-77040fsataah4defjp65nec6tkgshbv4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.medRemindV1"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
