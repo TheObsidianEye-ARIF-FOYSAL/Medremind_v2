@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// ignore: depend_on_referenced_packages
 
 import '../services/firebase_auth_service.dart';
 
@@ -116,20 +115,49 @@ class FirebaseAuthNotifier extends StateNotifier<FirebaseAuthState> {
     }
   }
 
+  Future<bool> changePassword(
+      String currentPassword, String newPassword) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _service.reauthenticateWithPassword(currentPassword);
+      await _service.updatePassword(newPassword);
+      state = state.copyWith(isLoading: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: _friendly(e));
+      return false;
+    }
+  }
+
   String _friendly(Object e) {
+    if (e is FirebaseAuthException) {
+      return switch (e.code) {
+        'wrong-password' ||
+        'invalid-credential' =>
+          'Incorrect email or password. Please try again.',
+        'user-not-found' => 'No account found with this email.',
+        'email-already-in-use' =>
+          'This email is already registered. Please log in instead.',
+        'weak-password' => 'Password must be at least 6 characters.',
+        'invalid-email' => 'Invalid email address.',
+        'operation-not-allowed' =>
+          'Email/password sign-in is not enabled. Please enable it in Firebase Console → Authentication → Sign-in methods.',
+        'network-request-failed' =>
+          'Network error. Please check your connection.',
+        'too-many-requests' =>
+          'Too many attempts. Please wait a moment and try again.',
+        'user-disabled' => 'This account has been disabled.',
+        'requires-recent-login' =>
+          'Please log out and log in again before making this change.',
+        _ => e.message ?? e.code,
+      };
+    }
     final msg = e.toString();
-    if (msg.contains('wrong-password') || msg.contains('invalid-credential')) {
-      return 'Incorrect password. Please try again.';
-    }
-    if (msg.contains('user-not-found')) return 'No account found with this email.';
-    if (msg.contains('email-already-in-use')) {
-      return 'Email already registered. Please login instead.';
-    }
-    if (msg.contains('weak-password')) return 'Password must be at least 6 characters.';
-    if (msg.contains('invalid-email')) return 'Invalid email address.';
-    if (msg.contains('network-request-failed')) return 'Network error. Check your connection.';
     if (msg.contains('cancelled')) return 'Sign-in cancelled.';
-    return msg.replaceFirst('Exception: ', '').replaceFirst('[firebase_auth]', '').trim();
+    return msg
+        .replaceFirst('Exception: ', '')
+        .replaceAll(RegExp(r'\[firebase_auth[^\]]*\]'), '')
+        .trim();
   }
 }
 
