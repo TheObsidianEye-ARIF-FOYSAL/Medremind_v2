@@ -4,6 +4,7 @@ import '../../../../core/models/dose_group.dart';
 import '../../../../core/models/dose_log.dart';
 import '../../../../core/models/medicine.dart';
 import '../../../../core/theme/theme_constants.dart';
+import '../providers/today_pills_provider.dart';
 
 // ── Dose status icon ───────────────────────────────────────────────────────────
 

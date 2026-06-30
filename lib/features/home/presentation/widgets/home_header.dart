@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
+import '../providers/today_pills_provider.dart';
 
 // ── Header chip ────────────────────────────────────────────────────────────────
 
