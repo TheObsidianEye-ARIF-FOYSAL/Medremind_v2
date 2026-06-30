@@ -36,7 +36,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         content: Text(error ?? 'Invalid OTP'),
         backgroundColor: const Color(0xFFE05C5C),
       ));
-      for (final c in _ctrls) c.clear();
+      for (final c in _ctrls) { c.clear(); }
       _nodes[0].requestFocus();
     }
     // If ok=true, MedRemindApp rebuilds automatically because authProvider changed
