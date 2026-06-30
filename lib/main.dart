@@ -6,11 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/database/database_service.dart';
 import 'core/navigation/app_router.dart';
-
+import 'core/providers/app_settings_provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/repositories/dose_group_repository.dart';
 import 'core/services/alarm_service.dart';
 import 'core/services/notification_service.dart';
+import 'features/auth/providers/auth_provider.dart';
+import 'features/auth/screens/phone_screen.dart';
+import 'features/auth/screens/subscription_screen.dart';
 import 'features/onboarding/onboarding_intro_screen.dart';
 import 'features/onboarding/permission_onboarding_screen.dart';
 
@@ -68,34 +71,45 @@ class MedRemindApp extends ConsumerStatefulWidget {
 }
 
 class _MedRemindAppState extends ConsumerState<MedRemindApp> {
-  // null = loading, false = show intro, 'perm' = show permissions, true = done
+  // null='loading', 'sub'=login, 'intro'=onboarding, 'perm'=perms, true=app
   Object? _flow;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final prefs = ref.read(sharedPrefsProvider);
-      final introDone = await _isIntroDone(prefs);
-      final permsDone = await isOnboardingDone();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _resolveFlow());
+  }
 
-      if (!mounted) return;
-      if (!introDone) {
-        setState(() => _flow = false); // show intro
-      } else if (!permsDone) {
-        setState(() => _flow = 'perm'); // show permissions
-      } else {
-        setState(() => _flow = true); // main app
-        _handlePendingAlarm();
-      }
-    });
+  Future<void> _resolveFlow() async {
+    // Allow AuthNotifier._loadSession() micro-task to complete first
+    await Future.microtask(() {});
+    if (!mounted) return;
+
+    final auth = ref.read(authProvider);
+    if (!auth.isAuthenticated) {
+      setState(() => _flow = 'sub');
+      return;
+    }
+
+    final prefs = ref.read(sharedPrefsProvider);
+    final introDone = await _isIntroDone(prefs);
+    final permsDone = await isOnboardingDone();
+
+    if (!mounted) return;
+    if (!introDone) {
+      setState(() => _flow = 'intro');
+    } else if (!permsDone) {
+      setState(() => _flow = 'perm');
+    } else {
+      setState(() => _flow = true);
+      _handlePendingAlarm();
+    }
   }
 
   void _handlePendingAlarm() {
     if (_pendingAlarmId != null) {
       final id = _pendingAlarmId!;
       _pendingAlarmId = null;
-      // Resolve group ID from alarm mapping, then navigate
       alarmService.getGroupIdForAlarm(id).then((groupId) {
         if (mounted) {
           appRouter.go(AppRoutes.activeAlarm, extra: {
@@ -114,13 +128,29 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
     final darkTheme = ref.watch(darkThemeProvider);
     final themeMode = ref.watch(themeModeProvider);
 
+    // Redirect to login whenever auth state is lost (logout / unsubscribe)
+    final auth = ref.watch(authProvider);
+    if (_flow == true && !auth.isAuthenticated) {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => setState(() => _flow = 'sub'));
+    }
+    // After login completes while on subscription screen → advance flow
+    if (_flow == 'sub' && auth.isAuthenticated) {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _resolveFlow());
+    }
+
     Widget home;
 
     if (_flow == null) {
-      // Loading splash
       home = const Scaffold(body: Center(child: CircularProgressIndicator()));
-    } else if (_flow == false) {
-      // Show intro onboarding
+    } else if (_flow == 'sub') {
+      home = SubscriptionScreen(
+        onSubscribe: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const PhoneScreen()),
+        ),
+      );
+    } else if (_flow == 'intro') {
       home = OnboardingIntroScreen(
         onDone: () async {
           final prefs = ref.read(sharedPrefsProvider);
@@ -129,7 +159,6 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
         },
       );
     } else if (_flow == 'perm') {
-      // Show permission onboarding
       home = PermissionOnboardingScreen(
         onComplete: () => setState(() {
           _flow = true;
@@ -137,7 +166,6 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
         }),
       );
     } else {
-      // Main app (router handles navigation)
       return MaterialApp.router(
         title: 'MedRemind',
         debugShowCheckedModeBanner: false,
