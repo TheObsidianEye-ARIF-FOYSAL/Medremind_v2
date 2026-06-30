@@ -436,14 +436,6 @@ class _Header extends ConsumerWidget {
     return 'Stay on track for better health.';
   }
 
-  static String _emoji() {
-    final h = DateTime.now().hour;
-    if (h < 6) return '🌙';
-    if (h < 12) return '🌅';
-    if (h < 17) return '☀️';
-    return '🌆';
-  }
-
   static String _greet() {
     final h = DateTime.now().hour;
     if (h < 12) return 'Good morning';
@@ -863,8 +855,8 @@ class _DoseCard extends StatelessWidget {
   }
 
   static String _meal(MealRelation r) => switch (r) {
-        MealRelation.beforeMeal => '🍽 Before meal',
-        MealRelation.afterMeal => '🍽 After meal',
+        MealRelation.beforeMeal => 'Before meal',
+        MealRelation.afterMeal => 'After meal',
         _ => '',
       };
 
@@ -962,7 +954,7 @@ class _Empty extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              isFiltered ? 'No ${filter.label} doses' : 'All clear! 🎉',
+              isFiltered ? 'No ${filter.label} doses' : 'All clear!',
               style: theme.textTheme.titleSmall
                   ?.copyWith(fontWeight: FontWeight.w700),
             ),
