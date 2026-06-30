@@ -81,6 +81,66 @@ void main() async {
 
 int? _pendingAlarmId;
 
+// ── Alarm action helpers ──────────────────────────────────────────────────────
+
+/// Called from the foreground notification callback (main isolate).
+Future<void> _applyAlarmAction(
+    String actionId, int alarmId, String groupId) async {
+  await alarmService.cancelAlarm(alarmId);
+  await notificationService.cancelAlarmActions(alarmId);
+
+  final db = AppDatabase.instance;
+  final logRepo = DoseLogRepository(db);
+
+  if (actionId == 'alarm_taken') {
+    await _upsertLog(logRepo, groupId, DoseStatus.taken);
+  } else if (actionId == 'alarm_snooze') {
+    // Snooze: re-ring in 5 min (no dose log update).
+    final snoozeAt = DateTime.now().add(const Duration(minutes: 5));
+    await alarmService.scheduleAlarm(
+      id: alarmId + 800000,
+      scheduledAt: snoozeAt,
+      title: 'Medicine — Snoozed reminder',
+      body: 'Time to take your medicine',
+      groupId: groupId,
+    );
+  }
+}
+
+/// Creates or updates today's dose log for [groupId] with [status].
+Future<void> _upsertLog(
+    DoseLogRepository logRepo, String groupId, DoseStatus status) async {
+  if (groupId.isEmpty) return;
+  final today = DateTime.now();
+  final logs = await logRepo.getForDate(today);
+  DoseLog? log;
+  try {
+    log = logs.firstWhere((l) => l.doseGroupId == groupId);
+  } catch (_) {}
+
+  if (log == null) {
+    log = await logRepo.createPending(
+      doseGroupId: groupId,
+      scheduledFor: DateTime(today.year, today.month, today.day, today.hour),
+    );
+  }
+  await logRepo.updateStatus(log.id, status, actedAt: DateTime.now());
+}
+
+/// Processes any alarm action stored by the background notification isolate.
+Future<void> _consumePendingAlarmAction(SharedPreferences prefs) async {
+  final raw = prefs.getString('pending_alarm_action');
+  if (raw == null) return;
+  await prefs.remove('pending_alarm_action');
+
+  final parts = raw.split('|');
+  if (parts.length < 3) return;
+  final actionId = parts[0];
+  final alarmId = int.tryParse(parts[1]) ?? 0;
+  final groupId = parts[2];
+  await _applyAlarmAction(actionId, alarmId, groupId);
+}
+
 // ── App root ──────────────────────────────────────────────────────────────────
 
 class MedRemindApp extends ConsumerStatefulWidget {
@@ -142,7 +202,6 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
           appRouter.go(AppRoutes.activeAlarm, extra: {
             'alarmId': id,
             'doseGroupId': groupId ?? '',
-            'logId': null,
           });
         }
       });

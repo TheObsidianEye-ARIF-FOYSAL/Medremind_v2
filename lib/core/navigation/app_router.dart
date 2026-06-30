@@ -102,7 +102,6 @@ final appRouter = GoRouter(
           child: ActiveAlarmScreen(
             alarmId: extra['alarmId'] as int,
             doseGroupId: extra['doseGroupId'] as String,
-            logId: extra['logId'] as String?,
           ),
         );
       },
