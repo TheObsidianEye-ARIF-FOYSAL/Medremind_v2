@@ -19,6 +19,24 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   final _brandCtrl = TextEditingController();
   final _strengthCtrl = TextEditingController();
   String? _genericHint;
+  List<String> _suggestions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSuggestions();
+  }
+
+  Future<void> _loadSuggestions() async {
+    final groups =
+        await ref.read(genericGroupRepositoryProvider).searchByName('');
+    if (!mounted) return;
+    final brands = <String>{};
+    for (final g in groups) {
+      brands.addAll(g.brands);
+    }
+    setState(() => _suggestions = brands.toList()..sort());
+  }
 
   @override
   void dispose() {
