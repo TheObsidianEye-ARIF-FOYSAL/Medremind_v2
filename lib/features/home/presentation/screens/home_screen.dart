@@ -349,6 +349,7 @@ class _Header extends ConsumerWidget {
                         ),
                       ),
                     ]),
+
                     const SizedBox(height: 4),
                     Text(
                       userName.isNotEmpty ? userName : "Today's Pills",
