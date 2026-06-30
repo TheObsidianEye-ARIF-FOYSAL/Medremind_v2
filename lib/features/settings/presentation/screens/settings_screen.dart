@@ -387,6 +387,33 @@ class SettingsScreen extends ConsumerWidget {
       ThemeMode.dark => 'Always use dark theme',
     };
   }
+
+  Future<bool?> _confirmDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+    required String confirmLabel,
+    bool destructive = false,
+  }) =>
+      showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: TextButton.styleFrom(
+                foregroundColor: destructive ? TagColors.missed : null,
+              ),
+              child: Text(confirmLabel),
+            ),
+          ],
+        ),
+      );
 }
 
 // ── Toggle tile ───────────────────────────────────────────────────────────────
