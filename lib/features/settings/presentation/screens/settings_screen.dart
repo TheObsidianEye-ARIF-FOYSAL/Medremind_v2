@@ -24,6 +24,8 @@ class SettingsScreen extends ConsumerWidget {
     final appSettingsNotifier = ref.read(appSettingsProvider.notifier);
     final authNotifier = ref.read(authProvider.notifier);
     final authState = ref.watch(authProvider);
+    final fbNotifier = ref.read(firebaseAuthProvider.notifier);
+    final fbUser = ref.watch(firebaseAuthProvider).user;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
