@@ -40,6 +40,9 @@ dependencies:
   # HTTP client (BdApps auth)
   http: ^1.2.2
 
+  # Keep screen on during alarm
+  wakelock_plus: ^1.1.4
+
   # Firebase
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1

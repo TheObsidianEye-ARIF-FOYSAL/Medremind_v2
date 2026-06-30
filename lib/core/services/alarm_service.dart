@@ -62,6 +62,7 @@ class AlarmServiceImpl {
       vibrate: true,
       fadeDuration: 3.0,
       warningNotificationOnKill: true,
+      androidFullScreenIntent: true,
       notificationSettings: NotificationSettings(
         title: title,
         body: body,

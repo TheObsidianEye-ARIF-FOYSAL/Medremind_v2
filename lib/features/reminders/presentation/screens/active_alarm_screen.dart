@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../../core/models/dose_group.dart';
 import '../../../../core/models/dose_log.dart';
@@ -62,6 +63,9 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
     _pulseAnim = Tween<double>(begin: 0.92, end: 1.08)
         .animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
+    // Keep screen on for the entire duration of this screen
+    WakelockPlus.enable();
+
     _loadGroup();
 
     // Auto-stop alarm audio after 60 s
@@ -75,6 +79,7 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
   void dispose() {
     _pulseCtrl.dispose();
     _stopTimer?.cancel();
+    WakelockPlus.disable();
     super.dispose();
   }
 

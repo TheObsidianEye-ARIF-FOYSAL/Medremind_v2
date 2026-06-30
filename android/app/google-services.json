@@ -50,6 +50,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "798717939681-rvl23q0f219hbf5cj8g4lplsqlb38e03.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.med_remind_v2",
+            "certificate_hash": "7ee83f7ea50d958f4e028549a55c04380bb4193f"
+          }
+        },
+        {
           "client_id": "798717939681-mij6dfmkkjqgtg1rj2ptb34khab5dfpd.apps.googleusercontent.com",
           "client_type": 3
         }
