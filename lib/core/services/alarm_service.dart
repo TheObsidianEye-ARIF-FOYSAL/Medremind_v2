@@ -1,31 +1,57 @@
 import 'package:alarm/alarm.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/dose_group.dart';
+import 'app_settings_service.dart';
 
 /// Wraps the `alarm` package with app-specific logic.
-/// All alarm IDs are derived from dose group + scheduled date to be stable.
 class AlarmServiceImpl {
-  static const _defaultSoundPath =
-      'assets/audio/universfield-digital-alarm-clock-151920.mp3';
+  // ── Alarm ID → DoseGroup ID mapping ──────────────────────────────────────
+
+  Future<void> _saveGroupMapping(int alarmId, String groupId) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setString('alarm_group_$alarmId', groupId);
+  }
+
+  Future<String?> getGroupIdForAlarm(int alarmId) async {
+    final p = await SharedPreferences.getInstance();
+    return p.getString('alarm_group_$alarmId');
+  }
+
+  Future<void> _clearGroupMapping(int alarmId) async {
+    final p = await SharedPreferences.getInstance();
+    await p.remove('alarm_group_$alarmId');
+  }
+
+  // ── Sound from user settings ──────────────────────────────────────────────
+
+  Future<String> _soundPath() async {
+    final p = await SharedPreferences.getInstance();
+    return p.getString('alarm_sound_path') ?? AppSettings.defaultSoundPath;
+  }
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   Future<void> initialize() async {
     await Alarm.init();
   }
 
-  /// Schedule a ringing alarm for [scheduledAt].
-  /// [id] must be unique per alarm; [groupId] is for logging.
-  Future<void> scheduleAlarm({
+  /// Schedule a ringing alarm. Returns false if [scheduledAt] is in the past.
+  Future<bool> scheduleAlarm({
     required int id,
     required DateTime scheduledAt,
     required String title,
     required String body,
+    String? groupId,
   }) async {
-    // Don't schedule alarms in the past.
-    if (scheduledAt.isBefore(DateTime.now())) return;
+    if (scheduledAt.isBefore(DateTime.now())) return false;
+
+    final sound = await _soundPath();
 
     final settings = AlarmSettings(
       id: id,
       dateTime: scheduledAt,
-      assetAudioPath: _defaultSoundPath,
+      assetAudioPath: sound,
       loopAudio: true,
       vibrate: true,
       fadeDuration: 3.0,
@@ -38,23 +64,31 @@ class AlarmServiceImpl {
       ),
     );
     await Alarm.set(alarmSettings: settings);
+
+    if (groupId != null) {
+      await _saveGroupMapping(id, groupId);
+    }
+    return true;
   }
 
   Future<void> cancelAlarm(int id) async {
     await Alarm.stop(id);
+    await _clearGroupMapping(id);
   }
 
   Future<void> cancelAll() async {
     final alarms = await Alarm.getAlarms();
-    for (final alarm in alarms) {
-      await Alarm.stop(alarm.id);
+    for (final a in alarms) {
+      await Alarm.stop(a.id);
+      await _clearGroupMapping(a.id);
     }
   }
 
   Future<List<AlarmSettings>> getActive() => Alarm.getAlarms();
 
-  /// Convenience: schedule the next occurrence of a dose group alarm.
-  /// Called when a group is created/updated, and on app startup.
+  // ── Dose group helpers ────────────────────────────────────────────────────
+
+  /// Schedule the next occurrence of a dose group alarm.
   Future<void> scheduleForGroup(DoseGroup group) async {
     if (!group.isActive) return;
     final parts = group.timeOfDay.split(':');
@@ -62,17 +96,17 @@ class AlarmServiceImpl {
     final m = int.parse(parts[1]);
     final now = DateTime.now();
     var scheduled = DateTime(now.year, now.month, now.day, h, m);
-    // If the time already passed today, schedule for tomorrow
     if (scheduled.isBefore(now.add(const Duration(seconds: 30)))) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
     await scheduleAlarm(
       id: alarmId(group.id, scheduled),
       scheduledAt: scheduled,
-      title: '${group.label} — Time to take your medicine',
+      title: '${group.label} — Time for your medicine',
       body: group.items.length == 1
           ? 'Take your medicine now'
           : 'Take ${group.items.length} medicines now',
+      groupId: group.id,
     );
   }
 
@@ -82,6 +116,31 @@ class AlarmServiceImpl {
       await scheduleForGroup(g);
     }
   }
+
+  /// Schedule a re-ring alarm [delay] after now if no user action is taken.
+  /// Returns the alarm ID of the re-ring alarm, or null if not scheduled.
+  Future<int?> scheduleReRing({
+    required int originalId,
+    required String groupId,
+    required String title,
+    required String body,
+    Duration delay = const Duration(minutes: 3),
+  }) async {
+    final reRingAt = DateTime.now().add(delay);
+    final id = originalId + 900000; // offset to avoid collision
+    await scheduleAlarm(
+      id: id,
+      scheduledAt: reRingAt,
+      title: title,
+      body: body,
+      groupId: groupId,
+    );
+    return id;
+  }
+
+  /// Cancel the re-ring alarm for [originalId].
+  Future<void> cancelReRing(int originalId) =>
+      cancelAlarm(originalId + 900000);
 
   /// Derive a stable integer ID from a dose group id string + date.
   static int alarmId(String doseGroupId, DateTime date) {
