@@ -11,7 +11,6 @@ import 'core/repositories/dose_group_repository.dart';
 import 'core/services/alarm_service.dart';
 import 'core/services/notification_service.dart';
 import 'features/auth/providers/auth_provider.dart';
-import 'features/auth/screens/phone_screen.dart';
 import 'features/auth/screens/subscription_screen.dart';
 import 'features/onboarding/onboarding_intro_screen.dart';
 import 'features/onboarding/permission_onboarding_screen.dart';
@@ -144,11 +143,7 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
     if (_flow == null) {
       home = const Scaffold(body: Center(child: CircularProgressIndicator()));
     } else if (_flow == 'sub') {
-      home = SubscriptionScreen(
-        onSubscribe: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const PhoneScreen()),
-        ),
-      );
+      home = const SubscriptionScreen();
     } else if (_flow == 'intro') {
       home = OnboardingIntroScreen(
         onDone: () async {

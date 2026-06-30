@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'phone_screen.dart';
+
 // ── Subscription / landing screen ─────────────────────────────────────────────
 // Design matches bdapps login guidelines:
 //   - App name, pricing (2.78/5.56 BDT + VAT+SC+SD), feature list
@@ -7,9 +9,7 @@ import 'package:flutter/material.dart';
 //   - "Subscribe with Mobile" → phone entry → OTP
 
 class SubscriptionScreen extends StatelessWidget {
-  final VoidCallback onSubscribe;
-
-  const SubscriptionScreen({super.key, required this.onSubscribe});
+  const SubscriptionScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +138,10 @@ class SubscriptionScreen extends StatelessWidget {
                       ],
                     ),
                     child: ElevatedButton.icon(
-                      onPressed: onSubscribe,
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => const PhoneScreen()),
+                      ),
                       icon: const Icon(Icons.smartphone_rounded,
                           color: Colors.white),
                       label: const Text(
