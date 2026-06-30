@@ -2,33 +2,37 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../../core/models/dose_group.dart';
 import '../../../../core/models/dose_log.dart';
+import '../../../../core/navigation/app_router.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/services/alarm_service.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/theme_constants.dart';
+
+const _maxSnoozes = 5;
+const _ringDuration = Duration(minutes: 1);
+const _snoozeDuration = Duration(minutes: 5);
 
 /// Full-screen alarm screen shown when a dose alarm fires.
 ///
 /// Behaviour:
-///   • Alarm rings for 60 s, then audio stops.
-///   • If the user takes no action after the ring stops, a re-ring fires
-///     2 minutes later (total 3 min from original ring).
-///   • Dismiss (swipe-up or button) → marks dose as TAKEN.
-///   • Snooze → stops alarm, re-rings in 5 minutes.
-///   • Skip → marks dose as SKIPPED.
+///   • Alarm rings for 60 s; if no action → auto-snooze 5 min.
+///   • After [_maxSnoozes] auto-snoozes → auto-skip (no more re-rings).
+///   • "Dismiss — Taken" button (or swipe-up) → marks dose as TAKEN.
+///   • "Snooze 5 min" button → stops alarm, re-rings in 5 min.
+///   • "Skip" button → marks dose as SKIPPED, no re-ring.
 class ActiveAlarmScreen extends ConsumerStatefulWidget {
   final int alarmId;
   final String doseGroupId;
-  final String? logId;
 
   const ActiveAlarmScreen({
     super.key,
     required this.alarmId,
     required this.doseGroupId,
-    this.logId,
   });
 
   @override
@@ -42,15 +46,19 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
 
-  // Timers for auto-stop and re-ring
   Timer? _stopTimer;
-  int? _reRingId;
   bool _ringing = true;
   bool _acted = false;
 
   // Swipe drag state
   double _dragOffset = 0;
   static const _swipeThreshold = 80.0;
+
+  // Snooze counter SharedPrefs key scoped to group + today's date.
+  String get _snoozeKey {
+    final now = DateTime.now();
+    return 'snooze_count_${widget.doseGroupId}_${now.year}${now.month}${now.day}';
+  }
 
   @override
   void initState() {
@@ -63,16 +71,12 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
     _pulseAnim = Tween<double>(begin: 0.92, end: 1.08)
         .animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
-    // Keep screen on for the entire duration of this screen
     WakelockPlus.enable();
 
     _loadGroup();
 
-    // Auto-stop alarm audio after 60 s
-    _stopTimer = Timer(const Duration(minutes: 1), _onAutoStop);
-
-    // Schedule re-ring 3 min from now (1 min ring + 2 min wait) if no action
-    _scheduleReRing();
+    // Stop alarm audio after 60 s; then auto-snooze or auto-skip.
+    _stopTimer = Timer(_ringDuration, _onAutoStop);
   }
 
   @override
@@ -80,10 +84,16 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
     _pulseCtrl.dispose();
     _stopTimer?.cancel();
     WakelockPlus.disable();
+    // If the screen is being destroyed without the user taking action,
+    // stop the alarm so it doesn't ring in the background forever.
+    if (!_acted) {
+      alarmService.cancelAlarm(widget.alarmId);
+      notificationService.cancelAlarmActions(widget.alarmId);
+    }
     super.dispose();
   }
 
-  // ── Data loading ─────────────────────────────────────────────────────────
+  // ── Data ──────────────────────────────────────────────────────────────────
 
   Future<void> _loadGroup() async {
     final groupRepo = ref.read(doseGroupRepositoryProvider);
@@ -101,23 +111,78 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
     });
   }
 
-  // ── Alarm timing ──────────────────────────────────────────────────────────
+  // ── Log helpers ───────────────────────────────────────────────────────────
 
-  Future<void> _scheduleReRing() async {
+  /// Finds or creates today's log for this dose group, then updates its status.
+  Future<void> _updateLog(DoseStatus status) async {
     if (widget.doseGroupId.isEmpty) return;
-    _reRingId = await alarmService.scheduleReRing(
-      originalId: widget.alarmId,
-      groupId: widget.doseGroupId,
-      title: '${_group?.label ?? 'Medicine'} — Reminder again',
-      body: 'You missed the previous alarm. Time to take your medicine.',
-      delay: const Duration(minutes: 3),
-    );
+    final logRepo = ref.read(doseLogRepositoryProvider);
+    final today = DateTime.now();
+
+    final logs = await logRepo.getForDate(today);
+    DoseLog? log;
+    try {
+      log = logs.firstWhere((l) => l.doseGroupId == widget.doseGroupId);
+    } catch (_) {
+      // No log yet for today — create a pending one first.
+      if (status != DoseStatus.snoozed) {
+        final scheduledHour = int.tryParse(
+                widget.doseGroupId.isNotEmpty
+                    ? (_group?.timeOfDay.split(':').first ?? '0')
+                    : '0') ??
+            0;
+        final scheduledMin = int.tryParse(
+                widget.doseGroupId.isNotEmpty
+                    ? (_group?.timeOfDay.split(':').last ?? '0')
+                    : '0') ??
+            0;
+        final scheduledFor = DateTime(
+            today.year, today.month, today.day, scheduledHour, scheduledMin);
+        log = await logRepo.createPending(
+          doseGroupId: widget.doseGroupId,
+          scheduledFor: scheduledFor,
+        );
+      }
+    }
+
+    if (log != null && status != DoseStatus.snoozed) {
+      await logRepo.updateStatus(log.id, status, actedAt: DateTime.now());
+    }
   }
 
+  // ── Auto-stop / auto-snooze ───────────────────────────────────────────────
+
   Future<void> _onAutoStop() async {
-    // Stop audio but keep the screen showing
     await alarmService.cancelAlarm(widget.alarmId);
     if (mounted) setState(() => _ringing = false);
+
+    final prefs = await SharedPreferences.getInstance();
+    final count = prefs.getInt(_snoozeKey) ?? 0;
+
+    if (count < _maxSnoozes) {
+      // Auto-snooze: ring again in 5 min.
+      await prefs.setInt(_snoozeKey, count + 1);
+      await _scheduleSnooze(widget.alarmId);
+    } else {
+      // Max snoozes reached → auto-skip.
+      await prefs.remove(_snoozeKey);
+      await _updateLog(DoseStatus.skipped);
+    }
+
+    await notificationService.cancelAlarmActions(widget.alarmId);
+    if (mounted) appRouter.go(AppRoutes.home);
+  }
+
+  Future<void> _scheduleSnooze(int originalAlarmId) async {
+    if (widget.doseGroupId.isEmpty) return;
+    final snoozeAt = DateTime.now().add(_snoozeDuration);
+    await alarmService.scheduleAlarm(
+      id: originalAlarmId + 800000,
+      scheduledAt: snoozeAt,
+      title: '${_group?.label ?? 'Medicine'} — Snoozed reminder',
+      body: 'Time to take your medicine',
+      groupId: widget.doseGroupId,
+    );
   }
 
   // ── User actions ──────────────────────────────────────────────────────────
@@ -127,39 +192,31 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
     _acted = true;
     _stopTimer?.cancel();
 
-    // Cancel re-ring since user acted
-    await alarmService.cancelReRing(widget.alarmId);
-    if (_reRingId != null) await alarmService.cancelAlarm(_reRingId!);
-
-    // Stop alarm if still ringing
     await alarmService.cancelAlarm(widget.alarmId);
+    // Also cancel any pending snooze alarm.
+    await alarmService.cancelAlarm(widget.alarmId + 800000);
+    await notificationService.cancelAlarmActions(widget.alarmId);
 
-    // Update dose log
-    if (widget.logId != null) {
-      final logRepo = ref.read(doseLogRepositoryProvider);
-      await logRepo.updateStatus(widget.logId!, status,
-          actedAt: DateTime.now());
+    // Reset snooze counter on explicit user action.
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_snoozeKey);
+
+    if (status == DoseStatus.snoozed) {
+      // Manual snooze: re-schedule in 5 min, don't update dose log status.
+      await _scheduleSnooze(widget.alarmId);
+    } else {
+      await _updateLog(status);
     }
 
-    // Snooze: re-schedule in 5 minutes
-    if (status == DoseStatus.snoozed && widget.doseGroupId.isNotEmpty) {
-      final snoozeAt = DateTime.now().add(const Duration(minutes: 5));
-      await alarmService.scheduleAlarm(
-        id: widget.alarmId + 1,
-        scheduledAt: snoozeAt,
-        title: '${_group?.label ?? 'Medicine'} — Snoozed reminder',
-        body: 'Time to take your medicine',
-        groupId: widget.doseGroupId,
-      );
-    }
-
-    if (mounted) Navigator.of(context).pop();
+    // FIX: alarm was opened via appRouter.go() which replaces the stack,
+    // so Navigator.pop() has nothing to return to → black screen.
+    // Use appRouter.go() to rebuild the navigation stack at home.
+    if (mounted) appRouter.go(AppRoutes.home);
   }
 
   // ── Swipe gesture ─────────────────────────────────────────────────────────
 
   void _onDragUpdate(DragUpdateDetails d) {
-    // Only track upward swipes (negative dy)
     if (d.delta.dy < 0) {
       setState(() => _dragOffset = (_dragOffset - d.delta.dy).clamp(0, 160));
     }
@@ -195,7 +252,7 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
               children: [
                 const Spacer(),
 
-                // ── Pulsing icon ───────────────────────────────────────────
+                // ── Pulsing icon ─────────────────────────────────────────
                 ScaleTransition(
                   scale: _ringing ? _pulseAnim : AlwaysStoppedAnimation(1.0),
                   child: Container(
@@ -215,8 +272,7 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
                           ? Icons.alarm_rounded
                           : Icons.alarm_off_rounded,
                       size: 64,
-                      color:
-                          primary.withValues(alpha: _ringing ? 1.0 : 0.5),
+                      color: primary.withValues(alpha: _ringing ? 1.0 : 0.5),
                     ),
                   ),
                 ),
@@ -236,7 +292,7 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
-                      'Re-ring in ~2 min if no action taken',
+                      'Will re-ring in 5 min if no action taken',
                       style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant),
                       textAlign: TextAlign.center,
@@ -248,8 +304,7 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
                 if (_group != null) ...[
                   Text(
                     _group!.label,
-                    style: theme.textTheme.titleLarge
-                        ?.copyWith(color: primary),
+                    style: theme.textTheme.titleLarge?.copyWith(color: primary),
                   ),
                   if (_group!.mealRelation != MealRelation.none) ...[
                     const SizedBox(height: 4),
@@ -270,7 +325,7 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
 
                 const Spacer(),
 
-                // ── Swipe-up hint ─────────────────────────────────────────
+                // ── Swipe-up hint ────────────────────────────────────────
                 AnimatedOpacity(
                   opacity: 1 - swipePct,
                   duration: const Duration(milliseconds: 100),
@@ -288,7 +343,7 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
                   ]),
                 ),
 
-                // ── Dismiss (= Take) button ───────────────────────────────
+                // ── Dismiss (= Taken) ────────────────────────────────────
                 SizedBox(
                   width: double.infinity,
                   height: 56,

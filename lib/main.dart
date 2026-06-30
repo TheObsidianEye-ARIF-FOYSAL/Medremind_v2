@@ -6,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/database/database_service.dart';
+import 'core/models/dose_log.dart';
 import 'core/navigation/app_router.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/repositories/dose_group_repository.dart';
+import 'core/repositories/dose_log_repository.dart';
 import 'core/services/alarm_service.dart';
 import 'core/services/notification_service.dart';
 import 'features/auth/providers/auth_provider.dart';
@@ -43,7 +45,10 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
 
   await alarmService.initialize();
-  await notificationService.initialize();
+  await notificationService.initialize(
+    onAlarmAction: (actionId, alarmId, groupId) =>
+        _applyAlarmAction(actionId, alarmId, groupId),
+  );
 
   // Reschedule all active alarms on every startup (covers reboots too).
   try {
@@ -53,8 +58,20 @@ void main() async {
     await alarmService.rescheduleAll(groups);
   } catch (_) {}
 
-  // Capture alarm that fires while app is closed.
-  Alarm.ringStream.stream.listen((s) => _pendingAlarmId = s.id);
+  // Process any action stored by the background notification handler.
+  await _consumePendingAlarmAction(prefs);
+
+  // Show alarm action notification when alarm fires (also captures pending alarms).
+  Alarm.ringStream.stream.listen((s) {
+    _pendingAlarmId = s.id;
+    alarmService.getGroupIdForAlarm(s.id).then((groupId) {
+      notificationService.showAlarmActions(
+        alarmId: s.id,
+        groupId: groupId ?? '',
+        title: 'Medicine Alarm',
+      );
+    });
+  });
 
   runApp(ProviderScope(
     overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
