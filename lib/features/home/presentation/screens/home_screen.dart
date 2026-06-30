@@ -89,6 +89,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   ),
                 ),
 
+                const SliverToBoxAdapter(child: SizedBox(height: AppSizes.paddingMd)),
+
                 // ── Filter tabs ──────────────────────────────────────────
                 SliverToBoxAdapter(
                   child: HomeFilterTabs(
