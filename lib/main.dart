@@ -1,4 +1,5 @@
 import 'package:alarm/alarm.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,8 @@ import 'core/repositories/dose_group_repository.dart';
 import 'core/services/alarm_service.dart';
 import 'core/services/notification_service.dart';
 import 'features/auth/providers/auth_provider.dart';
+import 'features/auth/providers/firebase_auth_provider.dart';
+import 'features/auth/screens/login_register_screen.dart';
 import 'features/auth/screens/subscription_screen.dart';
 import 'features/onboarding/onboarding_intro_screen.dart';
 import 'features/onboarding/permission_onboarding_screen.dart';
@@ -34,6 +37,8 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+  await Firebase.initializeApp();
 
   final prefs = await SharedPreferences.getInstance();
 
@@ -69,7 +74,8 @@ class MedRemindApp extends ConsumerStatefulWidget {
 }
 
 class _MedRemindAppState extends ConsumerState<MedRemindApp> {
-  // null='loading', 'sub'=login, 'intro'=onboarding, 'perm'=perms, true=app
+  // null=loading, 'sub'=bdapps not subscribed, 'login'=firebase not logged in,
+  // 'intro'=onboarding, 'perm'=permissions, true=main app
   Object? _flow;
 
   @override
@@ -86,6 +92,12 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
     final auth = ref.read(authProvider);
     if (!auth.isAuthenticated) {
       setState(() => _flow = 'sub');
+      return;
+    }
+
+    final firebase = ref.read(firebaseAuthProvider);
+    if (!firebase.isLoggedIn) {
+      setState(() => _flow = 'login');
       return;
     }
 
@@ -126,14 +138,26 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
     final darkTheme = ref.watch(darkThemeProvider);
     final themeMode = ref.watch(themeModeProvider);
 
-    // Redirect to login whenever auth state is lost (logout / unsubscribe)
     final auth = ref.watch(authProvider);
+    final firebase = ref.watch(firebaseAuthProvider);
+
+    // BdApps session lost → go to subscription screen
     if (_flow == true && !auth.isAuthenticated) {
       WidgetsBinding.instance
           .addPostFrameCallback((_) => setState(() => _flow = 'sub'));
     }
-    // After login completes while on subscription screen → advance flow
+    // Firebase logged out while in main app → go to login screen
+    if (_flow == true && auth.isAuthenticated && !firebase.isLoggedIn) {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => setState(() => _flow = 'login'));
+    }
+    // BdApps subscription confirmed → re-resolve (will check Firebase next)
     if (_flow == 'sub' && auth.isAuthenticated) {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _resolveFlow());
+    }
+    // Firebase login confirmed → advance flow
+    if (_flow == 'login' && firebase.isLoggedIn) {
       WidgetsBinding.instance
           .addPostFrameCallback((_) => _resolveFlow());
     }
@@ -144,6 +168,8 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
       home = const Scaffold(body: Center(child: CircularProgressIndicator()));
     } else if (_flow == 'sub') {
       home = const SubscriptionScreen();
+    } else if (_flow == 'login') {
+      home = const LoginRegisterScreen();
     } else if (_flow == 'intro') {
       home = OnboardingIntroScreen(
         onDone: () async {
@@ -171,7 +197,7 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
     }
 
     // ValueKey forces a brand-new Navigator (clearing any pushed routes)
-    // every time _flow changes — e.g. 'sub' → 'intro' after OTP success.
+    // every time _flow changes.
     return MaterialApp(
       key: ValueKey(_flow),
       title: 'MedRemind',

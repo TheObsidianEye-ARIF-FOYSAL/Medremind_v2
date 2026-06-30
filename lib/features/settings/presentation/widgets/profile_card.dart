@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/theme_constants.dart';
-import '../providers/settings_provider.dart';
+import '../../../auth/providers/firebase_auth_provider.dart';
 import '../screens/profile_screen.dart';
-
-// ── Settings profile card ──────────────────────────────────────────────────────
 
 class SettingsProfileCard extends ConsumerWidget {
   final bool isDark;
@@ -23,9 +21,10 @@ class SettingsProfileCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final name = ref.watch(userNameProvider);
-    final displayName = name.isEmpty ? 'Set your name' : name;
-    final hasName = name.isNotEmpty;
+    final fbUser = ref.watch(firebaseAuthProvider).user;
+    final displayName = fbUser?.displayName ?? '';
+    final email = fbUser?.email ?? '';
+    final hasName = displayName.isNotEmpty;
 
     return GestureDetector(
       onTap: () => Navigator.of(context)
@@ -62,7 +61,7 @@ class SettingsProfileCard extends ConsumerWidget {
             child: hasName
                 ? Center(
                     child: Text(
-                      name[0].toUpperCase(),
+                      displayName[0].toUpperCase(),
                       style: textTheme.headlineSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
@@ -77,7 +76,7 @@ class SettingsProfileCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  displayName,
+                  hasName ? displayName : 'Set your name',
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: hasName ? null : onSurfaceVariant,
@@ -85,10 +84,10 @@ class SettingsProfileCard extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  hasName
-                      ? 'View profile, name, account details'
-                      : 'Tap to set up your profile',
+                  email.isNotEmpty ? email : 'View profile & account details',
                   style: textTheme.bodySmall?.copyWith(color: onSurfaceVariant),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
