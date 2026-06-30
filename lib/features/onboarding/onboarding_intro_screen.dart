@@ -192,7 +192,7 @@ class _OnboardingIntroScreenState extends State<OnboardingIntroScreen> {
 
 class _IntroPageView extends StatelessWidget {
   final _IntroPage page;
-  const _IntroPageView({super.key, required this.page});
+  const _IntroPageView({required this.page});
 
   @override
   Widget build(BuildContext context) {
