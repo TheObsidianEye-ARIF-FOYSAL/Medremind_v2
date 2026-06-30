@@ -37,6 +37,9 @@ dependencies:
   # UUID generation
   uuid: ^4.4.2
 
+  # HTTP client (BdApps auth)
+  http: ^1.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
