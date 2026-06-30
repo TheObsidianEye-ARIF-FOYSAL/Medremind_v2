@@ -7,7 +7,6 @@ import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/services/app_settings_service.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../../../auth/providers/auth_provider.dart';
-import '../providers/settings_provider.dart';
 import '../widgets/profile_card.dart';
 import '../widgets/settings_tiles.dart';
 
