@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/models/dose_group.dart';
 import '../../../../core/models/medicine.dart';
-import '../../../../core/navigation/app_router.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
+import '../../../alternative_finder/presentation/screens/find_alternative_screen.dart';
 import 'add_dose_group_screen.dart';
 import 'add_medication_screen.dart';
 
@@ -83,7 +82,10 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen>
                       child: Icon(Icons.compare_arrows_rounded,
                           color: primary, size: 20),
                     ),
-                    onPressed: () => context.go(AppRoutes.finder),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (_) => const FindAlternativeScreen()),
+                    ),
                   ),
                 ],
               ),

@@ -41,12 +41,24 @@ class _FindAlternativeScreenState
             // ── Header ──────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                  AppSizes.paddingLg, AppSizes.paddingLg,
+                  AppSizes.paddingSm, AppSizes.paddingMd,
                   AppSizes.paddingLg, 0),
-              child: Text(
-                'Find Alternative',
-                style: theme.textTheme.headlineMedium,
-              ),
+              child: Row(children: [
+                if (Navigator.of(context).canPop())
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    onPressed: () => Navigator.of(context).pop(),
+                    visualDensity: VisualDensity.compact,
+                  )
+                else
+                  const SizedBox(width: AppSizes.paddingLg),
+                Expanded(
+                  child: Text(
+                    'Find Alternative',
+                    style: theme.textTheme.headlineMedium,
+                  ),
+                ),
+              ]),
             ),
 
             Padding(
