@@ -2,43 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/theme_constants.dart';
-import 'settings_screen.dart';
+import '../../../auth/providers/auth_provider.dart';
+import '../../../auth/providers/firebase_auth_provider.dart';
 
-class ProfileScreen extends ConsumerStatefulWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  late final TextEditingController _nameCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameCtrl = TextEditingController(text: ref.read(userNameProvider));
-  }
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
-    final name = ref.watch(userNameProvider);
-    final hasName = name.isNotEmpty;
+    final muted = isDark ? DarkColors.onSurfaceMuted : LightColors.onSurfaceMuted;
+
+    final fbUser = ref.watch(firebaseAuthProvider).user;
+    final bdappsPhone = ref.watch(authProvider).phone;
+    final displayName = fbUser?.displayName ?? '';
+    final email = fbUser?.email ?? '';
+    final hasName = displayName.isNotEmpty;
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            // ── App bar ───────────────────────────────────────────────────────
+            // ── App bar ─────────────────────────────────────────────────────────
             Container(
               padding: const EdgeInsets.symmetric(
                   horizontal: AppSizes.paddingMd, vertical: 12),
@@ -89,7 +76,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: hasName
                           ? Center(
                               child: Text(
-                                name[0].toUpperCase(),
+                                displayName[0].toUpperCase(),
                                 style: theme.textTheme.displaySmall?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
@@ -101,25 +88,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: AppSizes.paddingLg),
+                  const SizedBox(height: AppSizes.paddingMd),
 
-                  // ── Name field ──────────────────────────────────────────────
-                  _SectionLabel('Display Name'),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _nameCtrl,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: InputDecoration(
-                      hintText: 'Enter your name',
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.check_circle_rounded,
-                            color: TagColors.taken),
-                        onPressed: _saveName,
-                        tooltip: 'Save',
-                      ),
+                  if (hasName)
+                    Center(
+                      child: Text(displayName,
+                          style: theme.textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700)),
                     ),
-                    onSubmitted: (_) => _saveName(),
-                  ),
+                  if (email.isNotEmpty)
+                    Center(
+                      child: Text(email,
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(color: muted)),
+                    ),
 
                   const SizedBox(height: AppSizes.paddingXl),
 
@@ -128,133 +110,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: 8),
                   _InfoTile(
                     icon: Icons.phone_rounded,
-                    label: 'Phone Number',
-                    value: 'Available after login',
+                    label: 'BdApps Mobile',
+                    value: bdappsPhone ?? 'Not available',
                     isDark: isDark,
-                    muted: true,
+                    muted: bdappsPhone == null,
+                    primary: primary,
                   ),
                   const SizedBox(height: AppSizes.paddingSm),
                   _InfoTile(
                     icon: Icons.email_rounded,
                     label: 'Email',
-                    value: 'Available after login',
+                    value: email.isNotEmpty ? email : 'Not available',
                     isDark: isDark,
-                    muted: true,
-                  ),
-
-                  const SizedBox(height: AppSizes.paddingXl),
-
-                  // ── Login notice ────────────────────────────────────────────
-                  Container(
-                    padding: const EdgeInsets.all(AppSizes.paddingMd),
-                    decoration: BoxDecoration(
-                      color: primary.withValues(alpha: 0.07),
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusLg),
-                      border:
-                          Border.all(color: primary.withValues(alpha: 0.18)),
-                    ),
-                    child: Row(children: [
-                      Icon(Icons.lock_outline_rounded,
-                          size: 18, color: primary),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Login feature coming soon. Your phone/email will be linked automatically when you sign in.',
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: primary),
-                        ),
-                      ),
-                    ]),
-                  ),
-
-                  const SizedBox(height: AppSizes.paddingXl),
-
-                  // ── Danger zone ─────────────────────────────────────────────
-                  _SectionLabel('Account Actions'),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: _confirmUnsubscribe,
-                    icon: const Icon(Icons.notifications_off_outlined,
-                        color: Colors.orange),
-                    label: const Text('Unsubscribe from Notifications',
-                        style: TextStyle(color: Colors.orange)),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.orange),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSizes.radiusMd)),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: _confirmDeleteAccount,
-                    icon: const Icon(Icons.delete_forever_rounded,
-                        color: Colors.redAccent),
-                    label: const Text('Delete Account & Data',
-                        style: TextStyle(color: Colors.redAccent)),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.redAccent),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSizes.radiusMd)),
-                    ),
+                    muted: email.isEmpty,
+                    primary: primary,
                   ),
                 ],
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Future<void> _saveName() async {
-    final name = _nameCtrl.text.trim();
-    await ref.read(userNameProvider.notifier).set(name);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name saved!')),
-      );
-    }
-  }
-
-  Future<void> _confirmUnsubscribe() async {
-    await showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Unsubscribe'),
-        content: const Text(
-            'This will disable all medicine reminders and notifications.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Coming soon',
-                  style: TextStyle(color: Colors.grey))),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _confirmDeleteAccount() async {
-    await showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Account'),
-        content: const Text(
-            'Account deletion will be available once login is enabled.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('OK')),
-        ],
       ),
     );
   }
@@ -284,11 +159,14 @@ class _InfoTile extends StatelessWidget {
   final String value;
   final bool isDark;
   final bool muted;
+  final Color primary;
+
   const _InfoTile({
     required this.icon,
     required this.label,
     required this.value,
     required this.isDark,
+    required this.primary,
     this.muted = false,
   });
 
@@ -304,9 +182,7 @@ class _InfoTile extends StatelessWidget {
       child: Row(children: [
         Icon(icon,
             size: 20,
-            color: muted
-                ? theme.colorScheme.onSurfaceVariant
-                : theme.colorScheme.primary),
+            color: muted ? theme.colorScheme.onSurfaceVariant : primary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -317,9 +193,7 @@ class _InfoTile extends StatelessWidget {
                       color: theme.colorScheme.onSurfaceVariant)),
               Text(value,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: muted
-                        ? theme.colorScheme.onSurfaceVariant
-                        : null,
+                    color: muted ? theme.colorScheme.onSurfaceVariant : null,
                     fontStyle: muted ? FontStyle.italic : null,
                   )),
             ],
