@@ -342,8 +342,6 @@ class _Header extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      Text(_emoji(), style: const TextStyle(fontSize: 20)),
-                      const SizedBox(width: 6),
                       Text(
                         _greet(),
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -430,7 +428,7 @@ class _Header extends ConsumerWidget {
 
   static String _motiveLine(double pct, DayStats s) {
     if (s.total == 0) return 'No doses scheduled today.';
-    if (pct == 1.0) return '🎉 All doses done for today!';
+    if (pct == 1.0) return 'All doses done for today!';
     if (s.taken == 0) return 'Start strong — take your first dose!';
     if (pct >= 0.75) return 'Almost there — keep it up!';
     if (pct >= 0.5) return 'Good progress — stay consistent!';

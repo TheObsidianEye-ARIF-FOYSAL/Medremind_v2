@@ -115,19 +115,75 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                   // ── Medicine name ──────────────────────────────────────
                   _Label('Medicine Name'),
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: _brandCtrl,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: InputDecoration(
-                      hintText: 'e.g. Napa, Vigorex 25mg, Amlodipine',
-                      suffixIcon: form.brandName.isNotEmpty
-                          ? const Icon(Icons.check_circle_rounded,
-                              color: TagColors.taken)
-                          : null,
-                    ),
-                    onChanged: (v) {
-                      notifier.setBrandName(v);
-                      _lookupGeneric(v);
+                  Autocomplete<String>(
+                    optionsBuilder: (TextEditingValue v) {
+                      if (v.text.length < 2) return const Iterable.empty();
+                      final q = v.text.toLowerCase();
+                      return _suggestions
+                          .where((s) => s.toLowerCase().contains(q))
+                          .take(6);
+                    },
+                    displayStringForOption: (s) => s,
+                    fieldViewBuilder:
+                        (ctx, ctrl, focusNode, onSubmit) {
+                      // Keep our controller in sync
+                      ctrl.text = _brandCtrl.text;
+                      ctrl.selection = TextSelection.fromPosition(
+                          TextPosition(offset: ctrl.text.length));
+                      return TextField(
+                        controller: ctrl,
+                        focusNode: focusNode,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: InputDecoration(
+                          hintText: 'e.g. Napa, Vigorex 25mg, Amlodipine',
+                          prefixIcon: Icon(Icons.search_rounded,
+                              color: primary, size: 20),
+                          suffixIcon: form.brandName.isNotEmpty
+                              ? const Icon(Icons.check_circle_rounded,
+                                  color: TagColors.taken)
+                              : null,
+                        ),
+                        onChanged: (val) {
+                          _brandCtrl.text = val;
+                          notifier.setBrandName(val);
+                          _lookupGeneric(val);
+                        },
+                        onEditingComplete: onSubmit,
+                      );
+                    },
+                    onSelected: (String selection) {
+                      _brandCtrl.text = selection;
+                      notifier.setBrandName(selection);
+                      _lookupGeneric(selection);
+                    },
+                    optionsViewBuilder: (ctx, onSelected, options) {
+                      return Align(
+                        alignment: Alignment.topLeft,
+                        child: Material(
+                          elevation: 4,
+                          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 200),
+                            child: ListView.separated(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              itemCount: options.length,
+                              separatorBuilder: (_, __) => const Divider(height: 1),
+                              itemBuilder: (ctx, i) {
+                                final opt = options.elementAt(i);
+                                return ListTile(
+                                  dense: true,
+                                  leading: Icon(Icons.local_pharmacy_outlined,
+                                      size: 16, color: primary),
+                                  title: Text(opt,
+                                      style: Theme.of(ctx).textTheme.bodyMedium),
+                                  onTap: () => onSelected(opt),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      );
                     },
                   ),
 
