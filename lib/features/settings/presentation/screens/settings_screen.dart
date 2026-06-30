@@ -252,6 +252,81 @@ class SettingsScreen extends ConsumerWidget {
 
             const SizedBox(height: AppSizes.paddingXl),
 
+            // ── Account section ─────────────────────────────────────────────
+            SettingsSectionHeader('Account',
+                icon: Icons.account_circle_rounded),
+            const SizedBox(height: AppSizes.paddingMd),
+
+            if (authState.phone != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSizes.paddingMd),
+                child: Text(
+                  'Logged in as: ${authState.phone}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+
+            SettingsCard(
+              isDark: isDark,
+              child: Column(children: [
+                // Logout
+                _AccountTile(
+                  icon: Icons.logout_rounded,
+                  label: 'Logout',
+                  subtitle: 'Sign out and return to login',
+                  color: theme.colorScheme.primary,
+                  isDark: isDark,
+                  onTap: () async {
+                    final confirm = await _confirmDialog(
+                      context,
+                      title: 'Logout?',
+                      message:
+                          'You will be signed out and redirected to the login screen.',
+                      confirmLabel: 'Logout',
+                    );
+                    if (confirm == true) await authNotifier.logout();
+                  },
+                ),
+                Divider(
+                    height: 1,
+                    color: isDark
+                        ? DarkColors.outlineVariant
+                        : LightColors.outlineVariant),
+                // Unsubscribe
+                _AccountTile(
+                  icon: Icons.unsubscribe_rounded,
+                  label: 'Unsubscribe',
+                  subtitle: 'Cancel BdApps subscription and logout',
+                  color: TagColors.missed,
+                  isDark: isDark,
+                  onTap: () async {
+                    final confirm = await _confirmDialog(
+                      context,
+                      title: 'Unsubscribe?',
+                      message:
+                          'Your BdApps subscription will be cancelled. You will be logged out immediately.',
+                      confirmLabel: 'Unsubscribe',
+                      destructive: true,
+                    );
+                    if (confirm == true) {
+                      final ok = await authNotifier.unsubscribe();
+                      if (!ok && context.mounted) {
+                        final err = ref.read(authProvider).error;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(err ?? 'Unsubscribe failed')),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ]),
+            ),
+
+            const SizedBox(height: AppSizes.paddingXl),
+
             // ── About section ───────────────────────────────────────────────
             SettingsSectionHeader('About', icon: Icons.info_outline_rounded),
             const SizedBox(height: AppSizes.paddingMd),
