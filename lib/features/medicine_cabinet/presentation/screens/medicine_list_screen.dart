@@ -680,9 +680,6 @@ class _GroupTile extends ConsumerWidget {
     final dh = h == 0 ? 12 : (h > 12 ? h - 12 : h);
     return '${dh.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')} $per';
   }
-
-  static String _qty(double q) =>
-      q == q.truncateToDouble() ? '×${q.toInt()}' : '×$q';
 }
 
 // ── Medicine chips with resolved names ───────────────────────────────────────
