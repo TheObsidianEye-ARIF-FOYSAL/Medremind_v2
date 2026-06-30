@@ -150,7 +150,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                           if (v.isNotEmpty && i < 5) {
                             _nodes[i + 1].requestFocus();
                           }
-                          if (v.isNotEmpty && i == 5) _verify();
+                          if (v.isNotEmpty && i == 5) { _verify(); }
                         },
                       ),
                     );
