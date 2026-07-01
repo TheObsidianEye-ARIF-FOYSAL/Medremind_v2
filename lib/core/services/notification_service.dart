@@ -94,7 +94,7 @@ class NotificationServiceImpl {
   }
 
   /// Show a persistent action notification alongside the ringing alarm.
-  /// Provides "Dismiss (Taken)" and "Snooze 5 min" action buttons.
+  /// Provides "Dismiss (Taken)", "Snooze 5 min" and "Skip" action buttons.
   Future<void> showAlarmActions({
     required int alarmId,
     required String groupId,
@@ -104,7 +104,7 @@ class NotificationServiceImpl {
       'alarm_actions_channel',
       'Alarm Quick Actions',
       channelDescription:
-          'Dismiss or snooze a medicine alarm without opening the app',
+          'Dismiss, snooze or skip a medicine alarm without opening the app',
       importance: Importance.max,
       priority: Priority.max,
       playSound: false,
@@ -122,12 +122,18 @@ class NotificationServiceImpl {
           cancelNotification: true,
           showsUserInterface: false,
         ),
+        AndroidNotificationAction(
+          'alarm_skip',
+          'Skip',
+          cancelNotification: true,
+          showsUserInterface: false,
+        ),
       ],
     );
     await _plugin.show(
       alarmId + 500000, // offset avoids collision with other notification IDs
       title,
-      'Dismiss = taken · Snooze = ring again in 5 min',
+      'Dismiss = taken · Snooze = ring again in 5 min · Skip = mark skipped',
       const NotificationDetails(android: androidDetails),
       payload: '$alarmId|$groupId',
     );

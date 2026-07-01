@@ -130,25 +130,78 @@ class GroupTile extends ConsumerWidget {
     if (action == 'toggle') {
       await repo.setActive(group.id, active: !group.isActive);
     } else if (action == 'delete') {
+      if (!context.mounted) return;
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Remove Dose Group'),
-          content: Text(
-              'Remove "${group.label}" dose group? This will also delete all logs for this group.'),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusLg)),
+          icon: Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.redAccent.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.delete_outline_rounded,
+                color: Colors.redAccent, size: 26),
+          ),
+          title: const Text('Remove Dose Group', textAlign: TextAlign.center),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Remove "${group.label}" (${_fmtTime(group.timeOfDay)})?',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        color: Colors.amber, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'This also deletes all ${group.items.length} '
+                        '${group.items.length == 1 ? 'medicine link' : 'medicine links'} and '
+                        'dose logs for this group.',
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.center,
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
                 child: const Text('Cancel')),
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Remove',
-                    style: TextStyle(color: Colors.redAccent))),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Remove'),
+            ),
           ],
         ),
       );
       if (confirmed == true) {
         await repo.delete(group.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('"${group.label}" dose group removed'),
+            behavior: SnackBarBehavior.floating,
+          ));
+        }
       }
     }
   }

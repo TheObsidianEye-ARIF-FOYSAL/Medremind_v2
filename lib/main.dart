@@ -94,6 +94,8 @@ Future<void> _applyAlarmAction(
 
   if (actionId == 'alarm_taken') {
     await _upsertLog(logRepo, groupId, DoseStatus.taken);
+  } else if (actionId == 'alarm_skip') {
+    await _upsertLog(logRepo, groupId, DoseStatus.skipped);
   } else if (actionId == 'alarm_snooze') {
     // Snooze: re-ring in 5 min (no dose log update).
     final snoozeAt = DateTime.now().add(const Duration(minutes: 5));
