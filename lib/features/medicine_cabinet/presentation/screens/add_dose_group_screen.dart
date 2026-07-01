@@ -307,6 +307,120 @@ class _AddDoseGroupScreenState extends ConsumerState<AddDoseGroupScreen> {
                       ),
                   ]),
 
+                  const SizedBox(height: AppSizes.paddingLg),
+
+                  // ── Days of week ─────────────────────────────────────
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Repeat Days',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant)),
+                      GestureDetector(
+                        onTap: () => setState(() => _days = []),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _days.isEmpty
+                                ? primary.withValues(alpha: 0.15)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(
+                                AppSizes.radiusPill),
+                            border: Border.all(
+                              color: _days.isEmpty
+                                  ? primary.withValues(alpha: 0.5)
+                                  : theme.colorScheme.outlineVariant,
+                            ),
+                          ),
+                          child: Text(
+                            'Every day',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: _days.isEmpty
+                                  ? primary
+                                  : theme.colorScheme.onSurfaceVariant,
+                              fontWeight: _days.isEmpty
+                                  ? FontWeight.w700
+                                  : FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSizes.paddingSm),
+                  Row(
+                    children: List.generate(7, (i) {
+                      final dayNum = i + 1; // 1=Mon … 7=Sun
+                      final sel = _days.contains(dayNum);
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(right: i < 6 ? 5 : 0),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (sel) {
+                                  _days = _days
+                                      .where((d) => d != dayNum)
+                                      .toList();
+                                } else {
+                                  _days = [..._days, dayNum]..sort();
+                                }
+                              });
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: sel
+                                    ? primary
+                                    : (isDark
+                                        ? DarkColors.surfaceVariant
+                                        : LightColors.surfaceVariant),
+                                borderRadius: BorderRadius.circular(
+                                    AppSizes.radiusMd),
+                                boxShadow: sel
+                                    ? [
+                                        BoxShadow(
+                                          color: primary
+                                              .withValues(alpha: 0.35),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 3),
+                                        )
+                                      ]
+                                    : null,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  _dayLabels[i],
+                                  style: theme.textTheme.labelMedium
+                                      ?.copyWith(
+                                    color: sel
+                                        ? Colors.white
+                                        : theme.colorScheme
+                                            .onSurfaceVariant,
+                                    fontWeight: sel
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  if (_days.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      _days.map((d) => _dayNames[d - 1]).join(' · '),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: primary, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+
                   const SizedBox(height: AppSizes.paddingXl),
 
                   // ── Medicines in group ───────────────────────────────
@@ -454,6 +568,7 @@ class _AddDoseGroupScreenState extends ConsumerState<AddDoseGroupScreen> {
         label: _label,
         timeOfDay: '$h:$m',
         mealRelation: _meal,
+        daysOfWeek: _days,
         startDate: DateTime.now(),
         items: _slots
             .map((s) => (medicineId: s.med.id, quantity: s.quantity))

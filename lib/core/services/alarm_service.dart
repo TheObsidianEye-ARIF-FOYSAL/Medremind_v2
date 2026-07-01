@@ -95,20 +95,36 @@ class AlarmServiceImpl {
 
   // ── Dose group helpers ────────────────────────────────────────────────────
 
-  /// Schedule the next occurrence of a dose group alarm.
+  /// Schedule the next occurrence of a dose group alarm,
+  /// honouring daysOfWeek (empty = every day; 1=Mon … 7=Sun).
   Future<void> scheduleForGroup(DoseGroup group) async {
     if (!group.isActive) return;
     final parts = group.timeOfDay.split(':');
     final h = int.parse(parts[0]);
     final m = int.parse(parts[1]);
     final now = DateTime.now();
-    var scheduled = DateTime(now.year, now.month, now.day, h, m);
-    if (scheduled.isBefore(now.add(const Duration(seconds: 30)))) {
-      scheduled = scheduled.add(const Duration(days: 1));
+
+    // Start with today at the configured time
+    var candidate = DateTime(now.year, now.month, now.day, h, m);
+
+    // Advance past "too soon" (within 30 s)
+    if (candidate.isBefore(now.add(const Duration(seconds: 30)))) {
+      candidate = candidate.add(const Duration(days: 1));
     }
+
+    // If specific days are configured, walk forward until we land on one
+    if (group.daysOfWeek.isNotEmpty) {
+      for (int i = 0; i < 7; i++) {
+        if (group.daysOfWeek.contains(candidate.weekday)) break;
+        candidate = candidate.add(const Duration(days: 1));
+      }
+      // Still not on a valid day? (shouldn't happen with a non-empty list)
+      if (!group.daysOfWeek.contains(candidate.weekday)) return;
+    }
+
     await scheduleAlarm(
-      id: alarmId(group.id, scheduled),
-      scheduledAt: scheduled,
+      id: alarmId(group.id, candidate),
+      scheduledAt: candidate,
       title: '${group.label} — Time for your medicine',
       body: group.items.length == 1
           ? 'Take your medicine now'
