@@ -29,6 +29,7 @@ class SettingsScreen extends ConsumerWidget {
       body: SafeArea(
         bottom: false,
         child: ListView(
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(
               AppSizes.paddingLg, AppSizes.paddingLg,
               AppSizes.paddingLg, 120),

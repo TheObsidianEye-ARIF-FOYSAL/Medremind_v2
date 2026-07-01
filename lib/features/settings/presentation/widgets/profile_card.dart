@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/navigation/app_transitions.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../../../auth/providers/firebase_auth_provider.dart';
 import '../screens/profile_screen.dart';
@@ -28,7 +29,7 @@ class SettingsProfileCard extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () => Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => const ProfileScreen())),
+          .push(AppPageRoute(page: const ProfileScreen())),
       child: Container(
         padding: const EdgeInsets.all(AppSizes.paddingMd),
         decoration: BoxDecoration(
