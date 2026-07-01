@@ -20,16 +20,18 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(themeSettingsProvider);
-    final notifier = ref.read(themeSettingsProvider.notifier);
     final appSettings = ref.watch(appSettingsProvider);
-    final appSettingsNotifier = ref.read(appSettingsProvider.notifier);
     final authNotifier = ref.read(authProvider.notifier);
     final authState = ref.watch(authProvider);
     final fbNotifier = ref.read(firebaseAuthProvider.notifier);
     final fbUser = ref.watch(firebaseAuthProvider).user;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.colorScheme.primary;
+
+    void push(Widget screen) => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => screen),
+        );
 
     return Scaffold(
       body: SafeArea(
@@ -45,213 +47,47 @@ class SettingsScreen extends ConsumerWidget {
             // ── Profile card ────────────────────────────────────────────────
             SettingsProfileCard(
               isDark: isDark,
-              primary: theme.colorScheme.primary,
+              primary: primary,
               onSurfaceVariant: theme.colorScheme.onSurfaceVariant,
               textTheme: theme.textTheme,
             ),
 
             const SizedBox(height: AppSizes.paddingXl),
 
-            // ── Appearance section ──────────────────────────────────────────
-            SettingsSectionHeader('Appearance', icon: Icons.palette_rounded),
-            const SizedBox(height: AppSizes.paddingMd),
-
-            // Theme mode
-            SettingsCard(
-              isDark: isDark,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppSizes.paddingMd, AppSizes.paddingMd,
-                        AppSizes.paddingMd, AppSizes.paddingSm),
-                    child: Text(
-                      'Theme Mode',
-                      style: theme.textTheme.titleSmall,
-                    ),
-                  ),
-                  ...ThemeMode.values.map(
-                    (mode) => SettingsRadioTile(
-                      title: _themeModeLabel(mode),
-                      subtitle: _themeModeSubtitle(mode),
-                      selected: settings.mode == mode,
-                      activeColor: theme.colorScheme.primary,
-                      onTap: () => notifier.setMode(mode),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: AppSizes.paddingMd),
-
-            // Color palette picker
-            SettingsCard(
-              isDark: isDark,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.paddingMd),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Color Theme', style: theme.textTheme.titleSmall),
-                    const SizedBox(height: AppSizes.paddingMd),
-                    Row(
-                      children: AppColorPalette.values
-                          .map((p) => Expanded(
-                                child: SettingsPaletteTile(
-                                  palette: p,
-                                  isSelected: settings.palette == p,
-                                  onTap: () => notifier.setPalette(p),
-                                ),
-                              ))
-                          .toList(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: AppSizes.paddingXl),
-
-            // ── Notifications & permissions ─────────────────────────────────
-            SettingsSectionHeader('Notifications & Alarms',
-                icon: Icons.notifications_rounded),
-            const SizedBox(height: AppSizes.paddingMd),
-
-            SettingsCard(
-              isDark: isDark,
-              child: Column(
-                children: [
-                  SettingsPermissionTile(
-                    icon: Icons.notifications_rounded,
-                    label: 'Notifications',
-                    subtitle: 'Required for dose reminders',
-                    permission: Permission.notification,
-                    primaryColor: theme.colorScheme.primary,
-                    isDark: isDark,
-                  ),
-                  Divider(
-                      height: 1,
-                      color: isDark
-                          ? DarkColors.outlineVariant
-                          : LightColors.outlineVariant),
-                  SettingsPermissionTile(
-                    icon: Icons.alarm_rounded,
-                    label: 'Exact alarms',
-                    subtitle: 'Required for on-time alarm ringing',
-                    permission: Permission.scheduleExactAlarm,
-                    primaryColor: theme.colorScheme.primary,
-                    isDark: isDark,
-                  ),
-                  Divider(
-                      height: 1,
-                      color: isDark
-                          ? DarkColors.outlineVariant
-                          : LightColors.outlineVariant),
-                  SettingsPermissionTile(
-                    icon: Icons.battery_saver_rounded,
-                    label: 'Battery optimization',
-                    subtitle: 'Keep alarms alive in background',
-                    permission: Permission.ignoreBatteryOptimizations,
-                    primaryColor: theme.colorScheme.primary,
-                    isDark: isDark,
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: AppSizes.paddingXl),
-
-            // ── Reminder behaviour ──────────────────────────────────────────
-            SettingsSectionHeader('Reminder Behaviour',
-                icon: Icons.tune_rounded),
+            // ── Preferences navigation group ────────────────────────────────
+            SettingsSectionHeader('Preferences', icon: Icons.tune_rounded),
             const SizedBox(height: AppSizes.paddingMd),
 
             SettingsCard(
               isDark: isDark,
               child: Column(children: [
-                // Notification toggle
-                _ToggleTile(
-                  icon: Icons.notifications_active_rounded,
-                  label: 'Push Notifications',
-                  subtitle: 'Show a silent notification when it\'s dose time',
-                  value: appSettings.notificationEnabled,
-                  primaryColor: theme.colorScheme.primary,
+                _NavTile(
+                  icon: Icons.palette_rounded,
+                  iconColor: const Color(0xFF6C5CE7),
+                  label: 'Appearance',
+                  subtitle: 'Theme mode & colour palette',
                   isDark: isDark,
-                  onChanged: appSettingsNotifier.setNotificationEnabled,
+                  onTap: () => push(const AppearanceScreen()),
                 ),
-                Divider(
-                    height: 1,
-                    color: isDark
-                        ? DarkColors.outlineVariant
-                        : LightColors.outlineVariant),
-                // Alarm toggle
-                _ToggleTile(
-                  icon: Icons.alarm_rounded,
-                  label: 'Ringing Alarm',
-                  subtitle: 'Play alarm sound and show full-screen alert',
-                  value: appSettings.alarmEnabled,
-                  primaryColor: theme.colorScheme.primary,
+                _divider(isDark),
+                _NavTile(
+                  icon: Icons.notifications_rounded,
+                  iconColor: const Color(0xFF00B4D8),
+                  label: 'Notifications & Alarms',
+                  subtitle: 'Permissions, toggles & behaviour',
                   isDark: isDark,
-                  onChanged: appSettingsNotifier.setAlarmEnabled,
+                  onTap: () => push(const NotificationsAlarmsScreen()),
+                ),
+                _divider(isDark),
+                _NavTile(
+                  icon: Icons.music_note_rounded,
+                  iconColor: const Color(0xFF10B981),
+                  label: 'Alarm Sound',
+                  subtitle: appSettings.alarmSoundLabel,
+                  isDark: isDark,
+                  onTap: () => push(const AlarmSoundScreen()),
                 ),
               ]),
-            ),
-
-            const SizedBox(height: AppSizes.paddingMd),
-
-            // Alarm sound picker
-            SettingsCard(
-              isDark: isDark,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.paddingMd),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary
-                              .withValues(alpha: 0.12),
-                          borderRadius:
-                              BorderRadius.circular(AppSizes.radiusSm),
-                        ),
-                        child: Icon(Icons.music_note_rounded,
-                            size: 18,
-                            color: theme.colorScheme.primary),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Alarm Sound',
-                                  style: theme.textTheme.bodyMedium),
-                              Text(
-                                appSettings.alarmSoundLabel,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme
-                                        .colorScheme.onSurfaceVariant),
-                              ),
-                            ]),
-                      ),
-                    ]),
-                    const SizedBox(height: AppSizes.paddingMd),
-                    ...alarmSoundOptions.map((opt) => _SoundTile(
-                          option: opt,
-                          isSelected:
-                              appSettings.alarmSoundPath == opt.assetPath,
-                          primaryColor: theme.colorScheme.primary,
-                          isDark: isDark,
-                          onTap: () =>
-                              appSettingsNotifier.setAlarmSound(opt.assetPath),
-                        )),
-                  ],
-                ),
-              ),
             ),
 
             const SizedBox(height: AppSizes.paddingXl),
@@ -395,21 +231,10 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  String _themeModeLabel(ThemeMode mode) {
-    return switch (mode) {
-      ThemeMode.system => 'System default',
-      ThemeMode.light => 'Light',
-      ThemeMode.dark => 'Dark',
-    };
-  }
-
-  String _themeModeSubtitle(ThemeMode mode) {
-    return switch (mode) {
-      ThemeMode.system => 'Follows your device setting',
-      ThemeMode.light => 'Always use light theme',
-      ThemeMode.dark => 'Always use dark theme',
-    };
-  }
+  Widget _divider(bool isDark) => Divider(
+        height: 1,
+        color: isDark ? DarkColors.outlineVariant : LightColors.outlineVariant,
+      );
 
   Future<void> _handleDeleteAccount(
     BuildContext context,
@@ -600,80 +425,21 @@ class SettingsScreen extends ConsumerWidget {
       );
 }
 
-// ── Toggle tile ───────────────────────────────────────────────────────────────
+// ── Navigation tile ───────────────────────────────────────────────────────────
 
-class _ToggleTile extends StatelessWidget {
+class _NavTile extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String label;
   final String subtitle;
-  final bool value;
-  final Color primaryColor;
-  final bool isDark;
-  final ValueChanged<bool> onChanged;
-
-  const _ToggleTile({
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-    required this.value,
-    required this.primaryColor,
-    required this.isDark,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingMd, vertical: 10),
-      child: Row(children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: (value ? primaryColor : theme.colorScheme.onSurfaceVariant)
-                .withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-          ),
-          child: Icon(icon,
-              size: 18,
-              color: value
-                  ? primaryColor
-                  : theme.colorScheme.onSurfaceVariant),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: theme.textTheme.bodyMedium),
-            Text(subtitle,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          ]),
-        ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeTrackColor: primaryColor,
-        ),
-      ]),
-    );
-  }
-}
-
-// ── Sound tile ────────────────────────────────────────────────────────────────
-
-class _SoundTile extends StatelessWidget {
-  final AlarmSoundOption option;
-  final bool isSelected;
-  final Color primaryColor;
   final bool isDark;
   final VoidCallback onTap;
 
-  const _SoundTile({
-    required this.option,
-    required this.isSelected,
-    required this.primaryColor,
+  const _NavTile({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.subtitle,
     required this.isDark,
     required this.onTap,
   });
@@ -683,48 +449,41 @@ class _SoundTile extends StatelessWidget {
     final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppSizes.radiusMd),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.paddingMd, vertical: 13),
         child: Row(children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            width: 20,
-            height: 20,
+          Container(
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected
-                    ? primaryColor
-                    : theme.colorScheme.outlineVariant,
-                width: isSelected ? 6 : 2,
-              ),
+              color: iconColor.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(AppSizes.radiusSm),
             ),
+            child: Icon(icon, size: 20, color: iconColor),
           ),
-          const SizedBox(width: 12),
-          Icon(Icons.music_note_rounded,
-              size: 16,
-              color: isSelected
-                  ? primaryColor
-                  : theme.colorScheme.onSurfaceVariant),
-          const SizedBox(width: 8),
+          const SizedBox(width: 13),
           Expanded(
-            child: Text(
-              option.label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: isSelected ? primaryColor : null,
-                fontWeight:
-                    isSelected ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: theme.textTheme.bodyMedium),
+                  Text(subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                ]),
           ),
+          Icon(Icons.chevron_right_rounded,
+              size: 20, color: theme.colorScheme.onSurfaceVariant),
         ]),
       ),
     );
   }
 }
 
-// ── Account action tile ────────────────────────────────────────────────────────
+// ── Account action tile ───────────────────────────────────────────────────────
 
 class _AccountTile extends StatelessWidget {
   final IconData icon;
