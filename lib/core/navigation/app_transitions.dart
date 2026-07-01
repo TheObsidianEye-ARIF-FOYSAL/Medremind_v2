@@ -5,11 +5,10 @@ import 'package:flutter/material.dart';
 
 class AppPageRoute<T> extends PageRouteBuilder<T> {
   final Widget page;
-  final bool fullscreenDialog;
 
   AppPageRoute({
     required this.page,
-    this.fullscreenDialog = false,
+    bool fullscreenDialog = false,
     super.settings,
   }) : super(
           fullscreenDialog: fullscreenDialog,
