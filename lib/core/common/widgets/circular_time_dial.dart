@@ -2,35 +2,43 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Circular drag-dial time picker matching the clock design.
+/// Two-ring circular time picker.
 ///
-/// • Outer ring: grey track with a coloured arc + draggable handle (number circle).
-/// • Inner ring: decorative concentric ring inside the outer track.
-/// • Clock hand: thin line from centre to the inner ring, capped with a white dot.
-/// • Hour mode: drag the handle around the outer ring to set the hour.
-/// • Minute mode: same gesture, but snaps to 5-min increments.
+/// • **Outer ring** (large) — drag to set the **hour** (1–12).
+/// • **Inner ring** (small) — drag to set the **minute** (0–55, 5-min steps).
+/// Both rings are always interactive; the touch is routed to whichever ring
+/// is geometrically closer to the starting touch point.
 class CircularTimeDial extends StatefulWidget {
   final TimeOfDay value;
   final ValueChanged<TimeOfDay> onChanged;
-  final bool isHourMode;
 
   const CircularTimeDial({
     super.key,
     required this.value,
     required this.onChanged,
-    required this.isHourMode,
   });
 
   @override
   State<CircularTimeDial> createState() => _CircularTimeDialState();
 }
 
+enum _DragRing { hour, minute }
+
 class _CircularTimeDialState extends State<CircularTimeDial> {
   Offset? _center;
+  _DragRing _active = _DragRing.hour;
+
+  static const double _outerR = 118.0;
+  static const double _innerR = 68.0;
 
   void _onPanStart(DragStartDetails d) {
     final box = context.findRenderObject() as RenderBox;
     _center = box.size.center(Offset.zero);
+    final local = box.globalToLocal(d.globalPosition);
+    final dist = (local - _center!).distance;
+    final toOuter = (dist - _outerR).abs();
+    final toInner = (dist - _innerR).abs();
+    _active = toOuter <= toInner ? _DragRing.hour : _DragRing.minute;
   }
 
   void _onPanUpdate(DragUpdateDetails d) {
@@ -46,7 +54,7 @@ class _CircularTimeDialState extends State<CircularTimeDial> {
     int newHour = widget.value.hour;
     int newMinute = widget.value.minute;
 
-    if (widget.isHourMode) {
+    if (_active == _DragRing.hour) {
       var h12 = ((angle / (2 * math.pi)) * 12).round() % 12;
       final isPm = widget.value.hour >= 12;
       newHour = isPm ? h12 + 12 : h12;
@@ -70,162 +78,222 @@ class _CircularTimeDialState extends State<CircularTimeDial> {
       onPanStart: _onPanStart,
       onPanUpdate: _onPanUpdate,
       child: CustomPaint(
-        painter: _DialPainter(
+        painter: _TwoRingPainter(
           value: widget.value,
-          isHourMode: widget.isHourMode,
           primaryColor: primary,
           isDark: isDark,
         ),
-        child: const SizedBox(width: 288, height: 288),
+        child: const SizedBox(width: 300, height: 300),
       ),
     );
   }
 }
 
-class _DialPainter extends CustomPainter {
+// ── Painter ───────────────────────────────────────────────────────────────────
+
+class _TwoRingPainter extends CustomPainter {
   final TimeOfDay value;
-  final bool isHourMode;
   final Color primaryColor;
   final bool isDark;
 
-  _DialPainter({
+  _TwoRingPainter({
     required this.value,
-    required this.isHourMode,
     required this.primaryColor,
     required this.isDark,
   });
 
-  // Ring geometry
-  static const double _ringWidth = 26.0;
-  static const double _innerRingWidth = 1.5;
+  static const double _outerR = 118.0;
+  static const double _outerStroke = 26.0;
+  static const double _innerR = 68.0;
+  static const double _innerStroke = 20.0;
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final outerRadius = size.width / 2 - 14; // outer ring radius
-    final innerRadius = outerRadius * 0.62;  // decorative inner ring radius
 
     final trackColor = isDark
         ? const Color(0xFF2C2C3E)
         : const Color(0xFFDDDDEE);
-    final innerRingColor = isDark
-        ? const Color(0xFF3A3A50)
-        : const Color(0xFFCCCCDD);
 
-    // ── 1. Outer background track ─────────────────────────────────────────────
+    // Secondary colour for the minute ring (slightly transparent primary)
+    final minuteArcColor = primaryColor.withValues(alpha: isDark ? 0.65 : 0.55);
+
+    // ── Outer ring track (hours) ──────────────────────────────────────────────
     canvas.drawCircle(
       center,
-      outerRadius,
+      _outerR,
       Paint()
         ..color = trackColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = _ringWidth,
+        ..strokeWidth = _outerStroke,
     );
 
-    // ── 2. Inner decorative ring ──────────────────────────────────────────────
+    // ── Inner ring track (minutes) ────────────────────────────────────────────
     canvas.drawCircle(
       center,
-      innerRadius,
+      _innerR,
       Paint()
-        ..color = innerRingColor
+        ..color = trackColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = _innerRingWidth,
+        ..strokeWidth = _innerStroke,
     );
 
-    // ── 3. Progress arc (12 o'clock → handle, clockwise) ─────────────────────
+    // ── Hour arc (outer ring, full primary colour) ────────────────────────────
     final h12 = value.hour % 12;
-    final fraction =
-        isHourMode ? (h12 / 12.0) : (value.minute / 60.0);
-    final sweepAngle = fraction * 2 * math.pi;
+    final hourFraction = h12 / 12.0;
+    final hourSweep = hourFraction * 2 * math.pi;
 
-    if (sweepAngle > 0.001) {
+    if (hourSweep > 0.001) {
       canvas.drawArc(
-        Rect.fromCircle(center: center, radius: outerRadius),
+        Rect.fromCircle(center: center, radius: _outerR),
         -math.pi / 2,
-        sweepAngle,
+        hourSweep,
         false,
         Paint()
           ..color = isDark
               ? Colors.white.withValues(alpha: 0.88)
-              : Colors.white.withValues(alpha: 0.70)
+              : Colors.white.withValues(alpha: 0.72)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = _ringWidth
+          ..strokeWidth = _outerStroke
           ..strokeCap = StrokeCap.round,
       );
     }
 
-    // ── 4. Clock hand: centre → inner ring, with white cap dot ───────────────
-    final handAngle = -math.pi / 2 + sweepAngle;
-    final handEnd = Offset(
-      center.dx + innerRadius * math.cos(handAngle),
-      center.dy + innerRadius * math.sin(handAngle),
-    );
+    // ── Minute arc (inner ring) ───────────────────────────────────────────────
+    final minFraction = value.minute / 60.0;
+    final minSweep = minFraction * 2 * math.pi;
 
-    // Hand line
-    canvas.drawLine(
-      center,
-      handEnd,
-      Paint()
-        ..color = primaryColor.withValues(alpha: 0.55)
-        ..strokeWidth = 2.0
-        ..strokeCap = StrokeCap.round,
-    );
+    if (minSweep > 0.001) {
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: _innerR),
+        -math.pi / 2,
+        minSweep,
+        false,
+        Paint()
+          ..color = minuteArcColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = _innerStroke
+          ..strokeCap = StrokeCap.round,
+      );
+    }
 
-    // White cap dot at end of hand
-    canvas.drawCircle(
-      handEnd,
-      5.5,
-      Paint()..color = Colors.white.withValues(alpha: 0.90),
-    );
-
-    // ── 5. 12-o'clock reference marker ───────────────────────────────────────
-    final topPos = Offset(center.dx, center.dy - outerRadius);
-    canvas.drawCircle(
-      topPos,
-      15,
-      Paint()
-        ..color = isDark
-            ? const Color(0xFF4A4A60)
-            : const Color(0xFFAAAAAA),
-    );
-    _drawText(
-      canvas,
-      isHourMode ? '12' : '00',
-      topPos,
-      isDark ? Colors.white54 : Colors.black54,
-      11,
-      FontWeight.w600,
-    );
-
-    // ── 6. Handle circle on outer ring ───────────────────────────────────────
-    final handlePos = Offset(
-      center.dx + outerRadius * math.cos(handAngle),
-      center.dy + outerRadius * math.sin(handAngle),
+    // ── Hour handle (outer ring) ──────────────────────────────────────────────
+    final hourAngle = -math.pi / 2 + hourSweep;
+    final hourHandlePos = Offset(
+      center.dx + _outerR * math.cos(hourAngle),
+      center.dy + _outerR * math.sin(hourAngle),
     );
 
     // Glow
     canvas.drawCircle(
-      handlePos,
+      hourHandlePos,
       22,
       Paint()
         ..color = primaryColor.withValues(alpha: 0.28)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9),
+    );
+    // Handle circle
+    canvas.drawCircle(hourHandlePos, 17, Paint()..color = primaryColor);
+    // Hour label
+    final hLabel = h12 == 0 ? '12' : h12.toString();
+    _drawText(canvas, hLabel, hourHandlePos, Colors.white, 13, FontWeight.bold);
+
+    // 12 o'clock marker (outer)
+    _drawRingMarker(
+      canvas,
+      center: center,
+      radius: _outerR,
+      label: '12',
+      isDark: isDark,
     );
 
-    // Filled circle
-    canvas.drawCircle(handlePos, 18, Paint()..color = primaryColor);
+    // ── Minute handle (inner ring) ────────────────────────────────────────────
+    final minAngle = -math.pi / 2 + minSweep;
+    final minHandlePos = Offset(
+      center.dx + _innerR * math.cos(minAngle),
+      center.dy + _innerR * math.sin(minAngle),
+    );
 
-    // Label inside handle
-    final label = isHourMode
-        ? (h12 == 0 ? '12' : h12.toString())
-        : value.minute.toString().padLeft(2, '0');
-    _drawText(canvas, label, handlePos, Colors.white, 14, FontWeight.bold);
+    // Glow
+    canvas.drawCircle(
+      minHandlePos,
+      18,
+      Paint()
+        ..color = primaryColor.withValues(alpha: 0.22)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+    );
+    // Handle circle
+    canvas.drawCircle(
+        minHandlePos, 13, Paint()..color = primaryColor.withValues(alpha: 0.85));
+    // Minute label
+    final mLabel = value.minute.toString().padLeft(2, '0');
+    _drawText(canvas, mLabel, minHandlePos, Colors.white, 11, FontWeight.bold);
 
-    // ── 7. Centre dot ─────────────────────────────────────────────────────────
+    // 00 marker (inner)
+    _drawRingMarker(
+      canvas,
+      center: center,
+      radius: _innerR,
+      label: '00',
+      isDark: isDark,
+      markerRadius: 12,
+      fontSize: 9,
+    );
+
+    // ── Clock hands (thin lines from centre to each handle) ───────────────────
+    final handPaint = Paint()
+      ..color = primaryColor.withValues(alpha: 0.40)
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round;
+
+    // Hour hand — stops just inside outer ring
+    final hourHandEnd = Offset(
+      center.dx + (_outerR - _outerStroke / 2 - 4) * math.cos(hourAngle),
+      center.dy + (_outerR - _outerStroke / 2 - 4) * math.sin(hourAngle),
+    );
+    canvas.drawLine(center, hourHandEnd, handPaint);
+
+    // Minute hand — stops just inside inner ring
+    final minHandEnd = Offset(
+      center.dx + (_innerR - _innerStroke / 2 - 4) * math.cos(minAngle),
+      center.dy + (_innerR - _innerStroke / 2 - 4) * math.sin(minAngle),
+    );
+    canvas.drawLine(center, minHandEnd, handPaint);
+
+    // ── Centre dot ────────────────────────────────────────────────────────────
     canvas.drawCircle(
       center,
-      5,
-      Paint()..color = primaryColor.withValues(alpha: 0.7),
+      5.5,
+      Paint()..color = primaryColor,
+    );
+  }
+
+  /// Draws the "12" / "00" reference marker on the ring at 12 o'clock.
+  void _drawRingMarker(
+    Canvas canvas, {
+    required Offset center,
+    required double radius,
+    required String label,
+    required bool isDark,
+    double markerRadius = 14,
+    double fontSize = 10,
+  }) {
+    final topPos = Offset(center.dx, center.dy - radius);
+    canvas.drawCircle(
+      topPos,
+      markerRadius,
+      Paint()
+        ..color = isDark
+            ? const Color(0xFF4A4A60)
+            : const Color(0xFFB0B0C8),
+    );
+    _drawText(
+      canvas,
+      label,
+      topPos,
+      isDark ? Colors.white54 : Colors.black54,
+      fontSize,
+      FontWeight.w600,
     );
   }
 
@@ -242,9 +310,8 @@ class _DialPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DialPainter old) =>
+  bool shouldRepaint(_TwoRingPainter old) =>
       old.value != value ||
-      old.isHourMode != isHourMode ||
       old.primaryColor != primaryColor ||
       old.isDark != isDark;
 }
