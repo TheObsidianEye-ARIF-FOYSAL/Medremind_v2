@@ -10,6 +10,7 @@ class AddMedicineFormState {
   final String strength;
   final bool isSaving;
   final String? error;
+  final String? editingId;
 
   const AddMedicineFormState({
     this.brandName = '',
@@ -17,6 +18,7 @@ class AddMedicineFormState {
     this.strength = '',
     this.isSaving = false,
     this.error,
+    this.editingId,
   });
 
   AddMedicineFormState copyWith({
@@ -25,6 +27,7 @@ class AddMedicineFormState {
     String? strength,
     bool? isSaving,
     String? error,
+    String? editingId,
   }) =>
       AddMedicineFormState(
         brandName: brandName ?? this.brandName,
@@ -32,9 +35,11 @@ class AddMedicineFormState {
         strength: strength ?? this.strength,
         isSaving: isSaving ?? this.isSaving,
         error: error ?? this.error,
+        editingId: editingId ?? this.editingId,
       );
 
   bool get isValid => brandName.trim().isNotEmpty;
+  bool get isEditing => editingId != null;
 }
 
 // ── Notifier ──────────────────────────────────────────────────────────────────
@@ -47,16 +52,39 @@ class AddMedicineFormNotifier extends StateNotifier<AddMedicineFormState> {
   void setForm(MedicineForm f) => state = state.copyWith(form: f);
   void setStrength(String v) => state = state.copyWith(strength: v);
 
+  /// Loads an existing medicine's fields for editing.
+  void loadForEdit(Medicine med) {
+    state = AddMedicineFormState(
+      brandName: med.brandName,
+      form: med.form,
+      strength: med.strength,
+      editingId: med.id,
+    );
+  }
+
   Future<bool> save() async {
     if (!state.isValid) return false;
     state = state.copyWith(isSaving: true, error: null);
     try {
       final medRepo = _ref.read(medicineRepositoryProvider);
-      await medRepo.insert(
-        brandName: state.brandName.trim(),
-        form: state.form,
-        strength: state.strength.trim(),
-      );
+      if (state.isEditing) {
+        final existing = await medRepo.getById(state.editingId!);
+        if (existing == null) throw StateError('Medicine not found');
+        await medRepo.update(Medicine(
+          id: existing.id,
+          brandName: state.brandName.trim(),
+          genericGroupId: existing.genericGroupId,
+          form: state.form,
+          strength: state.strength.trim(),
+          notes: existing.notes,
+        ));
+      } else {
+        await medRepo.insert(
+          brandName: state.brandName.trim(),
+          form: state.form,
+          strength: state.strength.trim(),
+        );
+      }
       state = state.copyWith(isSaving: false);
       return true;
     } catch (e) {

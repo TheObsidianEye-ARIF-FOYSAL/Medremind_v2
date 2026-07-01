@@ -135,7 +135,7 @@ class _AddDoseGroupScreenState extends ConsumerState<AddDoseGroupScreen> {
                                   child: CircularProgressIndicator(
                                       strokeWidth: 2, color: Colors.white),
                                 )
-                              : const Text('Save'),
+                              : Text(_isEditing ? 'Update' : 'Save'),
                         )
                       : const SizedBox.shrink(key: ValueKey('empty')),
                 ),
@@ -595,16 +595,32 @@ class _AddDoseGroupScreenState extends ConsumerState<AddDoseGroupScreen> {
 
     try {
       final repo = ref.read(doseGroupRepositoryProvider);
-      final group = await repo.insert(
-        label: _label,
-        timeOfDay: '$h:$m',
-        mealRelation: _meal,
-        daysOfWeek: _days,
-        startDate: DateTime.now(),
-        items: _slots
-            .map((s) => (medicineId: s.med.id, quantity: s.quantity))
-            .toList(),
-      );
+      final items = _slots
+          .map((s) => (medicineId: s.med.id, quantity: s.quantity))
+          .toList();
+
+      final DoseGroup group;
+      if (_isEditing) {
+        group = await repo.update(
+          id: widget.existing!.id,
+          label: _label,
+          timeOfDay: '$h:$m',
+          mealRelation: _meal,
+          daysOfWeek: _days,
+          items: items,
+        );
+        await alarmService.cancelAlarm(
+            AlarmServiceImpl.alarmId(group.id, DateTime.now()));
+      } else {
+        group = await repo.insert(
+          label: _label,
+          timeOfDay: '$h:$m',
+          mealRelation: _meal,
+          daysOfWeek: _days,
+          startDate: DateTime.now(),
+          items: items,
+        );
+      }
       await alarmService.scheduleForGroup(group);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
