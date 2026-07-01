@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/models/dose_group.dart';
 import '../../../../core/models/medicine.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
@@ -114,26 +115,135 @@ class MedicineTile extends ConsumerWidget {
   }
 
   Future<void> _onMenu(BuildContext context, WidgetRef ref, String action) async {
-    if (action == 'delete') {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Remove Medicine'),
-          content: Text('Remove "${med.brandName}" from your cabinet?'),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel')),
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Remove',
-                    style: TextStyle(color: Colors.redAccent))),
-          ],
-        ),
-      );
-      if (confirmed == true) {
-        await ref.read(medicineRepositoryProvider).delete(med.id);
+    if (action != 'delete') return;
+
+    final groups = await ref.read(doseGroupRepositoryProvider).getAll();
+    final usedIn = groups
+        .where((g) => g.items.any((i) => i.medicineId == med.id))
+        .toList();
+
+    if (usedIn.isNotEmpty) {
+      if (!context.mounted) return;
+      await _showBlockedDialog(context, usedIn);
+      return;
+    }
+
+    if (!context.mounted) return;
+    final confirmed = await _showConfirmDialog(context);
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(medicineRepositoryProvider).delete(med.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('"${med.brandName}" removed'),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              'Couldn\'t remove "${med.brandName}" — it\'s still linked to a dose group.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.redAccent,
+        ));
       }
     }
+  }
+
+  Future<bool?> _showConfirmDialog(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusLg)),
+        icon: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: Colors.redAccent.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.delete_outline_rounded,
+              color: Colors.redAccent, size: 26),
+        ),
+        title: const Text('Remove Medicine', textAlign: TextAlign.center),
+        content: Text(
+          'Remove "${med.brandName}" from your cabinet? This can\'t be undone.',
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showBlockedDialog(BuildContext context, List<DoseGroup> groups) {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusLg)),
+        icon: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: Colors.amber.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.lock_outline_rounded,
+              color: Colors.amber, size: 26),
+        ),
+        title: const Text('Can\'t Remove Medicine', textAlign: TextAlign.center),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '"${med.brandName}" is still used in ${groups.length == 1 ? 'this dose group' : 'these dose groups'}:',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            for (final g in groups)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.schedule_rounded, size: 16),
+                    const SizedBox(width: 6),
+                    Flexible(
+                        child: Text(g.label,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w600))),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 10),
+            const Text(
+              'Remove it from the group first, then try again.',
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
   }
 }
