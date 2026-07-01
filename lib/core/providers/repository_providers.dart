@@ -34,6 +34,10 @@ final genericGroupRepositoryProvider = Provider<GenericGroupRepository>(
   (_) => GenericGroupRepository(),
 );
 
+final medicineDatasetRepositoryProvider = Provider<MedicineDatasetRepository>(
+  (_) => medicineDatasetRepository,
+);
+
 // ── Reactive stream providers ─────────────────────────────────────────────────
 
 final medicinesStreamProvider = StreamProvider((ref) async* {
