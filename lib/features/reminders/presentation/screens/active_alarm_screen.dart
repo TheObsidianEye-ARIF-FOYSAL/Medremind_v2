@@ -10,7 +10,6 @@ import '../../../../core/models/dose_log.dart';
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/services/alarm_service.dart';
-import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/theme_constants.dart';
 
 const _maxSnoozes = 5;
@@ -88,7 +87,6 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
     // stop the alarm so it doesn't ring in the background forever.
     if (!_acted) {
       alarmService.cancelAlarm(widget.alarmId);
-      notificationService.cancelAlarmActions(widget.alarmId);
     }
     super.dispose();
   }
@@ -169,7 +167,6 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
       await _updateLog(DoseStatus.skipped);
     }
 
-    await notificationService.cancelAlarmActions(widget.alarmId);
     if (mounted) appRouter.go(AppRoutes.home);
   }
 
@@ -180,7 +177,7 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
       id: originalAlarmId + 800000,
       scheduledAt: snoozeAt,
       title: '${_group?.label ?? 'Medicine'} — Snoozed reminder',
-      body: 'Respond from the "Medicine Alarm" notification below',
+      body: 'Tap to open MedRemind and respond',
       groupId: widget.doseGroupId,
     );
   }
@@ -195,7 +192,6 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
     await alarmService.cancelAlarm(widget.alarmId);
     // Also cancel any pending snooze alarm.
     await alarmService.cancelAlarm(widget.alarmId + 800000);
-    await notificationService.cancelAlarmActions(widget.alarmId);
 
     // Reset snooze counter on explicit user action.
     final prefs = await SharedPreferences.getInstance();
