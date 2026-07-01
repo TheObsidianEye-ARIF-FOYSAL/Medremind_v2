@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/models/dose_group.dart';
+import '../../../../core/navigation/app_transitions.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
+import '../screens/add_dose_group_screen.dart';
 
 class GroupTile extends ConsumerWidget {
   final DoseGroup group;
@@ -94,30 +96,72 @@ class GroupTile extends ConsumerWidget {
         ),
         MedChips(group: group, color: color),
         PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert_rounded, size: 20),
+          icon: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.more_vert_rounded, size: 18),
+          ),
+          elevation: 6,
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+              borderRadius: BorderRadius.circular(AppSizes.radiusLg)),
           onSelected: (v) => _onMenu(context, ref, v),
           itemBuilder: (_) => [
             PopupMenuItem(
+                value: 'edit',
+                child: Row(children: [
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                    ),
+                    child: Icon(Icons.edit_rounded, size: 16, color: color),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Edit'),
+                ])),
+            PopupMenuItem(
                 value: 'toggle',
                 child: Row(children: [
-                  Icon(
-                    group.isActive
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
-                    size: 18,
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                    ),
+                    child: Icon(
+                      group.isActive
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                      size: 16,
+                    ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Text(group.isActive ? 'Pause' : 'Resume'),
                 ])),
-            const PopupMenuItem(
+            const PopupMenuDivider(height: 6),
+            PopupMenuItem(
                 value: 'delete',
                 child: Row(children: [
-                  Icon(Icons.delete_outline_rounded, size: 18,
-                      color: Colors.redAccent),
-                  SizedBox(width: 10),
-                  Text('Remove'),
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                    ),
+                    child: const Icon(Icons.delete_outline_rounded,
+                        size: 16, color: Colors.redAccent),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Remove',
+                      style: TextStyle(color: Colors.redAccent)),
                 ])),
           ],
         ),
