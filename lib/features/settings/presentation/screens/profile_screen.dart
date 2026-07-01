@@ -227,6 +227,300 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
+// ── Account actions (Logout / Unsubscribe / Delete) ──────────────────────────
+
+class _AccountActions extends ConsumerWidget {
+  final bool isDark;
+  final Color primary;
+  final bool isGoogleUser;
+
+  const _AccountActions({
+    required this.isDark,
+    required this.primary,
+    required this.isGoogleUser,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final surface = isDark ? DarkColors.surface : LightColors.surface;
+    final divColor =
+        isDark ? DarkColors.outlineVariant : LightColors.outlineVariant;
+
+    final authNotifier = ref.read(authProvider.notifier);
+    final fbNotifier = ref.read(firebaseAuthProvider.notifier);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(AppSizes.radiusCard),
+      ),
+      child: Column(children: [
+        // ── Logout ─────────────────────────────────────────────────────────
+        _ActionTile(
+          icon: Icons.logout_rounded,
+          label: 'Logout',
+          subtitle: 'Sign out — subscription stays active',
+          color: primary,
+          isDark: isDark,
+          onTap: () async {
+            final ok = await _confirm(context,
+                title: 'Logout?',
+                message:
+                    'You will be signed out and redirected to the login screen. Your BdApps subscription remains active.',
+                confirmLabel: 'Logout');
+            if (ok) await fbNotifier.signOut();
+          },
+        ),
+        Divider(height: 1, color: divColor),
+
+        // ── Unsubscribe ────────────────────────────────────────────────────
+        _ActionTile(
+          icon: Icons.unsubscribe_rounded,
+          label: 'Unsubscribe',
+          subtitle: 'Cancel BdApps subscription and sign out',
+          color: Colors.orange,
+          isDark: isDark,
+          onTap: () async {
+            final ok = await _confirm(context,
+                title: 'Unsubscribe?',
+                message:
+                    'Your BdApps subscription will be cancelled. You will need to subscribe again to use the app.',
+                confirmLabel: 'Unsubscribe',
+                destructive: true);
+            if (!ok || !context.mounted) return;
+            final unsubOk = await authNotifier.unsubscribe();
+            if (unsubOk) {
+              await fbNotifier.signOut();
+            } else if (context.mounted) {
+              final err = ref.read(authProvider).error;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(err ?? 'Unsubscribe failed')),
+              );
+            }
+          },
+        ),
+        Divider(height: 1, color: divColor),
+
+        // ── Delete Account ─────────────────────────────────────────────────
+        _ActionTile(
+          icon: Icons.delete_forever_rounded,
+          label: 'Delete Account',
+          subtitle: 'Permanently delete your account and all data',
+          color: TagColors.missed,
+          isDark: isDark,
+          onTap: () => _handleDelete(context, ref,
+              authNotifier: authNotifier,
+              fbNotifier: fbNotifier,
+              isGoogleUser: isGoogleUser),
+        ),
+      ]),
+    );
+  }
+
+  Future<bool> _confirm(
+    BuildContext context, {
+    required String title,
+    required String message,
+    required String confirmLabel,
+    bool destructive = false,
+  }) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(
+                foregroundColor: destructive ? TagColors.missed : null),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
+    return result == true;
+  }
+
+  Future<void> _handleDelete(
+    BuildContext context,
+    WidgetRef ref, {
+    required AuthNotifier authNotifier,
+    required FirebaseAuthNotifier fbNotifier,
+    required bool isGoogleUser,
+  }) async {
+    String? password;
+
+    if (!isGoogleUser) {
+      final ctrl = TextEditingController();
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Delete Account'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            _warnBox(
+                'This will permanently delete your account, all data, and cancel your BdApps subscription.'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Enter your password to confirm',
+                prefixIcon: Icon(Icons.lock_outline_rounded),
+              ),
+            ),
+          ]),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: TextButton.styleFrom(foregroundColor: TagColors.missed),
+              child: const Text('Delete Account'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+      password = ctrl.text;
+    } else {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Delete Account'),
+          content: _warnBox(
+              'This will permanently delete your account, all data, and cancel your BdApps subscription. You will be asked to sign in with Google to confirm.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: TextButton.styleFrom(foregroundColor: TagColors.missed),
+              child: const Text('Delete Account'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+    }
+
+    // Loading overlay
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+        canPop: false,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Center(
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Deleting account…'),
+                ]),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await authNotifier.unsubscribe();
+    final deleted = await fbNotifier.deleteAccount(password: password);
+
+    if (context.mounted) Navigator.of(context).pop(); // close loader
+
+    if (!deleted && context.mounted) {
+      final err = ref.read(firebaseAuthProvider).error;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(err ?? 'Account deletion failed'),
+        backgroundColor: TagColors.missed,
+      ));
+    }
+  }
+
+  static Widget _warnBox(String text) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: TagColors.missed.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: TagColors.missed.withValues(alpha: 0.30)),
+        ),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.warning_rounded, color: TagColors.missed, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text, style: const TextStyle(fontSize: 12)),
+          ),
+        ]),
+      );
+}
+
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _ActionTile({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.paddingMd, vertical: 14),
+        child: Row(children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+            ),
+            child: Icon(icon, size: 20, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(color: color, fontWeight: FontWeight.w600)),
+                  Text(subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant)),
+                ]),
+          ),
+          Icon(Icons.chevron_right_rounded,
+              size: 18, color: theme.colorScheme.onSurfaceVariant),
+        ]),
+      ),
+    );
+  }
+}
+
 // ── Change password card ──────────────────────────────────────────────────────
 
 class _ChangePasswordCard extends ConsumerStatefulWidget {
