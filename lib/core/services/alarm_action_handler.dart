@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../database/database_service.dart';
 import '../models/dose_log.dart';
 import '../repositories/dose_log_repository.dart';
@@ -14,25 +16,31 @@ import 'alarm_service.dart';
 /// dismisses it natively without needing a round-trip back into our code.
 Future<void> applyAlarmAction(
     String actionId, int alarmId, String groupId) async {
-  await alarmService.cancelAlarm(alarmId);
+  debugPrint('[AlarmAction] $actionId alarmId=$alarmId groupId=$groupId');
+  try {
+    await alarmService.cancelAlarm(alarmId);
 
-  final db = AppDatabase.instance;
-  final logRepo = DoseLogRepository(db);
+    final db = AppDatabase.instance;
+    final logRepo = DoseLogRepository(db);
 
-  if (actionId == 'alarm_taken') {
-    await _upsertLog(logRepo, groupId, DoseStatus.taken);
-  } else if (actionId == 'alarm_skip') {
-    await _upsertLog(logRepo, groupId, DoseStatus.skipped);
-  } else if (actionId == 'alarm_snooze') {
-    // Snooze: re-ring in 5 min (no dose log update).
-    final snoozeAt = DateTime.now().add(const Duration(minutes: 5));
-    await alarmService.scheduleAlarm(
-      id: alarmId + 800000,
-      scheduledAt: snoozeAt,
-      title: 'Medicine — Snoozed reminder',
-      body: 'Respond from the "Medicine Alarm" notification below',
-      groupId: groupId,
-    );
+    if (actionId == 'alarm_taken') {
+      await _upsertLog(logRepo, groupId, DoseStatus.taken);
+    } else if (actionId == 'alarm_skip') {
+      await _upsertLog(logRepo, groupId, DoseStatus.skipped);
+    } else if (actionId == 'alarm_snooze') {
+      // Snooze: re-ring in 5 min (no dose log update).
+      final snoozeAt = DateTime.now().add(const Duration(minutes: 5));
+      await alarmService.scheduleAlarm(
+        id: alarmId + 800000,
+        scheduledAt: snoozeAt,
+        title: 'Medicine — Snoozed reminder',
+        body: 'Respond from the "Medicine Alarm" notification below',
+        groupId: groupId,
+      );
+    }
+    debugPrint('[AlarmAction] $actionId applied successfully');
+  } catch (e, st) {
+    debugPrint('[AlarmAction] FAILED: $e\n$st');
   }
 }
 
