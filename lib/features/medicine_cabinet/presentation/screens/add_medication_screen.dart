@@ -44,12 +44,10 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   Future<void> _loadSuggestions() async {
     // Pull the full brand list once from the bundled 21k+ brand dataset so
     // the Autocomplete's synchronous optionsBuilder can filter it locally.
-    final all = await ref.read(medicineDatasetRepositoryProvider).searchBrands(
-          'a',
-          limit: 1 << 20,
-        );
+    final all =
+        await ref.read(medicineDatasetRepositoryProvider).allBrandNames();
     if (!mounted) return;
-    setState(() => _suggestions = all.map((b) => b.brand).toSet().toList()..sort());
+    setState(() => _suggestions = all);
   }
 
   @override

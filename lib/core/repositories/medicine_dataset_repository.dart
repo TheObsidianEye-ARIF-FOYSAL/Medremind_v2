@@ -48,6 +48,12 @@ class MedicineDatasetRepository {
     });
   }
 
+  /// All distinct brand names in the dataset (for local Autocomplete filtering).
+  Future<List<String>> allBrandNames() async {
+    await _ensureLoaded();
+    return _brands!.map((b) => b.brand).toSet().toList()..sort();
+  }
+
   /// Case-insensitive substring search over brand names, best-match-first.
   Future<List<BrandInfo>> searchBrands(String query, {int limit = 8}) async {
     if (query.trim().length < 2) return [];
