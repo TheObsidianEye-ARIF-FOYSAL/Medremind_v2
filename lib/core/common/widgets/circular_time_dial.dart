@@ -2,11 +2,13 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// The circular drag-dial time picker matching the design (Images 2/3/4).
+/// Circular drag-dial time picker matching the clock design.
 ///
-/// • Hour mode: drag the purple handle around the outer ring to set the hour.
-/// • Minute mode: drag to set minutes (in 5-min steps).
-/// • Toggle between modes by tapping the central time display in the parent.
+/// • Outer ring: grey track with a coloured arc + draggable handle (number circle).
+/// • Inner ring: decorative concentric ring inside the outer track.
+/// • Clock hand: thin line from centre to the inner ring, capped with a white dot.
+/// • Hour mode: drag the handle around the outer ring to set the hour.
+/// • Minute mode: same gesture, but snaps to 5-min increments.
 class CircularTimeDial extends StatefulWidget {
   final TimeOfDay value;
   final ValueChanged<TimeOfDay> onChanged;
@@ -25,10 +27,6 @@ class CircularTimeDial extends StatefulWidget {
 
 class _CircularTimeDialState extends State<CircularTimeDial> {
   Offset? _center;
-  @override
-  void didUpdateWidget(CircularTimeDial old) {
-    super.didUpdateWidget(old);
-  }
 
   void _onPanStart(DragStartDetails d) {
     final box = context.findRenderObject() as RenderBox;
@@ -42,7 +40,6 @@ class _CircularTimeDialState extends State<CircularTimeDial> {
     final dx = local.dx - _center!.dx;
     final dy = local.dy - _center!.dy;
 
-    // atan2 gives angle from positive-x axis; we want from top (negative-y).
     var angle = math.atan2(dx, -dy);
     if (angle < 0) angle += 2 * math.pi;
 
@@ -50,14 +47,11 @@ class _CircularTimeDialState extends State<CircularTimeDial> {
     int newMinute = widget.value.minute;
 
     if (widget.isHourMode) {
-      // Map [0, 2π] to [0, 12)
       var h12 = ((angle / (2 * math.pi)) * 12).round() % 12;
-      // Preserve AM/PM
       final isPm = widget.value.hour >= 12;
       newHour = isPm ? h12 + 12 : h12;
       if (newHour != widget.value.hour) HapticFeedback.selectionClick();
     } else {
-      // Snap to 5-minute increments
       final raw = ((angle / (2 * math.pi)) * 60).round() % 60;
       newMinute = (raw ~/ 5) * 5;
       if (newMinute != widget.value.minute) HapticFeedback.selectionClick();
@@ -82,7 +76,7 @@ class _CircularTimeDialState extends State<CircularTimeDial> {
           primaryColor: primary,
           isDark: isDark,
         ),
-        child: const SizedBox(width: 280, height: 280),
+        child: const SizedBox(width: 288, height: 288),
       ),
     );
   }
@@ -101,73 +95,99 @@ class _DialPainter extends CustomPainter {
     required this.isDark,
   });
 
+  // Ring geometry
+  static const double _ringWidth = 26.0;
+  static const double _innerRingWidth = 1.5;
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final outerRadius = size.width / 2 - 10;
-    final ringWidth = 28.0;
+    final outerRadius = size.width / 2 - 14; // outer ring radius
+    final innerRadius = outerRadius * 0.62;  // decorative inner ring radius
 
-    // ── 1. Background ring (track) ──────────────────────────────────────────
-    final trackPaint = Paint()
-      ..color = isDark
-          ? const Color(0xFF2A2A3A)
-          : const Color(0xFFE0E0EC)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = ringWidth;
-    canvas.drawCircle(center, outerRadius, trackPaint);
+    final trackColor = isDark
+        ? const Color(0xFF2C2C3E)
+        : const Color(0xFFDDDDEE);
+    final innerRingColor = isDark
+        ? const Color(0xFF3A3A50)
+        : const Color(0xFFCCCCDD);
 
-    // ── 2. White progress arc — from 12 o'clock clockwise to handle ────────
+    // ── 1. Outer background track ─────────────────────────────────────────────
+    canvas.drawCircle(
+      center,
+      outerRadius,
+      Paint()
+        ..color = trackColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _ringWidth,
+    );
+
+    // ── 2. Inner decorative ring ──────────────────────────────────────────────
+    canvas.drawCircle(
+      center,
+      innerRadius,
+      Paint()
+        ..color = innerRingColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _innerRingWidth,
+    );
+
+    // ── 3. Progress arc (12 o'clock → handle, clockwise) ─────────────────────
     final h12 = value.hour % 12;
-    final handleFraction = isHourMode
-        ? (h12 / 12.0)
-        : (value.minute / 60.0);
-    final sweepAngle = handleFraction * 2 * math.pi;
+    final fraction =
+        isHourMode ? (h12 / 12.0) : (value.minute / 60.0);
+    final sweepAngle = fraction * 2 * math.pi;
 
     if (sweepAngle > 0.001) {
-      final arcPaint = Paint()
-        ..color = isDark
-            ? Colors.white.withValues(alpha: 0.85)
-            : Colors.white.withValues(alpha: 0.6)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = ringWidth
-        ..strokeCap = StrokeCap.round;
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: outerRadius),
-        -math.pi / 2,  // start at top (12 o'clock)
+        -math.pi / 2,
         sweepAngle,
         false,
-        arcPaint,
+        Paint()
+          ..color = isDark
+              ? Colors.white.withValues(alpha: 0.88)
+              : Colors.white.withValues(alpha: 0.70)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = _ringWidth
+          ..strokeCap = StrokeCap.round,
       );
     }
 
-    // ── 3. Handle position ──────────────────────────────────────────────────
-    final handleAngle = -math.pi / 2 + sweepAngle;
-    final handlePos = Offset(
-      center.dx + outerRadius * math.cos(handleAngle),
-      center.dy + outerRadius * math.sin(handleAngle),
+    // ── 4. Clock hand: centre → inner ring, with white cap dot ───────────────
+    final handAngle = -math.pi / 2 + sweepAngle;
+    final handEnd = Offset(
+      center.dx + innerRadius * math.cos(handAngle),
+      center.dy + innerRadius * math.sin(handAngle),
     );
 
-    // Handle glow
-    final glowPaint = Paint()
-      ..color = primaryColor.withValues(alpha: 0.3)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-    canvas.drawCircle(handlePos, 22, glowPaint);
+    // Hand line
+    canvas.drawLine(
+      center,
+      handEnd,
+      Paint()
+        ..color = primaryColor.withValues(alpha: 0.55)
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round,
+    );
 
-    // Handle circle
-    final handlePaint = Paint()..color = primaryColor;
-    canvas.drawCircle(handlePos, 18, handlePaint);
+    // White cap dot at end of hand
+    canvas.drawCircle(
+      handEnd,
+      5.5,
+      Paint()..color = Colors.white.withValues(alpha: 0.90),
+    );
 
-    // Handle label (hour or minute number)
-    final label = isHourMode
-        ? (h12 == 0 ? '12' : h12.toString())
-        : value.minute.toString().padLeft(2, '0');
-    _drawText(canvas, label, handlePos, Colors.white, 14, FontWeight.bold);
-
-    // ── 4. 12 o'clock reference marker ─────────────────────────────────────
+    // ── 5. 12-o'clock reference marker ───────────────────────────────────────
     final topPos = Offset(center.dx, center.dy - outerRadius);
-    final markerPaint = Paint()
-      ..color = isDark ? const Color(0xFF555566) : const Color(0xFFB0B0C8);
-    canvas.drawCircle(topPos, 16, markerPaint);
+    canvas.drawCircle(
+      topPos,
+      15,
+      Paint()
+        ..color = isDark
+            ? const Color(0xFF4A4A60)
+            : const Color(0xFFAAAAAA),
+    );
     _drawText(
       canvas,
       isHourMode ? '12' : '00',
@@ -177,59 +197,48 @@ class _DialPainter extends CustomPainter {
       FontWeight.w600,
     );
 
-    // ── 5. Center dot ───────────────────────────────────────────────────────
+    // ── 6. Handle circle on outer ring ───────────────────────────────────────
+    final handlePos = Offset(
+      center.dx + outerRadius * math.cos(handAngle),
+      center.dy + outerRadius * math.sin(handAngle),
+    );
+
+    // Glow
+    canvas.drawCircle(
+      handlePos,
+      22,
+      Paint()
+        ..color = primaryColor.withValues(alpha: 0.28)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+
+    // Filled circle
+    canvas.drawCircle(handlePos, 18, Paint()..color = primaryColor);
+
+    // Label inside handle
+    final label = isHourMode
+        ? (h12 == 0 ? '12' : h12.toString())
+        : value.minute.toString().padLeft(2, '0');
+    _drawText(canvas, label, handlePos, Colors.white, 14, FontWeight.bold);
+
+    // ── 7. Centre dot ─────────────────────────────────────────────────────────
     canvas.drawCircle(
       center,
       5,
-      Paint()..color = primaryColor.withValues(alpha: 0.6),
-    );
-
-    // ── 6. Minute hand (thin line from center outward to minute position) ──
-    // Shown in both modes as a subtle indicator.
-    final minFraction = value.minute / 60.0;
-    final minAngle = -math.pi / 2 + minFraction * 2 * math.pi;
-    final innerRadius = outerRadius * 0.55;
-    final minEnd = Offset(
-      center.dx + innerRadius * math.cos(minAngle),
-      center.dy + innerRadius * math.sin(minAngle),
-    );
-    final linePaint = Paint()
-      ..color = primaryColor.withValues(alpha: 0.45)
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(center, minEnd, linePaint);
-
-    // Minute dot
-    canvas.drawCircle(
-      minEnd,
-      5,
-      Paint()..color = Colors.white.withValues(alpha: 0.8),
+      Paint()..color = primaryColor.withValues(alpha: 0.7),
     );
   }
 
-  void _drawText(
-    Canvas canvas,
-    String text,
-    Offset position,
-    Color color,
-    double fontSize,
-    FontWeight weight,
-  ) {
+  void _drawText(Canvas canvas, String text, Offset position, Color color,
+      double fontSize, FontWeight weight) {
     final tp = TextPainter(
       text: TextSpan(
         text: text,
-        style: TextStyle(
-          color: color,
-          fontSize: fontSize,
-          fontWeight: weight,
-        ),
+        style: TextStyle(color: color, fontSize: fontSize, fontWeight: weight),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    tp.paint(
-      canvas,
-      position - Offset(tp.width / 2, tp.height / 2),
-    );
+    tp.paint(canvas, position - Offset(tp.width / 2, tp.height / 2));
   }
 
   @override

@@ -4,8 +4,11 @@ import '../../../../core/common/widgets/circular_time_dial.dart';
 import '../../../../core/common/widgets/pill_button.dart';
 import '../../../../core/theme/theme_constants.dart';
 
-/// Full circular-dial time picker with optional keyboard input mode.
-/// Returns the selected [TimeOfDay] via Navigator.pop.
+/// Full-screen time picker with a circular dial and optional keyboard input.
+///
+/// • Tapping the large HH : MM display switches to keyboard mode.
+/// • The keyboard icon (top-right) also toggles keyboard ↔ dial mode.
+/// • Returns the selected [TimeOfDay] via Navigator.pop.
 class TimePickerScreen extends StatefulWidget {
   final TimeOfDay initial;
   final String? label;
@@ -25,7 +28,6 @@ class _TimePickerScreenState extends State<TimePickerScreen> {
   bool _isHourMode = true;
   bool _keyboardMode = false;
 
-  // For keyboard mode
   late final TextEditingController _hourCtrl;
   late final TextEditingController _minCtrl;
 
@@ -33,9 +35,9 @@ class _TimePickerScreenState extends State<TimePickerScreen> {
   void initState() {
     super.initState();
     _time = widget.initial;
-    final displayH = _time.hour % 12 == 0 ? 12 : _time.hour % 12;
-    _hourCtrl = TextEditingController(text: displayH.toString().padLeft(2, '0'));
-    _minCtrl = TextEditingController(text: _time.minute.toString().padLeft(2, '0'));
+    _hourCtrl = TextEditingController(text: _fmt12Hour(_time));
+    _minCtrl =
+        TextEditingController(text: _time.minute.toString().padLeft(2, '0'));
   }
 
   @override
@@ -45,7 +47,14 @@ class _TimePickerScreenState extends State<TimePickerScreen> {
     super.dispose();
   }
 
-  // ── Dynamic label based on current time ──────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  String _fmt12Hour(TimeOfDay t) =>
+      (t.hour % 12 == 0 ? 12 : t.hour % 12).toString().padLeft(2, '0');
+
+  String get _hourStr => _fmt12Hour(_time);
+  String get _minStr => _time.minute.toString().padLeft(2, '0');
+  String get _period => _time.hour < 12 ? 'AM' : 'PM';
 
   String get _periodLabel {
     final h = _time.hour;
@@ -55,59 +64,37 @@ class _TimePickerScreenState extends State<TimePickerScreen> {
     return 'Night';
   }
 
-  Color get _periodColor {
-    switch (_periodLabel) {
-      case 'Morning':
-        return TagColors.morning;
-      case 'Afternoon':
-        return TagColors.afternoon;
-      case 'Evening':
-        return TagColors.evening;
-      default:
-        return TagColors.night;
-    }
-  }
+  Color get _periodColor => switch (_periodLabel) {
+        'Morning' => TagColors.morning,
+        'Afternoon' => TagColors.afternoon,
+        'Evening' => TagColors.evening,
+        _ => TagColors.night,
+      };
 
-  IconData get _periodIcon {
-    switch (_periodLabel) {
-      case 'Morning':
-        return Icons.wb_twilight_rounded;
-      case 'Afternoon':
-        return Icons.wb_sunny_rounded;
-      case 'Evening':
-        return Icons.wb_cloudy_rounded;
-      default:
-        return Icons.bedtime_rounded;
-    }
-  }
-
-  // ── Getters ───────────────────────────────────────────────────────────────
-
-  String get _hourStr =>
-      (_time.hour % 12 == 0 ? 12 : _time.hour % 12).toString().padLeft(2, '0');
-  String get _minStr => _time.minute.toString().padLeft(2, '0');
-  String get _period => _time.hour < 12 ? 'AM' : 'PM';
+  IconData get _periodIcon => switch (_periodLabel) {
+        'Morning' => Icons.wb_twilight_rounded,
+        'Afternoon' => Icons.wb_sunny_rounded,
+        'Evening' => Icons.wb_cloudy_rounded,
+        _ => Icons.bedtime_rounded,
+      };
 
   void _toggleAmPm() {
     final h = _time.hour;
-    final newH = h < 12 ? h + 12 : h - 12;
-    _updateTime(TimeOfDay(hour: newH, minute: _time.minute));
+    _updateTime(TimeOfDay(hour: h < 12 ? h + 12 : h - 12, minute: _time.minute));
   }
 
   void _updateTime(TimeOfDay t) {
     setState(() {
       _time = t;
-      // Sync keyboard fields if in dial mode
       if (!_keyboardMode) {
-        final displayH = t.hour % 12 == 0 ? 12 : t.hour % 12;
-        _hourCtrl.text = displayH.toString().padLeft(2, '0');
+        _hourCtrl.text = _fmt12Hour(t);
         _minCtrl.text = t.minute.toString().padLeft(2, '0');
       }
     });
   }
 
   void _applyKeyboardInput() {
-    final hRaw = int.tryParse(_hourCtrl.text.trim()) ?? _time.hour % 12;
+    final hRaw = int.tryParse(_hourCtrl.text.trim()) ?? (_time.hour % 12);
     final mRaw = int.tryParse(_minCtrl.text.trim()) ?? _time.minute;
     final h12 = hRaw.clamp(1, 12);
     final m = mRaw.clamp(0, 59);
@@ -115,6 +102,18 @@ class _TimePickerScreenState extends State<TimePickerScreen> {
     final h24 = h12 == 12 ? (isAm ? 0 : 12) : (isAm ? h12 : h12 + 12);
     setState(() => _time = TimeOfDay(hour: h24, minute: m));
   }
+
+  void _enterKeyboardMode() {
+    if (_keyboardMode) return;
+    setState(() => _keyboardMode = true);
+  }
+
+  void _toggleKeyboard() {
+    if (_keyboardMode) _applyKeyboardInput();
+    setState(() => _keyboardMode = !_keyboardMode);
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +126,7 @@ class _TimePickerScreenState extends State<TimePickerScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Top bar ────────────────────────────────────────────────
+            // ── App bar ────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(
                   horizontal: AppSizes.paddingMd, vertical: 12),
@@ -137,109 +136,79 @@ class _TimePickerScreenState extends State<TimePickerScreen> {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 Expanded(
-                  child: Text('Set Time',
-                      style: theme.textTheme.titleLarge,
-                      textAlign: TextAlign.center),
+                  child: Text(
+                    widget.label != null ? widget.label! : 'Select Time',
+                    style: theme.textTheme.titleLarge,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-                // Toggle dial/keyboard
+                // Keyboard / dial toggle icon (top-right)
                 IconButton(
                   icon: Icon(
-                    _keyboardMode ? Icons.schedule_rounded : Icons.keyboard_rounded,
+                    _keyboardMode
+                        ? Icons.schedule_rounded
+                        : Icons.keyboard_rounded,
                     color: primary,
                   ),
                   tooltip: _keyboardMode ? 'Switch to dial' : 'Type time',
-                  onPressed: () {
-                    if (_keyboardMode) _applyKeyboardInput();
-                    setState(() => _keyboardMode = !_keyboardMode);
-                  },
+                  onPressed: _toggleKeyboard,
                 ),
               ]),
             ),
 
-            // ── Dynamic period label ───────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSizes.paddingMd),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Container(
-                  key: ValueKey(_periodLabel),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: periodColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-                    border: Border.all(color: periodColor.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(_periodIcon, size: 16, color: periodColor),
-                    const SizedBox(width: 6),
-                    Text(
-                      _periodLabel,
-                      style: theme.textTheme.labelMedium
-                          ?.copyWith(color: periodColor, fontWeight: FontWeight.w700),
-                    ),
-                  ]),
+            // ── Period chip ────────────────────────────────────────────────
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                key: ValueKey(_periodLabel),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: periodColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+                  border:
+                      Border.all(color: periodColor.withValues(alpha: 0.3)),
                 ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(_periodIcon, size: 15, color: periodColor),
+                  const SizedBox(width: 6),
+                  Text(
+                    _periodLabel,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                        color: periodColor, fontWeight: FontWeight.w700),
+                  ),
+                ]),
               ),
+            ),
+
+            const SizedBox(height: AppSizes.paddingLg),
+
+            // ── Time display — tap to open keyboard mode ───────────────────
+            _TimeDisplay(
+              hourStr: _keyboardMode ? _hourCtrl.text : _hourStr,
+              minStr: _keyboardMode ? _minCtrl.text : _minStr,
+              period: _period,
+              primary: primary,
+              isHourSelected: _isHourMode,
+              keyboardMode: _keyboardMode,
+              onTapHour: () {
+                if (!_keyboardMode) {
+                  setState(() => _isHourMode = true);
+                  _enterKeyboardMode();
+                }
+              },
+              onTapMin: () {
+                if (!_keyboardMode) {
+                  setState(() => _isHourMode = false);
+                  _enterKeyboardMode();
+                }
+              },
+              onTogglePeriod: _toggleAmPm,
             ),
 
             const Spacer(),
 
-            // ── HH : MM AM/PM display ──────────────────────────────────
-            if (!_keyboardMode)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  _TimeSegment(
-                    value: _hourStr,
-                    selected: _isHourMode,
-                    primary: primary,
-                    onTap: () => setState(() => _isHourMode = true),
-                    style: theme.textTheme.displayMedium,
-                  ),
-                  Text(' : ',
-                      style: theme.textTheme.displayMedium
-                          ?.copyWith(fontWeight: FontWeight.w300)),
-                  _TimeSegment(
-                    value: _minStr,
-                    selected: !_isHourMode,
-                    primary: primary,
-                    onTap: () => setState(() => _isHourMode = false),
-                    style: theme.textTheme.displayMedium,
-                  ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: _toggleAmPm,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Text(
-                        _period,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            else
-              // ── Keyboard input mode ──────────────────────────────────
-              _KeyboardInput(
-                hourCtrl: _hourCtrl,
-                minCtrl: _minCtrl,
-                period: _period,
-                primary: primary,
-                isDark: isDark,
-                theme: theme,
-                onTogglePeriod: _toggleAmPm,
-                onChanged: _applyKeyboardInput,
-              ),
-
-            const SizedBox(height: AppSizes.paddingXl),
-
-            // ── Dial (only in dial mode) ───────────────────────────────
+            // ── Dial or keyboard input ─────────────────────────────────────
             if (!_keyboardMode) ...[
               CircularTimeDial(
                 value: _time,
@@ -253,14 +222,24 @@ class _TimePickerScreenState extends State<TimePickerScreen> {
                   }
                 },
               ),
+            ] else ...[
+              _KeyboardInput(
+                hourCtrl: _hourCtrl,
+                minCtrl: _minCtrl,
+                period: _period,
+                primary: primary,
+                isDark: isDark,
+                theme: theme,
+                onTogglePeriod: _toggleAmPm,
+                onChanged: _applyKeyboardInput,
+              ),
             ],
 
             const Spacer(),
 
-            // ── Confirm button ─────────────────────────────────────────
+            // ── Confirm button ─────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSizes.paddingLg, 0,
+              padding: const EdgeInsets.fromLTRB(AppSizes.paddingLg, 0,
                   AppSizes.paddingLg, AppSizes.paddingLg),
               child: PillButton(
                 label: 'Confirm Time',
@@ -277,46 +256,117 @@ class _TimePickerScreenState extends State<TimePickerScreen> {
   }
 }
 
-// ── Time segment (tap to select hour/minute) ──────────────────────────────────
+// ── Large tappable time display ───────────────────────────────────────────────
 
-class _TimeSegment extends StatelessWidget {
-  final String value;
-  final bool selected;
+class _TimeDisplay extends StatelessWidget {
+  final String hourStr;
+  final String minStr;
+  final String period;
   final Color primary;
-  final VoidCallback onTap;
-  final TextStyle? style;
+  final bool isHourSelected;
+  final bool keyboardMode;
+  final VoidCallback onTapHour;
+  final VoidCallback onTapMin;
+  final VoidCallback onTogglePeriod;
 
-  const _TimeSegment({
-    required this.value,
-    required this.selected,
+  const _TimeDisplay({
+    required this.hourStr,
+    required this.minStr,
+    required this.period,
     required this.primary,
-    required this.onTap,
-    this.style,
+    required this.isHourSelected,
+    required this.keyboardMode,
+    required this.onTapHour,
+    required this.onTapMin,
+    required this.onTogglePeriod,
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected ? primary.withValues(alpha: 0.15) : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-          ),
-          child: Text(
-            value,
-            style: style?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: selected ? primary : Theme.of(context).colorScheme.onSurface,
-              fontFeatures: const [FontFeature.tabularFigures()],
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dimColor = theme.colorScheme.onSurface;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Hour segment — tap to select hour (and open keyboard in dial mode)
+        GestureDetector(
+          onTap: onTapHour,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: (!keyboardMode && isHourSelected)
+                  ? primary.withValues(alpha: 0.15)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+            ),
+            child: Text(
+              hourStr,
+              style: theme.textTheme.displayMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: (!keyboardMode && isHourSelected) ? primary : dimColor,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
         ),
-      );
+
+        // Colon separator
+        Text(
+          ' : ',
+          style: theme.textTheme.displayMedium?.copyWith(
+            fontWeight: FontWeight.w300,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+
+        // Minute segment
+        GestureDetector(
+          onTap: onTapMin,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: (!keyboardMode && !isHourSelected)
+                  ? primary.withValues(alpha: 0.15)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+            ),
+            child: Text(
+              minStr,
+              style: theme.textTheme.displayMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: (!keyboardMode && !isHourSelected) ? primary : dimColor,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 10),
+
+        // AM / PM toggle
+        GestureDetector(
+          onTap: onTogglePeriod,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              period,
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-// ── Keyboard input mode widget ────────────────────────────────────────────────
+// ── Keyboard input panel ──────────────────────────────────────────────────────
 
 class _KeyboardInput extends StatelessWidget {
   final TextEditingController hourCtrl;
@@ -345,9 +395,7 @@ class _KeyboardInput extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXl),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Hour
           _NumField(
             controller: hourCtrl,
             hint: 'HH',
@@ -359,12 +407,14 @@ class _KeyboardInput extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text(':',
-                style: theme.textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.w300,
-                    color: theme.colorScheme.onSurfaceVariant)),
+            child: Text(
+              ':',
+              style: theme.textTheme.displaySmall?.copyWith(
+                fontWeight: FontWeight.w300,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
-          // Minute
           _NumField(
             controller: minCtrl,
             hint: 'MM',
@@ -375,7 +425,6 @@ class _KeyboardInput extends StatelessWidget {
             onChanged: onChanged,
           ),
           const SizedBox(width: 12),
-          // AM/PM
           GestureDetector(
             onTap: onTogglePeriod,
             child: Container(
@@ -426,6 +475,7 @@ class _NumField extends StatelessWidget {
         controller: controller,
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
+        autofocus: true,
         inputFormatters: [
           FilteringTextInputFormatter.digitsOnly,
           LengthLimitingTextInputFormatter(2),
@@ -442,7 +492,9 @@ class _NumField extends StatelessWidget {
             fontWeight: FontWeight.w300,
           ),
           filled: true,
-          fillColor: isDark ? DarkColors.surfaceVariant : LightColors.surfaceVariant,
+          fillColor: isDark
+              ? DarkColors.surfaceVariant
+              : LightColors.surfaceVariant,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusMd),
             borderSide: BorderSide.none,
