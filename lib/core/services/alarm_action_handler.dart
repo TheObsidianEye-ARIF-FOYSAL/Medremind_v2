@@ -60,4 +60,5 @@ Future<void> _upsertLog(
     scheduledFor: DateTime(today.year, today.month, today.day, today.hour),
   );
   await logRepo.updateStatus(log.id, status, actedAt: DateTime.now());
+  debugPrint('[AlarmAction] dose log ${log.id} set to $status');
 }
