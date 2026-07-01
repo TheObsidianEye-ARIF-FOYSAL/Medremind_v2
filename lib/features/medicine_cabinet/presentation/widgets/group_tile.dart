@@ -163,6 +163,67 @@ class GroupTile extends ConsumerWidget {
   }
 }
 
+// ── Day chips ─────────────────────────────────────────────────────────────────
+
+class _DayChips extends StatelessWidget {
+  final List<int> days; // 1=Mon … 7=Sun; empty = every day
+  final Color color;
+
+  const _DayChips({required this.days, required this.color});
+
+  static const _labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  @override
+  Widget build(BuildContext context) {
+    if (days.isEmpty) {
+      return Text(
+        'Every day',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+      );
+    }
+    return Row(
+      children: List.generate(7, (i) {
+        final dayNum = i + 1;
+        final active = days.contains(dayNum);
+        return Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: active ? color : Colors.transparent,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: active
+                    ? color
+                    : Theme.of(context).colorScheme.outlineVariant,
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                _labels[i],
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: active
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 class MedChips extends ConsumerWidget {
   final DoseGroup group;
   final Color color;
