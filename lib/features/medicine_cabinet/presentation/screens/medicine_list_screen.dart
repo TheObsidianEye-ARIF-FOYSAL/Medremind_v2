@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/models/dose_group.dart';
-import '../../../../core/models/medicine.dart';
+import '../../../../core/navigation/app_transitions.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../../../alternative_finder/presentation/screens/find_alternative_screen.dart';
+import '../widgets/group_tile.dart';
+import '../widgets/medicine_tile.dart';
 import 'add_dose_group_screen.dart';
 import 'add_medication_screen.dart';
 
@@ -68,7 +69,6 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen>
                       ],
                     ),
                   ),
-                  // Finder shortcut
                   IconButton(
                     tooltip: 'Find Alternatives',
                     icon: Container(
@@ -83,8 +83,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen>
                           color: primary, size: 20),
                     ),
                     onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (_) => const FindAlternativeScreen()),
+                      AppPageRoute(page: const FindAlternativeScreen()),
                     ),
                   ),
                 ],
@@ -105,38 +104,39 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen>
 
             const SizedBox(height: AppSizes.paddingMd),
 
-            // ── Tab views ─────────────────────────────────────────────
             Expanded(
-              child: TabBarView(
-                controller: _tab,
-                children: const [
-                  _MedicinesTab(),
-                  _SchedulesTab(),
-                ],
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: TabBarView(
+                  key: ValueKey(_tab.index),
+                  controller: _tab,
+                  children: const [
+                    _MedicinesTab(),
+                    _SchedulesTab(),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
-      // FAB changes based on current tab
       floatingActionButton: _GradientFAB(
         onPressed: () async {
           if (_tab.index == 0) {
-            // Add individual medicine
             await Navigator.of(context).push<void>(
-              MaterialPageRoute(
-                  fullscreenDialog: true,
-                  builder: (_) => const AddMedicationScreen()),
+              AppPageRoute(
+                  page: const AddMedicationScreen(),
+                  fullscreenDialog: true),
             );
           } else {
-            // Add dose group
             await Navigator.of(context).push<bool>(
-              MaterialPageRoute(
-                  fullscreenDialog: true,
-                  builder: (_) => const AddDoseGroupScreen()),
+              AppPageRoute(
+                  page: const AddDoseGroupScreen(),
+                  fullscreenDialog: true),
             );
           }
-          // Rebuild to refresh lists
           if (mounted) setState(() {});
         },
         label: _tab.index == 0 ? 'Add Medicine' : 'New Group',
@@ -224,8 +224,8 @@ class _GradientFAB extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 88),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-              colors: [primary, primary.withValues(alpha: 0.75)]),
+          gradient:
+              LinearGradient(colors: [primary, primary.withValues(alpha: 0.75)]),
           borderRadius: BorderRadius.circular(AppSizes.radiusPill),
           boxShadow: [
             BoxShadow(
@@ -240,11 +240,15 @@ class _GradientFAB extends StatelessWidget {
           children: [
             Icon(icon, color: Colors.white, size: 20),
             const SizedBox(width: 8),
-            Text(label,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15)),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Text(label,
+                  key: ValueKey(label),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15)),
+            ),
           ],
         ),
       ),
@@ -330,153 +334,19 @@ class _MedicinesTabState extends ConsumerState<_MedicinesTab> {
                 );
               }
               return ListView.separated(
+                physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(
                     AppSizes.paddingLg, 0, AppSizes.paddingLg, 150),
                 itemCount: meds.length,
                 separatorBuilder: (_, __) =>
                     const SizedBox(height: AppSizes.paddingSm),
-                itemBuilder: (ctx, i) => _MedicineTile(med: meds[i]),
+                itemBuilder: (ctx, i) => MedicineTile(med: meds[i]),
               );
             },
           ),
         ),
       ],
     );
-  }
-}
-
-class _MedicineTile extends ConsumerWidget {
-  final Medicine med;
-  const _MedicineTile({required this.med});
-
-  static const _formIcons = {
-    MedicineForm.tablet: Icons.circle_outlined,
-    MedicineForm.pill: Icons.medication_rounded,
-    MedicineForm.syrup: Icons.local_drink_rounded,
-    MedicineForm.syringe: Icons.vaccines_rounded,
-    MedicineForm.other: Icons.more_horiz_rounded,
-  };
-
-  static const _formColors = {
-    MedicineForm.tablet: Color(0xFF6C5CE7),
-    MedicineForm.pill: Color(0xFF00B4D8),
-    MedicineForm.syrup: Color(0xFF00C896),
-    MedicineForm.syringe: Color(0xFFFF7675),
-    MedicineForm.other: Color(0xFFA0A0A0),
-  };
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final iconColor = _formColors[med.form] ?? theme.colorScheme.primary;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.paddingMd),
-      decoration: BoxDecoration(
-        color: isDark ? DarkColors.surface : LightColors.surface,
-        borderRadius: BorderRadius.circular(AppSizes.radiusCard),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-            ),
-            child: Icon(
-              _formIcons[med.form] ?? Icons.medication_rounded,
-              color: iconColor,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(med.brandName,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
-                if (med.strength.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    med.strength,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-            ),
-            child: Text(
-              med.form.name[0].toUpperCase() + med.form.name.substring(1),
-              style: theme.textTheme.labelSmall
-                  ?.copyWith(color: iconColor, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(width: 4),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert_rounded, size: 20),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
-            onSelected: (v) => _onMenu(context, ref, v),
-            itemBuilder: (_) => [
-              const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(children: [
-                    Icon(Icons.delete_outline_rounded, size: 18,
-                        color: Colors.redAccent),
-                    SizedBox(width: 10),
-                    Text('Remove'),
-                  ])),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _onMenu(
-      BuildContext context, WidgetRef ref, String action) async {
-    if (action == 'delete') {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Remove Medicine'),
-          content: Text('Remove "${med.brandName}" from your cabinet?'),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel')),
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Remove',
-                    style: TextStyle(color: Colors.redAccent))),
-          ],
-        ),
-      );
-      if (confirmed == true) {
-        await ref.read(medicineRepositoryProvider).delete(med.id);
-      }
-    }
   }
 }
 
@@ -503,234 +373,17 @@ class _SchedulesTab extends ConsumerWidget {
           );
         }
         return ListView.separated(
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(
               AppSizes.paddingLg, 0, AppSizes.paddingLg, 150),
           itemCount: groups.length,
           separatorBuilder: (_, __) =>
               const SizedBox(height: AppSizes.paddingSm),
-          itemBuilder: (ctx, i) => _GroupTile(group: groups[i]),
+          itemBuilder: (ctx, i) => GroupTile(group: groups[i]),
         );
       },
     );
   }
-}
-
-class _GroupTile extends ConsumerWidget {
-  final DoseGroup group;
-  const _GroupTile({required this.group});
-
-  static const _labelColors = {
-    'Morning': TagColors.morning,
-    'Afternoon': TagColors.afternoon,
-    'Evening': TagColors.evening,
-    'Night': TagColors.night,
-  };
-
-  static const _labelIcons = {
-    'Morning': Icons.wb_sunny_rounded,
-    'Afternoon': Icons.wb_cloudy_rounded,
-    'Evening': Icons.nights_stay_outlined,
-    'Night': Icons.nightlight_round,
-  };
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final color = _labelColors[group.label] ?? theme.colorScheme.primary;
-    final icon = _labelIcons[group.label] ?? Icons.schedule_rounded;
-
-    final timeStr = _fmtTime(group.timeOfDay);
-    final medCount = group.items.length;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.paddingMd),
-      decoration: BoxDecoration(
-        color: isDark ? DarkColors.surface : LightColors.surface,
-        borderRadius: BorderRadius.circular(AppSizes.radiusCard),
-        border: Border(left: BorderSide(color: color, width: 3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(children: [
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-          ),
-          child: Icon(icon, color: color, size: 22),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Text(group.label,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
-                const SizedBox(width: 8),
-                if (!group.isActive)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.onSurface
-                          .withValues(alpha: 0.08),
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusPill),
-                    ),
-                    child: Text('Paused',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant)),
-                  ),
-              ]),
-              const SizedBox(height: 2),
-              Text(
-                '$timeStr · $medCount ${medCount == 1 ? 'medicine' : 'medicines'}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant),
-              ),
-              if (group.mealRelation != MealRelation.none)
-                Text(
-                  group.mealRelation == MealRelation.beforeMeal
-                      ? '· Before meal'
-                      : '· After meal',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant),
-                ),
-            ],
-          ),
-        ),
-        // Medicine pill chips with names
-        _MedChips(group: group, color: color),
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert_rounded, size: 20),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
-          onSelected: (v) => _onMenu(context, ref, v),
-          itemBuilder: (_) => [
-            PopupMenuItem(
-                value: 'toggle',
-                child: Row(children: [
-                  Icon(
-                    group.isActive
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(group.isActive ? 'Pause' : 'Resume'),
-                ])),
-            const PopupMenuItem(
-                value: 'delete',
-                child: Row(children: [
-                  Icon(Icons.delete_outline_rounded, size: 18,
-                      color: Colors.redAccent),
-                  SizedBox(width: 10),
-                  Text('Remove'),
-                ])),
-          ],
-        ),
-      ]),
-    );
-  }
-
-  Future<void> _onMenu(
-      BuildContext context, WidgetRef ref, String action) async {
-    final repo = ref.read(doseGroupRepositoryProvider);
-    if (action == 'toggle') {
-      await repo.setActive(group.id, active: !group.isActive);
-    } else if (action == 'delete') {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Remove Dose Group'),
-          content: Text(
-              'Remove "${group.label}" dose group? This will also delete all logs for this group.'),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel')),
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Remove',
-                    style: TextStyle(color: Colors.redAccent))),
-          ],
-        ),
-      );
-      if (confirmed == true) {
-        await repo.delete(group.id);
-      }
-    }
-  }
-
-  static String _fmtTime(String hhmm) {
-    final p = hhmm.split(':');
-    final h = int.parse(p[0]);
-    final m = int.parse(p[1]);
-    final per = h < 12 ? 'AM' : 'PM';
-    final dh = h == 0 ? 12 : (h > 12 ? h - 12 : h);
-    return '${dh.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')} $per';
-  }
-}
-
-// ── Medicine chips with resolved names ───────────────────────────────────────
-
-class _MedChips extends ConsumerWidget {
-  final DoseGroup group;
-  final Color color;
-  const _MedChips({required this.group, required this.color});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final medsAsync = ref.watch(medicinesStreamProvider);
-    final medMap = medsAsync.maybeWhen(
-      data: (meds) => {for (final m in meds) m.id: m.brandName},
-      orElse: () => <String, String>{},
-    );
-
-    final items = group.items;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        for (final item in items.take(2))
-          Padding(
-            padding: const EdgeInsets.only(bottom: 3),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-              ),
-              child: Text(
-                '${medMap[item.medicineId] ?? '—'} ×${_qty(item.quantity)}',
-                style: theme.textTheme.labelSmall
-                    ?.copyWith(color: color, fontWeight: FontWeight.w600),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-        if (items.length > 2)
-          Text('+${items.length - 2} more',
-              style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant)),
-      ],
-    );
-  }
-
-  static String _qty(double q) =>
-      q == q.truncateToDouble() ? q.toInt().toString() : q.toString();
 }
 
 // ── Empty state ───────────────────────────────────────────────────────────────
@@ -763,13 +416,14 @@ class _EmptyState extends StatelessWidget {
                 color: primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child:
-                  Icon(icon, size: 44, color: primary.withValues(alpha: 0.6)),
+              child: Icon(icon, size: 44, color: primary.withValues(alpha: 0.6)),
             ),
             const SizedBox(height: 24),
             Text(title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700)),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             Text(
               subtitle,
