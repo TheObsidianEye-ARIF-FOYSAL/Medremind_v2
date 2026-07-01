@@ -340,15 +340,13 @@ class SettingsInfoTile extends StatelessWidget {
             child: Icon(icon, size: 18, color: primaryColor),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(label,
-                style: theme.textTheme.bodyMedium,
-                overflow: TextOverflow.ellipsis),
-          ),
+          Text(label, style: theme.textTheme.bodyMedium),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
               value,
+              textAlign: TextAlign.right,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
