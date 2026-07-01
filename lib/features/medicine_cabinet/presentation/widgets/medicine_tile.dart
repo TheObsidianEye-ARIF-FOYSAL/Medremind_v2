@@ -153,6 +153,7 @@ class MedicineTile extends ConsumerWidget {
           ),
         ],
       ),
+      ),
     );
   }
 
