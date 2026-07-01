@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/models/dose_group.dart';
 import '../../../../core/models/medicine.dart';
+import '../../../../core/navigation/app_transitions.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
+import '../screens/add_medication_screen.dart';
 
 class MedicineTile extends ConsumerWidget {
   final Medicine med;
@@ -94,18 +96,52 @@ class MedicineTile extends ConsumerWidget {
           ),
           const SizedBox(width: 4),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert_rounded, size: 20),
+            icon: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.more_vert_rounded, size: 18),
+            ),
+            elevation: 6,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+                borderRadius: BorderRadius.circular(AppSizes.radiusLg)),
             onSelected: (v) => _onMenu(context, ref, v),
             itemBuilder: (_) => [
-              const PopupMenuItem(
+              PopupMenuItem(
+                  value: 'edit',
+                  child: Row(children: [
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: iconColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                      ),
+                      child: Icon(Icons.edit_rounded, size: 16, color: iconColor),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('Edit'),
+                  ])),
+              const PopupMenuDivider(height: 6),
+              PopupMenuItem(
                   value: 'delete',
                   child: Row(children: [
-                    Icon(Icons.delete_outline_rounded, size: 18,
-                        color: Colors.redAccent),
-                    SizedBox(width: 10),
-                    Text('Remove'),
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                      ),
+                      child: const Icon(Icons.delete_outline_rounded,
+                          size: 16, color: Colors.redAccent),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('Remove',
+                        style: TextStyle(color: Colors.redAccent)),
                   ])),
             ],
           ),
@@ -115,6 +151,13 @@ class MedicineTile extends ConsumerWidget {
   }
 
   Future<void> _onMenu(BuildContext context, WidgetRef ref, String action) async {
+    if (action == 'edit') {
+      await Navigator.of(context).push<void>(
+        AppPageRoute(
+            page: AddMedicationScreen(existing: med), fullscreenDialog: true),
+      );
+      return;
+    }
     if (action != 'delete') return;
 
     final groups = await ref.read(doseGroupRepositoryProvider).getAll();
