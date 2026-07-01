@@ -171,6 +171,13 @@ class GroupTile extends ConsumerWidget {
 
   Future<void> _onMenu(BuildContext context, WidgetRef ref, String action) async {
     final repo = ref.read(doseGroupRepositoryProvider);
+    if (action == 'edit') {
+      await Navigator.of(context).push<bool>(
+        AppPageRoute(
+            page: AddDoseGroupScreen(existing: group), fullscreenDialog: true),
+      );
+      return;
+    }
     if (action == 'toggle') {
       await repo.setActive(group.id, active: !group.isActive);
     } else if (action == 'delete') {
