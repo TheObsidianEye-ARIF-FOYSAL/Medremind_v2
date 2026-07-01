@@ -32,8 +32,15 @@ class _AddDoseGroupScreenState extends ConsumerState<AddDoseGroupScreen> {
   String _label = 'Morning';
   TimeOfDay _time = const TimeOfDay(hour: 8, minute: 0);
   MealRelation _meal = MealRelation.none;
+  // empty = every day; 1=Mon … 7=Sun (DateTime.weekday convention)
+  List<int> _days = [];
   final List<MedSlot> _slots = [];
   bool _saving = false;
+
+  static const _dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  static const _dayNames = [
+    'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
+  ];
 
   @override
   Widget build(BuildContext context) {
