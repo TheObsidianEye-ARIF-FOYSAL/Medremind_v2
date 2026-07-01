@@ -3,10 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/app_settings_provider.dart';
 import '../../../../core/theme/theme_constants.dart';
-import '../../../auth/providers/auth_provider.dart'
-    show AuthNotifier, authProvider;
-import '../../../auth/providers/firebase_auth_provider.dart'
-    show FirebaseAuthNotifier, firebaseAuthProvider;
 import '../widgets/profile_card.dart';
 import '../widgets/settings_tiles.dart';
 import 'appearance_screen.dart';
@@ -21,10 +17,6 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appSettings = ref.watch(appSettingsProvider);
-    final authNotifier = ref.read(authProvider.notifier);
-    final authState = ref.watch(authProvider);
-    final fbNotifier = ref.read(firebaseAuthProvider.notifier);
-    final fbUser = ref.watch(firebaseAuthProvider).user;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
