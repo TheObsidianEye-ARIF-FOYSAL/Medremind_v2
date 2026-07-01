@@ -9,6 +9,7 @@ class AlarmSoundOption {
 }
 
 const alarmSoundOptions = [
+  // ── Classic alarm sounds ──────────────────────────────────────────────────
   AlarmSoundOption('Digital Clock',
       'assets/audio/universfield-digital-alarm-clock-151920.mp3'),
   AlarmSoundOption('Digital Alarm II',
@@ -25,6 +26,17 @@ const alarmSoundOptions = [
       'assets/audio/jeremayjimenez-kuwait-eas-alarm-1890-367438.mp3'),
   AlarmSoundOption(
       'Bell Alarm', 'assets/audio/u_inx5oo5fv3-alarm-327234.mp3'),
+  // ── Melodic / bell sounds ─────────────────────────────────────────────────
+  AlarmSoundOption('3D Bells', 'assets/audio/3d_bells.mp3'),
+  AlarmSoundOption('Acoustic Melody', 'assets/audio/acoustic_melody.mp3'),
+  AlarmSoundOption('Beautiful Bells', 'assets/audio/beautiful_bells.mp3'),
+  AlarmSoundOption('Beautiful Ringtone', 'assets/audio/beautiful_ringtone.mp3'),
+  AlarmSoundOption('Cute Bells', 'assets/audio/cute_bells.mp3'),
+  AlarmSoundOption('Dream Bells', 'assets/audio/dream_bells.mp3'),
+  AlarmSoundOption('I Got Rhythm', 'assets/audio/igotrhythm.mp3'),
+  AlarmSoundOption('Lovely Bells', 'assets/audio/lovely_bells.mp3'),
+  AlarmSoundOption('Nice Bells', 'assets/audio/nice_bells_alarm.mp3'),
+  AlarmSoundOption('Quiet Alarm', 'assets/audio/quite_alarm.mp3'),
 ];
 
 // ── Keys ─────────────────────────────────────────────────────────────────────

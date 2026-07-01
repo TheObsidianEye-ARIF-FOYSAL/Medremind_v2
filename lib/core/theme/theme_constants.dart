@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 /// The three built-in color palettes. Each works in both light and dark mode,
 /// giving 3 × 2 = 6 total theme combinations selectable from Settings.
 enum AppColorPalette {
-  purple('Purple', Color(0xFF6C5CE7), Color(0xFF9B8EF7)),
-  teal('Teal', Color(0xFF00B4D8), Color(0xFF48CAE4)),
-  rose('Rose', Color(0xFFE91E8C), Color(0xFFF06292));
+  purple('Purple',  Color(0xFF6C5CE7), Color(0xFF9B8EF7)),
+  teal(  'Teal',   Color(0xFF00B4D8), Color(0xFF48CAE4)),
+  rose(  'Rose',   Color(0xFFE91E8C), Color(0xFFF06292)),
+  amber( 'Amber',  Color(0xFFF59E0B), Color(0xFFFBBF24)),
+  green( 'Green',  Color(0xFF10B981), Color(0xFF34D399)),
+  indigo('Indigo', Color(0xFF4F46E5), Color(0xFF818CF8));
 
   const AppColorPalette(this.label, this.primary, this.primaryLight);
   final String label;
