@@ -342,7 +342,7 @@ class SettingsInfoTile extends StatelessWidget {
           const SizedBox(width: 12),
           Text(label, style: theme.textTheme.bodyMedium),
           const SizedBox(width: 8),
-          Flexible(
+          Expanded(
             child: Text(
               value,
               textAlign: TextAlign.right,
