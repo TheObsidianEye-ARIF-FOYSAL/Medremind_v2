@@ -85,6 +85,52 @@ class DoseGroupRepository {
     _notify();
   }
 
+  /// Updates a DoseGroup's fields and replaces its items in a transaction.
+  Future<DoseGroup> update({
+    required String id,
+    required String label,
+    required String timeOfDay,
+    MealRelation mealRelation = MealRelation.none,
+    List<int> daysOfWeek = const [],
+    required List<({String medicineId, double quantity})> items,
+  }) async {
+    final existing = await getById(id);
+    if (existing == null) {
+      throw StateError('Dose group $id not found');
+    }
+
+    final group = DoseGroup(
+      id: id,
+      label: label,
+      timeOfDay: timeOfDay,
+      mealRelation: mealRelation,
+      daysOfWeek: daysOfWeek,
+      startDate: existing.startDate,
+      endDate: existing.endDate,
+      isActive: existing.isActive,
+      items: items
+          .map((e) => DoseItem(
+                id: _uuid.v4(),
+                doseGroupId: id,
+                medicineId: e.medicineId,
+                quantity: e.quantity,
+              ))
+          .toList(),
+    );
+
+    final db = await _db.database;
+    await db.transaction((txn) async {
+      await txn.update('dose_groups', _groupToRow(group),
+          where: 'id = ?', whereArgs: [id]);
+      await txn.delete('dose_items', where: 'dose_group_id = ?', whereArgs: [id]);
+      for (final item in group.items) {
+        await txn.insert('dose_items', _itemToRow(item));
+      }
+    });
+    _notify();
+    return group;
+  }
+
   Future<void> delete(String id) async {
     final db = await _db.database;
     await db.delete('dose_groups', where: 'id = ?', whereArgs: [id]);
