@@ -24,6 +24,7 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   List<String> _suggestions = [];
 
   bool get _isEditing => widget.existing != null;
+  final _fieldLayerLink = LayerLink();
 
   @override
   void initState() {
@@ -143,25 +144,28 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                       ctrl.text = _brandCtrl.text;
                       ctrl.selection = TextSelection.fromPosition(
                           TextPosition(offset: ctrl.text.length));
-                      return TextField(
-                        controller: ctrl,
-                        focusNode: focusNode,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: InputDecoration(
-                          hintText: 'e.g. Napa, Vigorex 25mg, Amlodipine',
-                          prefixIcon: Icon(Icons.search_rounded,
-                              color: primary, size: 20),
-                          suffixIcon: form.brandName.isNotEmpty
-                              ? const Icon(Icons.check_circle_rounded,
-                                  color: TagColors.taken)
-                              : null,
+                      return CompositedTransformTarget(
+                        link: _fieldLayerLink,
+                        child: TextField(
+                          controller: ctrl,
+                          focusNode: focusNode,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: InputDecoration(
+                            hintText: 'e.g. Napa, Seclo, Amlodipine',
+                            prefixIcon: Icon(Icons.search_rounded,
+                                color: primary, size: 20),
+                            suffixIcon: form.brandName.isNotEmpty
+                                ? const Icon(Icons.check_circle_rounded,
+                                    color: TagColors.taken)
+                                : null,
+                          ),
+                          onChanged: (val) {
+                            _brandCtrl.text = val;
+                            notifier.setBrandName(val);
+                            _lookupGeneric(val);
+                          },
+                          onEditingComplete: onSubmit,
                         ),
-                        onChanged: (val) {
-                          _brandCtrl.text = val;
-                          notifier.setBrandName(val);
-                          _lookupGeneric(val);
-                        },
-                        onEditingComplete: onSubmit,
                       );
                     },
                     onSelected: (String selection) {
@@ -170,29 +174,42 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                       _lookupGeneric(selection);
                     },
                     optionsViewBuilder: (ctx, onSelected, options) {
-                      return Align(
-                        alignment: Alignment.topLeft,
-                        child: Material(
-                          elevation: 4,
-                          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxHeight: 200),
-                            child: ListView.separated(
-                              shrinkWrap: true,
-                              padding: EdgeInsets.zero,
-                              itemCount: options.length,
-                              separatorBuilder: (_, __) => const Divider(height: 1),
-                              itemBuilder: (ctx, i) {
-                                final opt = options.elementAt(i);
-                                return ListTile(
-                                  dense: true,
-                                  leading: Icon(Icons.local_pharmacy_outlined,
-                                      size: 16, color: primary),
-                                  title: Text(opt,
-                                      style: Theme.of(ctx).textTheme.bodyMedium),
-                                  onTap: () => onSelected(opt),
-                                );
-                              },
+                      final fieldWidth = MediaQuery.of(context).size.width -
+                          2 * AppSizes.paddingLg;
+                      return CompositedTransformFollower(
+                        link: _fieldLayerLink,
+                        showWhenUnlinked: false,
+                        offset: const Offset(0, 52),
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: SizedBox(
+                            width: fieldWidth,
+                            child: Material(
+                              elevation: 4,
+                              borderRadius:
+                                  BorderRadius.circular(AppSizes.radiusLg),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxHeight: 220),
+                                child: ListView.separated(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.zero,
+                                  itemCount: options.length,
+                                  separatorBuilder: (_, __) =>
+                                      const Divider(height: 1),
+                                  itemBuilder: (ctx, i) {
+                                    final opt = options.elementAt(i);
+                                    return ListTile(
+                                      dense: true,
+                                      leading: Icon(Icons.local_pharmacy_outlined,
+                                          size: 16, color: primary),
+                                      title: Text(opt,
+                                          style:
+                                              Theme.of(ctx).textTheme.bodyMedium),
+                                      onTap: () => onSelected(opt),
+                                    );
+                                  },
+                                ),
+                              ),
                             ),
                           ),
                         ),
