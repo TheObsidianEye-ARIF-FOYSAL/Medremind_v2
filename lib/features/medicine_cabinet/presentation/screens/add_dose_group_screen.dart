@@ -21,7 +21,8 @@ const _labels = [
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class AddDoseGroupScreen extends ConsumerStatefulWidget {
-  const AddDoseGroupScreen({super.key});
+  final DoseGroup? existing;
+  const AddDoseGroupScreen({super.key, this.existing});
 
   @override
   ConsumerState<AddDoseGroupScreen> createState() =>
@@ -37,10 +38,40 @@ class _AddDoseGroupScreenState extends ConsumerState<AddDoseGroupScreen> {
   final List<MedSlot> _slots = [];
   bool _saving = false;
 
+  bool get _isEditing => widget.existing != null;
+
   static const _dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   static const _dayNames = [
     'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final g = widget.existing;
+    if (g != null) {
+      _label = g.label;
+      final parts = g.timeOfDay.split(':');
+      _time = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+      _meal = g.mealRelation;
+      _days = List.of(g.daysOfWeek);
+      _loadExistingItems(g);
+    }
+  }
+
+  Future<void> _loadExistingItems(DoseGroup g) async {
+    final meds = await ref.read(medicineRepositoryProvider).getAll();
+    if (!mounted) return;
+    final medMap = {for (final m in meds) m.id: m};
+    setState(() {
+      for (final item in g.items) {
+        final med = medMap[item.medicineId];
+        if (med != null) {
+          _slots.add(MedSlot(med: med, quantity: item.quantity));
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
