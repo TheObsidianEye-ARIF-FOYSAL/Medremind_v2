@@ -35,7 +35,12 @@ class MedicineTile extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
     final iconColor = _formColors[med.form] ?? theme.colorScheme.primary;
 
-    return Container(
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppSizes.radiusCard),
+      onTap: () => Navigator.of(context).push<void>(
+        AppPageRoute(page: MedicineDetailScreen(medicine: med)),
+      ),
+      child: Container(
       padding: const EdgeInsets.all(AppSizes.paddingMd),
       decoration: BoxDecoration(
         color: isDark ? DarkColors.surface : LightColors.surface,
