@@ -374,9 +374,11 @@ class _InfoSection extends StatelessWidget {
           Row(children: [
             Icon(icon, size: 18, color: color),
             const SizedBox(width: 8),
-            Text(title,
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.w700, color: color)),
+            Expanded(
+              child: Text(title,
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(fontWeight: FontWeight.w700, color: color)),
+            ),
           ]),
           const SizedBox(height: 8),
           child,

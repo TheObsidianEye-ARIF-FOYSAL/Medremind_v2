@@ -75,9 +75,13 @@ class CalendarAgendaCard extends StatelessWidget {
               Row(children: [
                 Icon(labelIcon, size: 11, color: labelColor),
                 const SizedBox(width: 3),
-                Text(group.label,
-                    style: theme.textTheme.labelSmall
-                        ?.copyWith(color: labelColor, fontSize: 10)),
+                Flexible(
+                  child: Text(group.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall
+                          ?.copyWith(color: labelColor, fontSize: 10)),
+                ),
               ]),
             ],
           ),
