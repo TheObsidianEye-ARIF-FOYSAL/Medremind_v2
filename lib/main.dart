@@ -199,6 +199,7 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
         darkTheme: darkTheme,
         themeMode: themeMode,
         routerConfig: appRouter,
+        builder: _responsiveBuilder,
       );
     }
 
@@ -212,6 +213,33 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
       darkTheme: darkTheme,
       themeMode: themeMode,
       home: home,
+      builder: _responsiveBuilder,
     );
   }
+}
+
+/// Applied app-wide (both the pre-login and main router `MaterialApp`s) so
+/// every screen behaves consistently across devices without needing changes
+/// per-screen:
+///   • Clamps the system font-scale so large accessibility text settings
+///     can't blow up fixed-height cards/rows into overflow.
+///   • On tablet-width screens, centers content in a max-width column
+///     instead of letting it stretch edge-to-edge awkwardly.
+Widget _responsiveBuilder(BuildContext context, Widget? child) {
+  final mq = MediaQuery.of(context);
+  final clampedScaler = mq.textScaler.clamp(minScaleFactor: 0.9, maxScaleFactor: 1.25);
+  final width = mq.size.width;
+
+  Widget content = child ?? const SizedBox.shrink();
+  if (width > 840) {
+    content = Align(
+      alignment: Alignment.topCenter,
+      child: SizedBox(width: 600, child: content),
+    );
+  }
+
+  return MediaQuery(
+    data: mq.copyWith(textScaler: clampedScaler),
+    child: content,
+  );
 }
