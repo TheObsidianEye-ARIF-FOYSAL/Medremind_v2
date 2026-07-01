@@ -221,4 +221,10 @@ class ReminderReviewScreen extends ConsumerWidget {
         'Night' => TagColors.night,
         _ => TagColors.evening,
       };
+
+  static String _daysText(List<int> days) {
+    if (days.isEmpty) return 'Every day';
+    const names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days.map((d) => names[d - 1]).join(' · ');
+  }
 }
