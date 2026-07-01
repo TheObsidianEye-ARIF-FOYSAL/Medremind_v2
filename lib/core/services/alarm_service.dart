@@ -65,9 +65,8 @@ class AlarmServiceImpl {
       androidFullScreenIntent: true,
       // No stopButton here on purpose: the `alarm` package's own stop button
       // only silences the ring natively and can't run our Taken/Snooze/Skip
-      // logic (esp. when the app is killed). The real 3 action buttons
-      // (Dismiss=Taken, Snooze, Skip) come from our own notification in
-      // notificationService.showAlarmActions(), triggered on Alarm.ringStream.
+      // logic. Users respond via the full-screen ActiveAlarmScreen instead,
+      // which androidFullScreenIntent launches when the alarm rings.
       notificationSettings: NotificationSettings(
         title: title,
         body: body,
@@ -130,11 +129,7 @@ class AlarmServiceImpl {
       id: alarmId(group.id, candidate),
       scheduledAt: candidate,
       title: '${group.label} — Time for your medicine',
-      // This notification is required by Android to keep the alarm ringing
-      // reliably in the background; it has no action buttons on purpose.
-      // The actionable "Medicine Alarm" notification (Dismiss/Snooze/Skip)
-      // is the one to respond to.
-      body: 'Respond from the "Medicine Alarm" notification below',
+      body: 'Tap to open MedRemind and respond',
       groupId: group.id,
     );
   }
