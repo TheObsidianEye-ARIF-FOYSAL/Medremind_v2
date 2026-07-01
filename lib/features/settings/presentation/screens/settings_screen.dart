@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/providers/app_settings_provider.dart';
-import '../../../../core/providers/theme_provider.dart';
-import '../../../../core/services/app_settings_service.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../../../auth/providers/auth_provider.dart'
     show AuthNotifier, authProvider;
@@ -12,6 +9,9 @@ import '../../../auth/providers/firebase_auth_provider.dart'
     show FirebaseAuthNotifier, firebaseAuthProvider;
 import '../widgets/profile_card.dart';
 import '../widgets/settings_tiles.dart';
+import 'appearance_screen.dart';
+import 'notifications_alarms_screen.dart';
+import 'alarm_sound_screen.dart';
 
 export '../providers/settings_provider.dart' show userNameProvider;
 
