@@ -288,9 +288,9 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
       setState(() => _genericHint = null);
       return;
     }
-    final group =
-        await ref.read(genericGroupRepositoryProvider).findByBrand(brand);
-    if (mounted) setState(() => _genericHint = group?.name);
+    final match =
+        await ref.read(medicineDatasetRepositoryProvider).findBrand(brand);
+    if (mounted) setState(() => _genericHint = match?.generic);
   }
 
   Future<void> _save(BuildContext context) async {
