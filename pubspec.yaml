@@ -62,3 +62,5 @@ flutter:
   assets:
     - assets/generic_groups_seed.json
     - assets/audio/
+    - assets/med_dataset/brands.json
+    - assets/med_dataset/generics.json
