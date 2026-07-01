@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/navigation/app_transitions.dart';
 import '../../../../core/providers/app_settings_provider.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../widgets/profile_card.dart';
@@ -21,9 +22,8 @@ class SettingsScreen extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
 
-    void push(Widget screen) => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => screen),
-        );
+    void push(Widget screen) =>
+        Navigator.of(context).push(AppFadeRoute(page: screen));
 
     return Scaffold(
       body: SafeArea(
