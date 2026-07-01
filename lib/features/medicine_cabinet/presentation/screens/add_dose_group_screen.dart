@@ -110,7 +110,7 @@ class _AddDoseGroupScreenState extends ConsumerState<AddDoseGroupScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'New Dose Group',
+                    _isEditing ? 'Edit Dose Group' : 'New Dose Group',
                     style: theme.textTheme.titleLarge
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
