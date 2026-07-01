@@ -63,10 +63,14 @@ class AlarmServiceImpl {
       fadeDuration: 3.0,
       warningNotificationOnKill: true,
       androidFullScreenIntent: true,
+      // No stopButton here on purpose: the `alarm` package's own stop button
+      // only silences the ring natively and can't run our Taken/Snooze/Skip
+      // logic (esp. when the app is killed). The real 3 action buttons
+      // (Dismiss=Taken, Snooze, Skip) come from our own notification in
+      // notificationService.showAlarmActions(), triggered on Alarm.ringStream.
       notificationSettings: NotificationSettings(
         title: title,
         body: body,
-        stopButton: 'Dismiss',
         icon: 'notification_icon',
       ),
     );
