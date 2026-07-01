@@ -54,7 +54,14 @@ final resolvedDoseGroupsProvider =
         error: AsyncValue.error,
         data: (logs) {
           final medMap = {for (final m in meds) m.id: m};
-          final resolved = groups.map((g) {
+          final todayWeekday = DateTime.now().weekday; // 1=Mon … 7=Sun
+
+          final resolved = groups
+              // Only include groups scheduled for today's weekday
+              .where((g) =>
+                  g.daysOfWeek.isEmpty ||
+                  g.daysOfWeek.contains(todayWeekday))
+              .map((g) {
             final items = g.items.map((i) {
               final med = medMap[i.medicineId];
               return ResolvedDoseItem(
