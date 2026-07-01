@@ -112,6 +112,19 @@ class ReminderReviewScreen extends ConsumerWidget {
                               ),
                             ],
                           ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(Icons.calendar_today_rounded,
+                                  color: Colors.white70, size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                _daysText(group.daysOfWeek),
+                                style: theme.textTheme.bodySmall
+                                    ?.copyWith(color: Colors.white70),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
