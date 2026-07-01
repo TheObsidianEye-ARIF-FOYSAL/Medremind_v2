@@ -4,6 +4,7 @@ import '../repositories/medicine_repository.dart';
 import '../repositories/dose_group_repository.dart';
 import '../repositories/dose_log_repository.dart';
 import '../repositories/generic_group_repository.dart';
+import '../repositories/medicine_dataset_repository.dart';
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase.instance;
