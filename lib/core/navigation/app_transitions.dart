@@ -8,10 +8,9 @@ class AppPageRoute<T> extends PageRouteBuilder<T> {
 
   AppPageRoute({
     required this.page,
-    bool fullscreenDialog = false,
+    super.fullscreenDialog = false,
     super.settings,
   }) : super(
-          fullscreenDialog: fullscreenDialog,
           transitionDuration: const Duration(milliseconds: 300),
           reverseTransitionDuration: const Duration(milliseconds: 250),
           pageBuilder: (_, __, ___) => page,
