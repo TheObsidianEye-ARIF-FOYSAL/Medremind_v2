@@ -199,13 +199,24 @@ class ProfileScreen extends ConsumerWidget {
                     _SectionLabel('Security'),
                     const SizedBox(height: 8),
                     _ChangePasswordCard(isDark: isDark, primary: primary),
-                    const SizedBox(height: AppSizes.paddingXl),
                   ] else ...[
                     _SectionLabel('Security'),
                     const SizedBox(height: 8),
                     _GooglePasswordNote(isDark: isDark, primary: primary),
-                    const SizedBox(height: AppSizes.paddingXl),
                   ],
+
+                  const SizedBox(height: AppSizes.paddingXl),
+
+                  // ── Account actions ──────────────────────────────────────────
+                  _SectionLabel('Account'),
+                  const SizedBox(height: 8),
+                  _AccountActions(
+                    isDark: isDark,
+                    primary: primary,
+                    isGoogleUser: isGoogleUser,
+                  ),
+
+                  const SizedBox(height: AppSizes.paddingXl),
                 ],
               ),
             ),
