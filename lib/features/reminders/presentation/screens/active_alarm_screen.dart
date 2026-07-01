@@ -180,7 +180,7 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
       id: originalAlarmId + 800000,
       scheduledAt: snoozeAt,
       title: '${_group?.label ?? 'Medicine'} — Snoozed reminder',
-      body: 'Time to take your medicine',
+      body: 'Respond from the "Medicine Alarm" notification below',
       groupId: widget.doseGroupId,
     );
   }

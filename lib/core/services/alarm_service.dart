@@ -130,9 +130,11 @@ class AlarmServiceImpl {
       id: alarmId(group.id, candidate),
       scheduledAt: candidate,
       title: '${group.label} — Time for your medicine',
-      body: group.items.length == 1
-          ? 'Take your medicine now'
-          : 'Take ${group.items.length} medicines now',
+      // This notification is required by Android to keep the alarm ringing
+      // reliably in the background; it has no action buttons on purpose.
+      // The actionable "Medicine Alarm" notification (Dismiss/Snooze/Skip)
+      // is the one to respond to.
+      body: 'Respond from the "Medicine Alarm" notification below',
       groupId: group.id,
     );
   }

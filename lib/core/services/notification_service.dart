@@ -1,8 +1,13 @@
 import 'package:alarm/alarm.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'alarm_action_handler.dart';
 
 // ── Background handler (separate Dart isolate) ────────────────────────────────
+// Runs even when the app is fully killed. Applies the action (dose-log
+// write, snooze reschedule) immediately, rather than deferring it until the
+// user next opens the app — otherwise the buttons look broken when tapped
+// from a locked screen / killed app.
 @pragma('vm:entry-point')
 void onBackgroundNotificationResponse(NotificationResponse response) async {
   final parts = (response.payload ?? '').split('|');
@@ -13,16 +18,11 @@ void onBackgroundNotificationResponse(NotificationResponse response) async {
   final groupId = parts[1];
   final actionId = response.actionId ?? 'tap';
 
-  // Store action so main isolate can apply it on next resume.
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(
-      'pending_alarm_action', '$actionId|$alarmId|$groupId');
-
-  // Best-effort alarm stop.
   try {
     await Alarm.init();
-    await Alarm.stop(alarmId);
   } catch (_) {}
+
+  await applyAlarmAction(actionId, alarmId, groupId);
 }
 
 // ── Service ───────────────────────────────────────────────────────────────────
