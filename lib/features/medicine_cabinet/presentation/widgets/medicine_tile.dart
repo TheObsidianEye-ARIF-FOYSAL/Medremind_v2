@@ -7,6 +7,7 @@ import '../../../../core/navigation/app_transitions.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../screens/add_medication_screen.dart';
+import '../screens/medicine_detail_screen.dart';
 
 class MedicineTile extends ConsumerWidget {
   final Medicine med;
