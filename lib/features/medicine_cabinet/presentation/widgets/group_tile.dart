@@ -82,18 +82,13 @@ class GroupTile extends ConsumerWidget {
               ]),
               const SizedBox(height: 2),
               Text(
-                '$timeStr · $medCount ${medCount == 1 ? 'medicine' : 'medicines'}',
+                '$timeStr · $medCount ${medCount == 1 ? 'medicine' : 'medicines'}'
+                '${group.mealRelation == MealRelation.beforeMeal ? ' · Before meal' : group.mealRelation == MealRelation.afterMeal ? ' · After meal' : ''}',
                 style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant),
               ),
-              if (group.mealRelation != MealRelation.none)
-                Text(
-                  group.mealRelation == MealRelation.beforeMeal
-                      ? '· Before meal'
-                      : '· After meal',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant),
-                ),
+              const SizedBox(height: 5),
+              _DayChips(days: group.daysOfWeek, color: color),
             ],
           ),
         ),
