@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/common/widgets/pill_button.dart';
+import '../../../../core/models/medicine.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../providers/medicine_cabinet_provider.dart';
 import '../widgets/medicine_type_selector.dart';
 
 class AddMedicationScreen extends ConsumerStatefulWidget {
-  const AddMedicationScreen({super.key});
+  final Medicine? existing;
+  const AddMedicationScreen({super.key, this.existing});
 
   @override
   ConsumerState<AddMedicationScreen> createState() =>
@@ -21,10 +23,21 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   String? _genericHint;
   List<String> _suggestions = [];
 
+  bool get _isEditing => widget.existing != null;
+
   @override
   void initState() {
     super.initState();
     _loadSuggestions();
+    final med = widget.existing;
+    if (med != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(addMedicineFormProvider.notifier).loadForEdit(med);
+        _brandCtrl.text = med.brandName;
+        _strengthCtrl.text = med.strength;
+        _lookupGeneric(med.brandName);
+      });
+    }
   }
 
   Future<void> _loadSuggestions() async {
@@ -77,7 +90,7 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Add Medicine',
+                  child: Text(_isEditing ? 'Edit Medicine' : 'Add Medicine',
                       style: theme.textTheme.titleLarge
                           ?.copyWith(fontWeight: FontWeight.w700)),
                 ),
@@ -243,7 +256,7 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
               padding: const EdgeInsets.fromLTRB(AppSizes.paddingLg, 0,
                   AppSizes.paddingLg, AppSizes.paddingLg),
               child: PillButton(
-                label: 'Save Medicine',
+                label: _isEditing ? 'Update Medicine' : 'Save Medicine',
                 isLoading: form.isSaving,
                 onPressed: form.isValid ? () => _save(context) : null,
               ),
@@ -271,7 +284,9 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
     if (!mounted) return;
     if (ok) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Medicine saved!')),
+        SnackBar(
+            content:
+                Text(_isEditing ? 'Medicine updated!' : 'Medicine saved!')),
       );
       nav.pop();
     }
