@@ -242,7 +242,6 @@ class _AccountActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final surface = isDark ? DarkColors.surface : LightColors.surface;
     final divColor =
         isDark ? DarkColors.outlineVariant : LightColors.outlineVariant;
