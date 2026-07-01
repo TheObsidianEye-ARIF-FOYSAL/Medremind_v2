@@ -59,6 +59,7 @@ class ProfileScreen extends ConsumerWidget {
 
             Expanded(
               child: ListView(
+                physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.all(AppSizes.paddingLg),
                 children: [
                   // ── Avatar ──────────────────────────────────────────────────

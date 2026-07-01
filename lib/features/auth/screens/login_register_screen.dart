@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/theme_constants.dart';
 import '../providers/firebase_auth_provider.dart';
+import '../widgets/auth_form_widgets.dart';
+import '../widgets/forgot_password_sheet.dart';
 
 class LoginRegisterScreen extends ConsumerStatefulWidget {
   const LoginRegisterScreen({super.key});
@@ -36,14 +38,15 @@ class _LoginRegisterScreenState extends ConsumerState<LoginRegisterScreen>
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark ? DarkColors.background : LightColors.background;
     final surface = isDark ? DarkColors.surface : LightColors.surface;
-    final muted = isDark ? DarkColors.onSurfaceMuted : LightColors.onSurfaceMuted;
+    final muted =
+        isDark ? DarkColors.onSurfaceMuted : LightColors.onSurfaceMuted;
 
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header ──────────────────────────────────────────────────────────
+            // ── Header ──────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(
                   AppSizes.paddingLg, AppSizes.paddingXl,
@@ -70,8 +73,8 @@ class _LoginRegisterScreenState extends ConsumerState<LoginRegisterScreen>
                 const SizedBox(height: AppSizes.paddingMd),
                 Text(
                   'Welcome to MedRemind',
-                  style: theme.textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.3),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800, letterSpacing: -0.3),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -82,7 +85,7 @@ class _LoginRegisterScreenState extends ConsumerState<LoginRegisterScreen>
               ]),
             ),
 
-            // ── Tab bar ──────────────────────────────────────────────────────────
+            // ── Tab bar ──────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLg),
               child: Container(
@@ -111,15 +114,15 @@ class _LoginRegisterScreenState extends ConsumerState<LoginRegisterScreen>
               ),
             ),
 
-            // ── Tab views ────────────────────────────────────────────────────────
+            // ── Tab views ────────────────────────────────────────────────────
             Expanded(
               child: TabBarView(
                 controller: _tab,
                 children: [
                   _LoginTab(surface: surface, muted: muted, primary: primary,
-                      isDark: isDark, theme: theme),
+                      isDark: isDark),
                   _RegisterTab(surface: surface, muted: muted, primary: primary,
-                      isDark: isDark, theme: theme),
+                      isDark: isDark),
                 ],
               ),
             ),
@@ -135,14 +138,12 @@ class _LoginRegisterScreenState extends ConsumerState<LoginRegisterScreen>
 class _LoginTab extends ConsumerStatefulWidget {
   final Color surface, muted, primary;
   final bool isDark;
-  final ThemeData theme;
 
   const _LoginTab({
     required this.surface,
     required this.muted,
     required this.primary,
     required this.isDark,
-    required this.theme,
   });
 
   @override
@@ -164,13 +165,15 @@ class _LoginTabState extends ConsumerState<_LoginTab> {
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-    final ok = await ref.read(firebaseAuthProvider.notifier).signInWithEmailPassword(
-        _emailCtrl.text.trim(), _passCtrl.text);
+    final ok = await ref
+        .read(firebaseAuthProvider.notifier)
+        .signInWithEmailPassword(_emailCtrl.text.trim(), _passCtrl.text);
     if (!mounted) return;
     if (!ok) {
       final err = ref.read(firebaseAuthProvider).error;
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(err ?? 'Login failed'), backgroundColor: TagColors.missed));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(err ?? 'Login failed'),
+          backgroundColor: TagColors.missed));
     }
   }
 
@@ -180,7 +183,7 @@ class _LoginTabState extends ConsumerState<_LoginTab> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _ForgotPasswordSheet(
+      builder: (ctx) => ForgotPasswordSheet(
         emailCtrl: emailCtrl,
         notifier: ref.read(firebaseAuthProvider.notifier),
       ),
@@ -202,17 +205,18 @@ class _LoginTabState extends ConsumerState<_LoginTab> {
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(firebaseAuthProvider).isLoading;
-    final outline = widget.isDark ? DarkColors.outline : LightColors.outline;
+    final outline =
+        widget.isDark ? DarkColors.outline : LightColors.outline;
 
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(AppSizes.paddingLg),
       child: Form(
         key: _formKey,
         child: Column(children: [
           const SizedBox(height: AppSizes.paddingMd),
 
-          // Email
-          _InputField(
+          AuthInputField(
             controller: _emailCtrl,
             hint: 'Email address',
             icon: Icons.email_outlined,
@@ -220,7 +224,6 @@ class _LoginTabState extends ConsumerState<_LoginTab> {
             surface: widget.surface,
             outline: outline,
             muted: widget.muted,
-            theme: widget.theme,
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Enter email';
               if (!v.contains('@')) return 'Invalid email';
@@ -230,8 +233,7 @@ class _LoginTabState extends ConsumerState<_LoginTab> {
 
           const SizedBox(height: AppSizes.paddingMd),
 
-          // Password
-          _InputField(
+          AuthInputField(
             controller: _passCtrl,
             hint: 'Password',
             icon: Icons.lock_outline_rounded,
@@ -239,21 +241,21 @@ class _LoginTabState extends ConsumerState<_LoginTab> {
             surface: widget.surface,
             outline: outline,
             muted: widget.muted,
-            theme: widget.theme,
             suffix: IconButton(
-              icon: Icon(_obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: widget.muted, size: 20),
+              icon: Icon(
+                  _obscure
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: widget.muted,
+                  size: 20),
               onPressed: () => setState(() => _obscure = !_obscure),
             ),
-            validator: (v) {
-              if (v == null || v.isEmpty) return 'Enter password';
-              return null;
-            },
+            validator: (v) =>
+                (v == null || v.isEmpty) ? 'Enter password' : null,
           ),
 
           const SizedBox(height: AppSizes.paddingSm),
 
-          // Forgot password
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
@@ -271,8 +273,7 @@ class _LoginTabState extends ConsumerState<_LoginTab> {
 
           const SizedBox(height: AppSizes.paddingMd),
 
-          // Login button
-          _PrimaryButton(
+          AuthPrimaryButton(
             label: 'Login',
             icon: Icons.login_rounded,
             primary: widget.primary,
@@ -281,16 +282,14 @@ class _LoginTabState extends ConsumerState<_LoginTab> {
           ),
 
           const SizedBox(height: AppSizes.paddingMd),
-          _Divider(muted: widget.muted, theme: widget.theme),
+          AuthOrDivider(muted: widget.muted),
           const SizedBox(height: AppSizes.paddingMd),
 
-          // Google
-          _GoogleButton(
+          AuthGoogleButton(
             isLoading: isLoading,
             surface: widget.surface,
             muted: widget.muted,
             outline: outline,
-            theme: widget.theme,
             onPressed: _googleSignIn,
           ),
         ]),
@@ -304,14 +303,12 @@ class _LoginTabState extends ConsumerState<_LoginTab> {
 class _RegisterTab extends ConsumerStatefulWidget {
   final Color surface, muted, primary;
   final bool isDark;
-  final ThemeData theme;
 
   const _RegisterTab({
     required this.surface,
     required this.muted,
     required this.primary,
     required this.isDark,
-    required this.theme,
   });
 
   @override
@@ -345,8 +342,9 @@ class _RegisterTabState extends ConsumerState<_RegisterTab> {
     if (!mounted) return;
     if (!ok) {
       final err = ref.read(firebaseAuthProvider).error;
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(err ?? 'Registration failed'), backgroundColor: TagColors.missed));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(err ?? 'Registration failed'),
+          backgroundColor: TagColors.missed));
     }
   }
 
@@ -368,14 +366,14 @@ class _RegisterTabState extends ConsumerState<_RegisterTab> {
     final outline = widget.isDark ? DarkColors.outline : LightColors.outline;
 
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(AppSizes.paddingLg),
       child: Form(
         key: _formKey,
         child: Column(children: [
           const SizedBox(height: AppSizes.paddingMd),
 
-          // Name
-          _InputField(
+          AuthInputField(
             controller: _nameCtrl,
             hint: 'Full name',
             icon: Icons.person_outline_rounded,
@@ -383,17 +381,13 @@ class _RegisterTabState extends ConsumerState<_RegisterTab> {
             surface: widget.surface,
             outline: outline,
             muted: widget.muted,
-            theme: widget.theme,
-            validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Enter your name';
-              return null;
-            },
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Enter your name' : null,
           ),
 
           const SizedBox(height: AppSizes.paddingMd),
 
-          // Email
-          _InputField(
+          AuthInputField(
             controller: _emailCtrl,
             hint: 'Email address',
             icon: Icons.email_outlined,
@@ -401,7 +395,6 @@ class _RegisterTabState extends ConsumerState<_RegisterTab> {
             surface: widget.surface,
             outline: outline,
             muted: widget.muted,
-            theme: widget.theme,
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Enter email';
               if (!v.contains('@')) return 'Invalid email';
@@ -411,8 +404,7 @@ class _RegisterTabState extends ConsumerState<_RegisterTab> {
 
           const SizedBox(height: AppSizes.paddingMd),
 
-          // Password
-          _InputField(
+          AuthInputField(
             controller: _passCtrl,
             hint: 'Password (min 6 chars)',
             icon: Icons.lock_outline_rounded,
@@ -420,10 +412,13 @@ class _RegisterTabState extends ConsumerState<_RegisterTab> {
             surface: widget.surface,
             outline: outline,
             muted: widget.muted,
-            theme: widget.theme,
             suffix: IconButton(
-              icon: Icon(_obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: widget.muted, size: 20),
+              icon: Icon(
+                  _obscure
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: widget.muted,
+                  size: 20),
               onPressed: () => setState(() => _obscure = !_obscure),
             ),
             validator: (v) {
@@ -435,8 +430,7 @@ class _RegisterTabState extends ConsumerState<_RegisterTab> {
 
           const SizedBox(height: AppSizes.paddingMd),
 
-          // Confirm password
-          _InputField(
+          AuthInputField(
             controller: _confirmCtrl,
             hint: 'Confirm password',
             icon: Icons.lock_outline_rounded,
@@ -444,21 +438,22 @@ class _RegisterTabState extends ConsumerState<_RegisterTab> {
             surface: widget.surface,
             outline: outline,
             muted: widget.muted,
-            theme: widget.theme,
             suffix: IconButton(
-              icon: Icon(_obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: widget.muted, size: 20),
+              icon: Icon(
+                  _obscureConfirm
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: widget.muted,
+                  size: 20),
               onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
             ),
-            validator: (v) {
-              if (v != _passCtrl.text) return 'Passwords do not match';
-              return null;
-            },
+            validator: (v) =>
+                v != _passCtrl.text ? 'Passwords do not match' : null,
           ),
 
           const SizedBox(height: AppSizes.paddingXl),
 
-          _PrimaryButton(
+          AuthPrimaryButton(
             label: 'Create Account',
             icon: Icons.person_add_rounded,
             primary: widget.primary,
@@ -467,375 +462,19 @@ class _RegisterTabState extends ConsumerState<_RegisterTab> {
           ),
 
           const SizedBox(height: AppSizes.paddingMd),
-          _Divider(muted: widget.muted, theme: widget.theme),
+          AuthOrDivider(muted: widget.muted),
           const SizedBox(height: AppSizes.paddingMd),
 
-          _GoogleButton(
+          AuthGoogleButton(
             isLoading: isLoading,
             surface: widget.surface,
             muted: widget.muted,
             outline: outline,
-            theme: widget.theme,
             onPressed: _googleSignIn,
           ),
 
           const SizedBox(height: AppSizes.paddingMd),
         ]),
-      ),
-    );
-  }
-}
-
-// ── Shared sub-widgets ────────────────────────────────────────────────────────
-
-class _InputField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hint;
-  final IconData icon;
-  final TextInputType? keyboardType;
-  final bool obscure;
-  final Widget? suffix;
-  final Color surface, outline, muted;
-  final ThemeData theme;
-  final String? Function(String?)? validator;
-
-  const _InputField({
-    required this.controller,
-    required this.hint,
-    required this.icon,
-    required this.surface,
-    required this.outline,
-    required this.muted,
-    required this.theme,
-    this.keyboardType,
-    this.obscure = false,
-    this.suffix,
-    this.validator,
-  });
-
-  @override
-  Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-          border: Border.all(color: outline),
-        ),
-        child: TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          obscureText: obscure,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: muted),
-            prefixIcon: Icon(icon, color: muted, size: 20),
-            suffixIcon: suffix,
-            border: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            errorBorder: InputBorder.none,
-            focusedErrorBorder: InputBorder.none,
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
-          ),
-        ),
-      );
-}
-
-class _PrimaryButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color primary;
-  final bool isLoading;
-  final VoidCallback onPressed;
-
-  const _PrimaryButton({
-    required this.label,
-    required this.icon,
-    required this.primary,
-    required this.isLoading,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        width: double.infinity,
-        height: 56,
-        child: ElevatedButton.icon(
-          onPressed: isLoading ? null : onPressed,
-          icon: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2.5))
-              : Icon(icon),
-          label: Text(isLoading ? 'Please wait…' : label,
-              style:
-                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primary,
-            foregroundColor: Colors.white,
-            elevation: 4,
-            shadowColor: primary.withValues(alpha: 0.4),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusPill)),
-          ),
-        ),
-      );
-}
-
-class _GoogleButton extends StatelessWidget {
-  final bool isLoading;
-  final Color surface, muted, outline;
-  final ThemeData theme;
-  final VoidCallback onPressed;
-
-  const _GoogleButton({
-    required this.isLoading,
-    required this.surface,
-    required this.muted,
-    required this.outline,
-    required this.theme,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: OutlinedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: OutlinedButton.styleFrom(
-            backgroundColor: surface,
-            side: BorderSide(color: outline),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusPill)),
-          ),
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            // Google "G" logo
-            Container(
-              width: 22,
-              height: 22,
-              decoration: const BoxDecoration(shape: BoxShape.circle),
-              child: const Text(
-                'G',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF4285F4)),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text('Continue with Google',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w600, color: muted)),
-          ]),
-        ),
-      );
-}
-
-class _Divider extends StatelessWidget {
-  final Color muted;
-  final ThemeData theme;
-  const _Divider({required this.muted, required this.theme});
-
-  @override
-  Widget build(BuildContext context) => Row(children: [
-        Expanded(child: Divider(color: muted.withValues(alpha: 0.3))),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text('or',
-              style: theme.textTheme.bodySmall?.copyWith(color: muted)),
-        ),
-        Expanded(child: Divider(color: muted.withValues(alpha: 0.3))),
-      ]);
-}
-
-// ── Forgot password bottom sheet ──────────────────────────────────────────────
-
-class _ForgotPasswordSheet extends StatefulWidget {
-  final TextEditingController emailCtrl;
-  final FirebaseAuthNotifier notifier;
-
-  const _ForgotPasswordSheet({
-    required this.emailCtrl,
-    required this.notifier,
-  });
-
-  @override
-  State<_ForgotPasswordSheet> createState() => _ForgotPasswordSheetState();
-}
-
-class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
-  bool _loading = false;
-  bool _sent = false;
-
-  Future<void> _send() async {
-    final email = widget.emailCtrl.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Enter a valid email address'),
-          backgroundColor: TagColors.missed));
-      return;
-    }
-    setState(() => _loading = true);
-    final ok = await widget.notifier.sendPasswordReset(email);
-    if (!mounted) return;
-    setState(() {
-      _loading = false;
-      _sent = ok;
-    });
-    if (!ok) {
-      // ignore error — always show success to prevent email enumeration
-      setState(() => _sent = true);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final primary = theme.colorScheme.primary;
-    final bg = isDark ? DarkColors.background : LightColors.background;
-    final surface = isDark ? DarkColors.surface : LightColors.surface;
-    final outline = isDark ? DarkColors.outline : LightColors.outline;
-    final muted = isDark ? DarkColors.onSurfaceMuted : LightColors.onSurfaceMuted;
-
-    return Padding(
-      padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(AppSizes.radiusXl)),
-        ),
-        padding: const EdgeInsets.all(AppSizes.paddingLg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                margin: const EdgeInsets.only(bottom: AppSizes.paddingLg),
-                decoration: BoxDecoration(
-                  color: outline,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-
-            if (!_sent) ...[
-              Text('Reset Password',
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 6),
-              Text(
-                "Enter your email and we'll send a password reset link.",
-                style: theme.textTheme.bodyMedium?.copyWith(color: muted),
-              ),
-              const SizedBox(height: AppSizes.paddingLg),
-
-              Container(
-                decoration: BoxDecoration(
-                  color: surface,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                  border: Border.all(color: outline),
-                ),
-                child: TextField(
-                  controller: widget.emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: 'Email address',
-                    hintStyle: TextStyle(color: muted),
-                    prefixIcon: Icon(Icons.email_outlined, color: muted, size: 20),
-                    border: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                        vertical: 16, horizontal: 4),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: AppSizes.paddingLg),
-
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _loading ? null : _send,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusPill)),
-                  ),
-                  child: _loading
-                      ? const SizedBox(
-                          width: 22, height: 22,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2.5))
-                      : const Text('Send Reset Link',
-                          style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w700)),
-                ),
-              ),
-            ] else ...[
-              // Success state
-              Center(
-                child: Column(children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: TagColors.taken.withValues(alpha: 0.12),
-                    ),
-                    child: const Icon(Icons.mark_email_read_rounded,
-                        color: TagColors.taken, size: 36),
-                  ),
-                  const SizedBox(height: AppSizes.paddingMd),
-                  Text('Check your inbox',
-                      style: theme.textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 8),
-                  Text(
-                    'A password reset link has been sent to\n${widget.emailCtrl.text.trim()}',
-                    style:
-                        theme.textTheme.bodyMedium?.copyWith(color: muted),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSizes.paddingXl),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                AppSizes.radiusPill)),
-                      ),
-                      child: const Text('Back to Login',
-                          style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w700)),
-                    ),
-                  ),
-                ]),
-              ),
-            ],
-            const SizedBox(height: AppSizes.paddingMd),
-          ],
-        ),
       ),
     );
   }
