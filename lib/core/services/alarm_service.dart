@@ -60,6 +60,13 @@ class AlarmServiceImpl {
       assetAudioPath: sound,
       loopAudio: true,
       vibrate: true,
+      // Force the media volume up when the alarm rings instead of relying
+      // on whatever level it happens to be at — otherwise the ringtone can
+      // be silent (while vibration still fires) if the device's media
+      // volume is low/muted, since the `alarm` plugin plays audio on the
+      // music stream and only touches volume when explicitly told to.
+      volume: 1.0,
+      volumeEnforced: true,
       fadeDuration: 3.0,
       warningNotificationOnKill: true,
       androidFullScreenIntent: true,
