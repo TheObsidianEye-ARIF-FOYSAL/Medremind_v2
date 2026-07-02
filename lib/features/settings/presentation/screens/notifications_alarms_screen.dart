@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/providers/app_settings_provider.dart';
+import '../../../../core/providers/repository_providers.dart';
+import '../../../../core/services/alarm_service.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../widgets/settings_tiles.dart';
 
@@ -90,7 +92,7 @@ class NotificationsAlarmsScreen extends ConsumerWidget {
                 value: appSettings.alarmEnabled,
                 primaryColor: primary,
                 isDark: isDark,
-                onChanged: appSettingsNotifier.setAlarmEnabled,
+                onChanged: (v) => _setAlarmEnabled(ref, v),
               ),
             ]),
           ),
@@ -131,6 +133,21 @@ class NotificationsAlarmsScreen extends ConsumerWidget {
         height: 1,
         color: isDark ? DarkColors.outlineVariant : LightColors.outlineVariant,
       );
+
+  /// Toggling this off cancels every currently-scheduled alarm immediately
+  /// (not just future ones); toggling back on reschedules all active dose
+  /// groups. Without this, the setting would only affect alarms scheduled
+  /// *after* the toggle changed, leaving already-scheduled ones ringing.
+  Future<void> _setAlarmEnabled(WidgetRef ref, bool enabled) async {
+    await ref.read(appSettingsProvider.notifier).setAlarmEnabled(enabled);
+    if (!enabled) {
+      await alarmService.cancelAll();
+    } else {
+      final groups =
+          await ref.read(doseGroupRepositoryProvider).getAll(activeOnly: true);
+      await alarmService.rescheduleAll(groups);
+    }
+  }
 }
 
 // ── Toggle tile ───────────────────────────────────────────────────────────────

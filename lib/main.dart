@@ -9,6 +9,7 @@ import 'core/database/database_service.dart';
 import 'core/navigation/app_router.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/repositories/dose_group_repository.dart';
+import 'core/services/alarm_ring_watcher.dart';
 import 'core/services/alarm_service.dart';
 import 'core/services/notification_service.dart';
 import 'features/auth/providers/auth_provider.dart';
@@ -54,9 +55,14 @@ void main() async {
   } catch (_) {}
 
   // Capture the ringing alarm id so the app can navigate to the full-screen
-  // ActiveAlarmScreen (Dismiss/Snooze/Skip) once it resumes.
+  // ActiveAlarmScreen (Dismiss/Snooze/Skip) once it resumes. Also start the
+  // centralized ring→auto-snooze→auto-skip cycle, which runs independently
+  // of whether the full-screen screen actually launches.
   Alarm.ringStream.stream.listen((s) {
     _pendingAlarmId = s.id;
+    alarmService.getGroupIdForAlarm(s.id).then((groupId) {
+      alarmRingWatcher.onRing(s.id, groupId ?? '');
+    });
   });
 
   runApp(ProviderScope(

@@ -9,18 +9,19 @@ import '../../../../core/models/dose_group.dart';
 import '../../../../core/models/dose_log.dart';
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/providers/repository_providers.dart';
+import '../../../../core/services/alarm_ring_watcher.dart';
 import '../../../../core/services/alarm_service.dart';
 import '../../../../core/theme/theme_constants.dart';
 
-const _maxSnoozes = 5;
-const _ringDuration = Duration(minutes: 1);
-const _snoozeDuration = Duration(minutes: 5);
-
 /// Full-screen alarm screen shown when a dose alarm fires.
 ///
-/// Behaviour:
+/// The actual ring → auto-snooze → auto-skip timing is owned centrally by
+/// [AlarmRingWatcher] (started in main.dart when the alarm rings), since
+/// this screen isn't guaranteed to be shown on every device (full-screen
+/// intent can be blocked by the OS/OEM). This screen only reflects that
+/// state visually and offers manual actions:
 ///   • Alarm rings for 60 s; if no action → auto-snooze 5 min.
-///   • After [_maxSnoozes] auto-snoozes → auto-skip (no more re-rings).
+///   • After 5 auto-snoozes → auto-skip (no more re-rings).
 ///   • "Dismiss — Taken" button (or swipe-up) → marks dose as TAKEN.
 ///   • "Snooze 5 min" button → stops alarm, re-rings in 5 min.
 ///   • "Skip" button → marks dose as SKIPPED, no re-ring.
@@ -74,8 +75,13 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
 
     _loadGroup();
 
-    // Stop alarm audio after 60 s; then auto-snooze or auto-skip.
-    _stopTimer = Timer(_ringDuration, _onAutoStop);
+    // Cosmetic only — switches the icon/text from "ringing" to "stopped"
+    // after 60s. The actual auto-snooze/auto-skip decision is made by
+    // AlarmRingWatcher centrally (started when the alarm rang), so it
+    // still happens correctly even if this screen is closed early.
+    _stopTimer = Timer(ringDuration, () {
+      if (mounted) setState(() => _ringing = false);
+    });
   }
 
   @override
@@ -83,11 +89,10 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
     _pulseCtrl.dispose();
     _stopTimer?.cancel();
     WakelockPlus.disable();
-    // If the screen is being destroyed without the user taking action,
-    // stop the alarm so it doesn't ring in the background forever.
-    if (!_acted) {
-      alarmService.cancelAlarm(widget.alarmId);
-    }
+    // Deliberately does NOT cancel the alarm here when the user didn't act —
+    // AlarmRingWatcher owns the ring/auto-snooze/auto-skip cycle and should
+    // keep running in the background even if this screen is dismissed
+    // without an explicit action.
     super.dispose();
   }
 
@@ -148,31 +153,11 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
     }
   }
 
-  // ── Auto-stop / auto-snooze ───────────────────────────────────────────────
-
-  Future<void> _onAutoStop() async {
-    await alarmService.cancelAlarm(widget.alarmId);
-    if (mounted) setState(() => _ringing = false);
-
-    final prefs = await SharedPreferences.getInstance();
-    final count = prefs.getInt(_snoozeKey) ?? 0;
-
-    if (count < _maxSnoozes) {
-      // Auto-snooze: ring again in 5 min.
-      await prefs.setInt(_snoozeKey, count + 1);
-      await _scheduleSnooze(widget.alarmId);
-    } else {
-      // Max snoozes reached → auto-skip.
-      await prefs.remove(_snoozeKey);
-      await _updateLog(DoseStatus.skipped);
-    }
-
-    if (mounted) appRouter.go(AppRoutes.home);
-  }
+  // ── Snooze helper (used for manual "Snooze" action) ─────────────────────────
 
   Future<void> _scheduleSnooze(int originalAlarmId) async {
     if (widget.doseGroupId.isEmpty) return;
-    final snoozeAt = DateTime.now().add(_snoozeDuration);
+    final snoozeAt = DateTime.now().add(snoozeDuration);
     await alarmService.scheduleAlarm(
       id: originalAlarmId + 800000,
       scheduledAt: snoozeAt,
@@ -188,6 +173,9 @@ class _ActiveAlarmScreenState extends ConsumerState<ActiveAlarmScreen>
     if (_acted) return;
     _acted = true;
     _stopTimer?.cancel();
+    // Prevent AlarmRingWatcher's own timer from also auto-handling this
+    // alarm now that the user has explicitly acted on it.
+    alarmRingWatcher.cancel(widget.alarmId);
 
     await alarmService.cancelAlarm(widget.alarmId);
     // Also cancel any pending snooze alarm.

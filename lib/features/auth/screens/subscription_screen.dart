@@ -75,7 +75,7 @@ class SubscriptionScreen extends StatelessWidget {
                         color: muted, letterSpacing: 2)),
                 const SizedBox(height: 4),
                 Text(
-                  '৳2.78 / ৳5.56',
+                  '৳2.78',
                   style: theme.textTheme.headlineMedium?.copyWith(
                     color: primary,
                     fontWeight: FontWeight.w800,
@@ -146,8 +146,8 @@ class SubscriptionScreen extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    '৳2.78 (Robi) / ৳5.56 (Airtel) +VAT+SD+SC/day\n'
-                    'via Robi/Airtel mobile billing',
+                    '৳2.78 +VAT+SD+SC/day\n'
+                    'via mobile billing',
                     style: theme.textTheme.bodySmall?.copyWith(color: muted),
                   ),
                 ),
@@ -157,7 +157,7 @@ class SubscriptionScreen extends StatelessWidget {
             const SizedBox(height: AppSizes.paddingMd),
 
             Text(
-              'Supported: Android  |  Robi (018) & Airtel (016) only',
+              'Supported: Android',
               style: theme.textTheme.labelSmall?.copyWith(color: muted),
               textAlign: TextAlign.center,
             ),
