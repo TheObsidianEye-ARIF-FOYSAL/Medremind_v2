@@ -58,6 +58,23 @@ exports.registerUser = onCall(async (request) => {
   return {token};
 });
 
+exports.deleteAccount = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Must be signed in');
+
+  const password = String(request.data?.password || '');
+  const ref = db.collection('users').doc(uid);
+  const snap = await ref.get();
+  if (!snap.exists) throw new HttpsError('not-found', 'Account not found');
+
+  const match = await bcrypt.compare(password, snap.data().passwordHash || '');
+  if (!match) throw new HttpsError('permission-denied', 'Incorrect password');
+
+  await ref.delete();
+  await admin.auth().deleteUser(uid);
+  return {success: true};
+});
+
 exports.loginUser = onCall(async (request) => {
   const phone = requirePhone(request.data?.phone);
   const password = String(request.data?.password || '');

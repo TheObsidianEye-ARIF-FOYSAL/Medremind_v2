@@ -45,6 +45,11 @@ class UserAuthService {
 
   Future<void> signOut() => _auth.signOut();
 
+  Future<void> deleteAccount(String password) async {
+    await _functions.httpsCallable('deleteAccount').call({'password': password});
+    await _auth.signOut();
+  }
+
   Future<AppUser?> fetchProfile(String phone) async {
     final doc = await _firestore.collection('users').doc(phone).get();
     if (!doc.exists) return null;

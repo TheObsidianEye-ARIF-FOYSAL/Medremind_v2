@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/navigation/app_transitions.dart';
 import '../../../../core/theme/theme_constants.dart';
-import '../../../auth/providers/firebase_auth_provider.dart';
+import '../../../auth/providers/user_auth_provider.dart';
 import '../screens/profile_screen.dart';
 
 class SettingsProfileCard extends ConsumerWidget {
@@ -22,10 +22,10 @@ class SettingsProfileCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final fbUser = ref.watch(firebaseAuthProvider).user;
-    final displayName = fbUser?.displayName ?? '';
-    final email = fbUser?.email ?? '';
-    final hasName = displayName.isNotEmpty;
+    final user = ref.watch(userAuthProvider).user;
+    final name = user?.name ?? '';
+    final phone = user?.phone ?? '';
+    final hasName = name.isNotEmpty;
 
     return GestureDetector(
       onTap: () => Navigator.of(context)
@@ -62,7 +62,7 @@ class SettingsProfileCard extends ConsumerWidget {
             child: hasName
                 ? Center(
                     child: Text(
-                      displayName[0].toUpperCase(),
+                      name[0].toUpperCase(),
                       style: textTheme.headlineSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
@@ -77,7 +77,7 @@ class SettingsProfileCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  hasName ? displayName : 'Set your name',
+                  hasName ? name : 'Set your name',
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: hasName ? null : onSurfaceVariant,
@@ -85,7 +85,7 @@ class SettingsProfileCard extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  email.isNotEmpty ? email : 'View profile & account details',
+                  phone.isNotEmpty ? phone : 'View profile & account details',
                   style: textTheme.bodySmall?.copyWith(color: onSurfaceVariant),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
