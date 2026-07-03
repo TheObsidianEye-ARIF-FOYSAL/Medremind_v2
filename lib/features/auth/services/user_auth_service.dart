@@ -1,73 +1,152 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/models/app_user.dart';
 import 'auth_service.dart';
 
-/// Phone+password identity backed by Cloud Firestore, with password
-/// hashing/verification done server-side in Cloud Functions (functions/index.js).
-/// Firebase Auth is used only to hold the resulting session (custom token
-/// signed in with uid == phone) — the password itself never touches
-/// FirebaseAuth's own email/password provider.
+const _kDefaultBaseUrl = String.fromEnvironment(
+  'SERVER_BASE_URL',
+  defaultValue: 'https://ruetandroiddevelopers.com/ARIF(MR)',
+);
+
+const _kPhoneKey = 'medremind_session_phone';
+const _kTokenKey = 'medremind_session_token';
+
+/// Phone+password identity backed by a small PHP+SQLite API on the same
+/// BDApps server used for OTP (see auth_service.dart). No Firebase: the
+/// server hashes/verifies passwords with PHP's password_hash/password_verify
+/// and issues an opaque session token, cached locally via SharedPreferences.
 class UserAuthService {
-  final FirebaseFunctions _functions = FirebaseFunctions.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final AuthService _bdapps = AuthService();
+  final String _baseUrl;
 
-  User? get currentUser => _auth.currentUser;
+  String? _token;
 
-  Future<bool> checkPhoneExists(String phone) async {
-    final result =
-        await _functions.httpsCallable('checkPhoneExists').call({'phone': phone});
-    return result.data['exists'] == true;
+  UserAuthService({String? baseUrl})
+      : _baseUrl = _sanitize(baseUrl ?? _kDefaultBaseUrl);
+
+  /// Reads a previously persisted session (if any) so main.dart can restore
+  /// it on app start. Returns the phone number to restore, or null.
+  Future<String?> restoreSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final phone = prefs.getString(_kPhoneKey);
+    final token = prefs.getString(_kTokenKey);
+    if (phone == null || token == null) return null;
+    _token = token;
+    return phone;
   }
 
-  Future<void> register({
+  Future<void> _persistSession(String phone, String token) async {
+    _token = token;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kPhoneKey, phone);
+    await prefs.setString(_kTokenKey, token);
+  }
+
+  Future<void> _clearSession() async {
+    _token = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_kPhoneKey);
+    await prefs.remove(_kTokenKey);
+  }
+
+  Future<bool> checkPhoneExists(String phone) async {
+    final map = await _post('medremind_check_phone.php', {'phone': phone});
+    return map['exists'] == true;
+  }
+
+  Future<AppUser> register({
     required String phone,
     required String name,
     required String password,
   }) async {
-    final result = await _functions.httpsCallable('registerUser').call({
+    final map = await _post('medremind_register.php', {
       'phone': phone,
       'name': name,
       'password': password,
     });
-    await _auth.signInWithCustomToken(result.data['token'] as String);
+    await _persistSession(map['phone'] as String, map['token'] as String);
+    return _userFromMap(map);
   }
 
-  Future<void> login({required String phone, required String password}) async {
-    final result = await _functions.httpsCallable('loginUser').call({
+  Future<AppUser> login({required String phone, required String password}) async {
+    final map = await _post('medremind_login.php', {
       'phone': phone,
       'password': password,
     });
-    await _auth.signInWithCustomToken(result.data['token'] as String);
+    await _persistSession(map['phone'] as String, map['token'] as String);
+    return _userFromMap(map);
   }
 
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() => _clearSession();
 
-  Future<void> deleteAccount(String password) async {
-    await _functions.httpsCallable('deleteAccount').call({'password': password});
-    await _auth.signOut();
-  }
-
-  /// P4 Unsubscribe: opt the phone out via BDApps first, then wipe the
-  /// Firestore doc + Firebase Auth account, then end the local session.
+  /// P4 Unsubscribe: opt the phone out via BDApps, and only once that
+  /// succeeds delete the server-side user row + local session.
   Future<void> unsubscribe(String phone) async {
+    final token = _token;
+    if (token == null) throw Exception('Not signed in');
     await _bdapps.unsubscribe(phone);
-    await _functions.httpsCallable('unsubscribeUser').call();
-    await _auth.signOut();
+    await _post('medremind_unsubscribe.php', {'phone': phone, 'token': token});
+    await _clearSession();
   }
 
   Future<AppUser?> fetchProfile(String phone) async {
-    final doc = await _firestore.collection('users').doc(phone).get();
-    if (!doc.exists) return null;
-    return AppUser.fromFirestore(phone, doc.data()!);
+    final token = _token;
+    if (token == null) return null;
+    try {
+      final map =
+          await _post('medremind_profile.php', {'phone': phone, 'token': token});
+      return _userFromMap(map);
+    } catch (_) {
+      return null;
+    }
   }
 
-  String mapError(Object e) {
-    if (e is FirebaseFunctionsException) return e.message ?? e.code;
-    return e.toString().replaceFirst('Exception: ', '');
+  AppUser _userFromMap(Map<String, dynamic> map) => AppUser(
+        phone: map['phone'] as String,
+        name: (map['name'] ?? '').toString(),
+        subscriptionStatus: map['subscriptionStatus'] == true,
+        subscriptionExpiry: DateTime.tryParse(
+            (map['subscriptionExpiry'] ?? '').toString()),
+      );
+
+  Future<Map<String, dynamic>> _post(
+      String endpoint, Map<String, dynamic> body) async {
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/$endpoint'),
+          headers: const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 30));
+
+    final map = _json(response.body);
+    if (response.statusCode != 200) {
+      throw Exception((map['error'] ?? 'Request failed (${response.statusCode})')
+          .toString());
+    }
+    return map;
+  }
+
+  Map<String, dynamic> _json(String raw) {
+    try {
+      final data = jsonDecode(raw);
+      if (data is Map<String, dynamic>) return data;
+      throw const FormatException();
+    } catch (_) {
+      throw Exception('Invalid server response');
+    }
+  }
+
+  String mapError(Object e) => e.toString().replaceFirst('Exception: ', '');
+
+  static String _sanitize(String raw) {
+    final t = raw.trim();
+    return t.endsWith('/') ? t.substring(0, t.length - 1) : t;
   }
 }

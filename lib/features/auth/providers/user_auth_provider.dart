@@ -33,7 +33,7 @@ class UserAuthNotifier extends StateNotifier<UserAuthState> {
   final UserAuthService _service;
 
   /// main.dart awaits this before deciding whether to show the login screen,
-  /// so a restored FirebaseAuth session isn't mistaken for "logged out".
+  /// so a persisted session token isn't mistaken for "logged out".
   late final Future<void> ready;
 
   UserAuthNotifier(this._service) : super(const UserAuthState()) {
@@ -41,10 +41,14 @@ class UserAuthNotifier extends StateNotifier<UserAuthState> {
   }
 
   Future<void> _restoreSession() async {
-    final current = _service.currentUser;
-    if (current == null) return;
-    final profile = await _service.fetchProfile(current.uid);
-    if (profile != null) state = state.copyWith(user: profile);
+    final phone = await _service.restoreSession();
+    if (phone == null) return;
+    final profile = await _service.fetchProfile(phone);
+    if (profile != null) {
+      state = state.copyWith(user: profile);
+    } else {
+      await _service.signOut(); // stale/invalid token
+    }
   }
 
   Future<bool> checkPhoneExists(String phone) async {
