@@ -7,7 +7,7 @@ import '../../../core/models/app_user.dart';
 
 const _kDefaultBaseUrl = String.fromEnvironment(
   'SERVER_BASE_URL',
-  defaultValue: 'https://ruetandroiddevelopers.com/ARIF(MR)',
+  defaultValue: 'https://ruetandroiddevelopers.com/ARIF(MRe)',
 );
 
 const _kPhoneKey = 'medremind_session_phone';
