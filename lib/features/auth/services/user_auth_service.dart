@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/models/app_user.dart';
-import 'auth_service.dart';
 
 const _kDefaultBaseUrl = String.fromEnvironment(
   'SERVER_BASE_URL',
@@ -19,7 +18,6 @@ const _kTokenKey = 'medremind_session_token';
 /// server hashes/verifies passwords with PHP's password_hash/password_verify
 /// and issues an opaque session token, cached locally via SharedPreferences.
 class UserAuthService {
-  final AuthService _bdapps = AuthService();
   final String _baseUrl;
 
   String? _token;
