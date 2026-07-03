@@ -112,6 +112,20 @@ class UserAuthNotifier extends StateNotifier<UserAuthState> {
       return false;
     }
   }
+
+  Future<bool> unsubscribe() async {
+    final phone = state.user?.phone;
+    if (phone == null) return false;
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _service.unsubscribe(phone);
+      state = const UserAuthState();
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: _service.mapError(e));
+      return false;
+    }
+  }
 }
 
 // ── Providers ─────────────────────────────────────────────────────────────────

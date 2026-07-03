@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class AppUser {
   final String phone;
   final String name;
-  final String subscriptionStatus;
+  final bool subscriptionStatus;
   final DateTime? subscriptionExpiry;
 
   const AppUser({
@@ -14,7 +14,7 @@ class AppUser {
   });
 
   bool get isSubscribed =>
-      subscriptionStatus.toLowerCase() == 'active' &&
+      subscriptionStatus &&
       (subscriptionExpiry == null ||
           subscriptionExpiry!.isAfter(DateTime.now()));
 
@@ -23,7 +23,7 @@ class AppUser {
     return AppUser(
       phone: phone,
       name: (data['name'] ?? '').toString(),
-      subscriptionStatus: (data['subscriptionStatus'] ?? 'inactive').toString(),
+      subscriptionStatus: data['subscriptionStatus'] == true,
       subscriptionExpiry: expiry is Timestamp ? expiry.toDate() : null,
     );
   }

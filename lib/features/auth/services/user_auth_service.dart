@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../core/models/app_user.dart';
+import 'auth_service.dart';
 
 /// Phone+password identity backed by Cloud Firestore, with password
 /// hashing/verification done server-side in Cloud Functions (functions/index.js).
@@ -13,6 +14,7 @@ class UserAuthService {
   final FirebaseFunctions _functions = FirebaseFunctions.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AuthService _bdapps = AuthService();
 
   User? get currentUser => _auth.currentUser;
 
@@ -47,6 +49,14 @@ class UserAuthService {
 
   Future<void> deleteAccount(String password) async {
     await _functions.httpsCallable('deleteAccount').call({'password': password});
+    await _auth.signOut();
+  }
+
+  /// P4 Unsubscribe: opt the phone out via BDApps first, then wipe the
+  /// Firestore doc + Firebase Auth account, then end the local session.
+  Future<void> unsubscribe(String phone) async {
+    await _bdapps.unsubscribe(phone);
+    await _functions.httpsCallable('unsubscribeUser').call();
     await _auth.signOut();
   }
 
