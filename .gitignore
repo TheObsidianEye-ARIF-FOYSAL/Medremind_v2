@@ -1,0 +1,5 @@
+# Server: runtime-generated logs/database, never commit BDApps traffic dumps
+# or the SQLite user store.
+server/*.txt
+server/*.log
+server/*.db
