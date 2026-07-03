@@ -45,17 +45,33 @@ exports.registerUser = onCall(async (request) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+  // BDApps charges this subscription daily (2 taka/day) with no renewal
+  // webhook wired up yet, so expiry tracks one day of confirmed charging
+  // rather than a fixed-term plan.
+  const expiry = admin.firestore.Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000);
   await ref.set({
     phone,
     name,
     passwordHash,
-    subscriptionStatus: 'inactive',
-    subscriptionExpiry: null,
+    subscriptionStatus: true,
+    subscriptionExpiry: expiry,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
   const token = await admin.auth().createCustomToken(phone);
   return {token};
+});
+
+// Called after the client has already confirmed the BDApps unsubscribe
+// (opt-out) request succeeded. Deletes the Firestore user doc and the
+// Firebase Auth account; the client signs itself out afterward.
+exports.unsubscribeUser = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Must be signed in');
+
+  await db.collection('users').doc(uid).delete();
+  await admin.auth().deleteUser(uid);
+  return {success: true};
 });
 
 exports.deleteAccount = onCall(async (request) => {
