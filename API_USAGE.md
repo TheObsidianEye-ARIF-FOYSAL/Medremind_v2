@@ -23,7 +23,7 @@ BDApps OTP calls, proxied through the server's `send_otp.php` / `verify_otp.php`
 | 105 | `Uri.parse('$_baseUrl/unsubscribe.php')` | `server/unsubscribe.php` (generic opt-out; not the one used by the app's P4 flow — see below) |
 
 ### `app/lib/features/auth/services/user_auth_service.dart`
-Phone+password auth, backed by the new `medremind_*.php` endpoints. All requests go through the single `_post()` helper at **line 117**; call sites:
+Phone+password auth, backed by the new `medremind_*.php` endpoints. All requests go through the single `_post()` helper at **line 132**; call sites:
 
 | Line | Call | Hits |
 |---|---|---|
@@ -31,8 +31,9 @@ Phone+password auth, backed by the new `medremind_*.php` endpoints. All requests
 | 63 | `_post('medremind_register.php', ...)` | `server/medremind_register.php` |
 | 73 | `_post('medremind_login.php', ...)` | `server/medremind_login.php` |
 | 89 | `_post('medremind_unsubscribe.php', ...)` | `server/medremind_unsubscribe.php` |
-| 98 | `_post('medremind_profile.php', ...)` | `server/medremind_profile.php` |
-| 117 | `http.post(Uri.parse('$_baseUrl/$endpoint'), ...)` | shared request builder used by all of the above |
+| 103 | `_post('medremind_change_password.php', ...)` | `server/medremind_change_password.php` |
+| 117 | `_post('medremind_profile.php', ...)` | `server/medremind_profile.php` |
+| 132 | `http.post(Uri.parse('$_baseUrl/$endpoint'), ...)` | shared request builder used by all of the above |
 
 Base URL for both files: `SERVER_BASE_URL` dart-define, defaulting to
 `https://ruetandroiddevelopers.com/ARIF(MRe)` (`auth_service.dart:8-11`,
