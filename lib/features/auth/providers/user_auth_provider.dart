@@ -104,18 +104,6 @@ class UserAuthNotifier extends StateNotifier<UserAuthState> {
     state = state.copyWith(clearUser: true);
   }
 
-  Future<bool> deleteAccount(String password) async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      await _service.deleteAccount(password);
-      state = const UserAuthState();
-      return true;
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: _service.mapError(e));
-      return false;
-    }
-  }
-
   Future<bool> unsubscribe() async {
     final phone = state.user?.phone;
     if (phone == null) return false;
