@@ -1,1 +1,39 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"medremind-373b6","appId":"1:798717939681:android:f75d541eaf11e8096e4ca0","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"medremind-373b6","configurations":{"android":"1:798717939681:android:f75d541eaf11e8096e4ca0","ios":"1:798717939681:ios:3badd28c2153c1996e4ca0","web":"1:798717939681:web:feed02fba2a7f6e96e4ca0"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "medremind-373b6",
+          "appId": "1:798717939681:android:f75d541eaf11e8096e4ca0",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "medremind-373b6",
+          "configurations": {
+            "android": "1:798717939681:android:f75d541eaf11e8096e4ca0",
+            "ios": "1:798717939681:ios:3badd28c2153c1996e4ca0",
+            "web": "1:798717939681:web:feed02fba2a7f6e96e4ca0"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ]
+}
