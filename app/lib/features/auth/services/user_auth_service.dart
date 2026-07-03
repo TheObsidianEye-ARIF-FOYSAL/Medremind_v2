@@ -9,7 +9,7 @@ const _kDefaultBaseUrl = String.fromEnvironment(
   'SERVER_BASE_URL',
   defaultValue: 'https://ruetandroiddevelopers.com/ARIF(MRe)',
 );
-
+ 
 const _kPhoneKey = 'medremind_session_phone';
 const _kTokenKey = 'medremind_session_token';
 
