@@ -184,6 +184,18 @@ class _AccountActions extends ConsumerWidget {
         Divider(height: 1, color: divColor),
 
         _ActionTile(
+          icon: Icons.password_rounded,
+          label: 'Change Password',
+          subtitle: 'Update the password for your account',
+          color: primary,
+          isDark: isDark,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => const ChangePasswordScreen(),
+          )),
+        ),
+        Divider(height: 1, color: divColor),
+
+        _ActionTile(
           icon: Icons.delete_forever_rounded,
           label: 'Unsubscribe',
           subtitle: 'Cancel your BDApps subscription and delete your account',
