@@ -74,6 +74,7 @@ inside them):
 | `server/medremind_login.php` | `/medremind_login.php` | none (password is the credential) |
 | `server/medremind_profile.php` | `/medremind_profile.php` | phone + session token (see `medremind_db.php:69` `medremind_require_session`) |
 | `server/medremind_unsubscribe.php` | `/medremind_unsubscribe.php` | phone + session token |
+| `server/medremind_change_password.php` | `/medremind_change_password.php` | phone + session token, plus current password |
 | `server/medremind_admin_unsubscribe.php` | `/medremind_admin_unsubscribe.php` | none — manual test tool, see warning comment at top of file |
 | `server/send_otp.php` | `/send_otp.php` | none |
 | `server/verify_otp.php` | `/verify_otp.php` | none |
