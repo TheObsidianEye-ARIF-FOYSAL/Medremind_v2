@@ -90,6 +90,25 @@ class UserAuthService {
     await _clearSession();
   }
 
+  /// Change password for the current session (user already knows their
+  /// current password). Server rotates the session token; we persist the
+  /// new one so this device stays signed in.
+  Future<void> changePassword({
+    required String phone,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final token = _token;
+    if (token == null) throw Exception('Not signed in');
+    final map = await _post('medremind_change_password.php', {
+      'phone': phone,
+      'token': token,
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    });
+    await _persistSession(phone, map['token'] as String);
+  }
+
   Future<AppUser?> fetchProfile(String phone) async {
     final token = _token;
     if (token == null) return null;
