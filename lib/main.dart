@@ -12,10 +12,8 @@ import 'core/repositories/dose_group_repository.dart';
 import 'core/services/alarm_ring_watcher.dart';
 import 'core/services/alarm_service.dart';
 import 'core/services/notification_service.dart';
-import 'features/auth/providers/auth_provider.dart';
-import 'features/auth/providers/firebase_auth_provider.dart';
-import 'features/auth/screens/login_register_screen.dart';
-import 'features/auth/screens/subscription_screen.dart';
+import 'features/auth/providers/user_auth_provider.dart';
+import 'features/auth/screens/phone_entry_screen.dart';
 import 'features/onboarding/onboarding_intro_screen.dart';
 import 'features/onboarding/permission_onboarding_screen.dart';
 
@@ -83,8 +81,8 @@ class MedRemindApp extends ConsumerStatefulWidget {
 }
 
 class _MedRemindAppState extends ConsumerState<MedRemindApp> {
-  // null=loading, 'sub'=bdapps not subscribed, 'login'=firebase not logged in,
-  // 'intro'=onboarding, 'perm'=permissions, true=main app
+  // null=loading, 'login'=not logged in, 'intro'=onboarding, 'perm'=permissions,
+  // true=main app
   Object? _flow;
 
   @override
@@ -94,18 +92,13 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
   }
 
   Future<void> _resolveFlow() async {
-    // Allow AuthNotifier._loadSession() micro-task to complete first
-    await Future.microtask(() {});
+    // Wait for a restored FirebaseAuth session (if any) to finish loading its
+    // Firestore profile before deciding whether the user is logged in.
+    await ref.read(userAuthProvider.notifier).ready;
     if (!mounted) return;
 
-    final auth = ref.read(authProvider);
-    if (!auth.isAuthenticated) {
-      setState(() => _flow = 'sub');
-      return;
-    }
-
-    final firebase = ref.read(firebaseAuthProvider);
-    if (!firebase.isLoggedIn) {
+    final user = ref.read(userAuthProvider);
+    if (!user.isLoggedIn) {
       setState(() => _flow = 'login');
       return;
     }
@@ -146,28 +139,15 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
     final darkTheme = ref.watch(darkThemeProvider);
     final themeMode = ref.watch(themeModeProvider);
 
-    final auth = ref.watch(authProvider);
-    final firebase = ref.watch(firebaseAuthProvider);
+    final userAuth = ref.watch(userAuthProvider);
 
-    // BdApps session lost → go to subscription screen
-    if (_flow == true && !auth.isAuthenticated) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => setState(() => _flow = 'sub'));
-    }
-    // Firebase logged out while in main app → go to login screen
-    if (_flow == true && auth.isAuthenticated && !firebase.isLoggedIn) {
+    // Logged out while in main app (e.g. logout from profile) → go to login.
+    if (_flow == true && !userAuth.isLoggedIn) {
       WidgetsBinding.instance
           .addPostFrameCallback((_) => setState(() => _flow = 'login'));
     }
-    // BdApps subscription confirmed → advance to login check
-    if (_flow == 'sub' && auth.isAuthenticated) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() => _flow = null); // show loader briefly
-        _resolveFlow();
-      });
-    }
-    // Firebase login confirmed → advance flow
-    if (_flow == 'login' && firebase.isLoggedIn) {
+    // Login/registration confirmed → advance flow.
+    if (_flow == 'login' && userAuth.isLoggedIn) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() => _flow = null); // show loader briefly
         _resolveFlow();
@@ -178,10 +158,8 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
 
     if (_flow == null) {
       home = const Scaffold(body: Center(child: CircularProgressIndicator()));
-    } else if (_flow == 'sub') {
-      home = const SubscriptionScreen();
     } else if (_flow == 'login') {
-      home = const LoginRegisterScreen();
+      home = const PhoneEntryScreen();
     } else if (_flow == 'intro') {
       home = OnboardingIntroScreen(
         onDone: () async {
