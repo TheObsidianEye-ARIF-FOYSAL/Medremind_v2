@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/theme_constants.dart';
 import '../../../auth/providers/user_auth_provider.dart';
+import '../../../auth/screens/change_password_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
