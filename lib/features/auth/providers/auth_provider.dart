@@ -55,9 +55,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final ok = await _service.verifyOtp(state.phone!, code);
       if (ok) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('bdapps_phone', state.phone!);
-        state = state.copyWith(isLoading: false, isAuthenticated: true);
+        state = state.copyWith(isLoading: false);
         return true;
       }
       state = state.copyWith(isLoading: false, error: 'Invalid OTP');
@@ -67,38 +65,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
           isLoading: false, error: e.toString().replaceFirst('Exception: ', ''));
       return false;
     }
-  }
-
-  Future<bool> unsubscribe() async {
-    state = state.copyWith(isLoading: true, error: null);
-    final phone = state.phone;
-    if (phone == null || phone.isEmpty) {
-      state = state.copyWith(
-          isLoading: false, error: 'No phone found. Please login again.');
-      return false;
-    }
-    try {
-      final ok = await _service.unsubscribe(phone);
-      if (ok) {
-        await _clearSession();
-        return true;
-      }
-      state = state.copyWith(
-          isLoading: false, error: 'Unsubscribe failed. Please try again.');
-      return false;
-    } catch (e) {
-      state = state.copyWith(
-          isLoading: false, error: e.toString().replaceFirst('Exception: ', ''));
-      return false;
-    }
-  }
-
-  Future<void> logout() async => _clearSession();
-
-  Future<void> _clearSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('bdapps_phone');
-    state = const AuthState();
   }
 }
 
