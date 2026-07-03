@@ -79,14 +79,31 @@ inside them):
 
 ### Forgot password (`server_forgot_password/`) — separate deployment folder
 
-Not yet wired up in the Flutter app (server code only, as requested). Shares
-the same `medremind_users.db` as `server/` — see the path note at the top of
-`server_forgot_password/fp_config.php:20`.
+Shares the same `medremind_users.db` as `server/` — see the path note at the
+top of `server_forgot_password/fp_config.php:20`.
 
 | File | Endpoint path | BDApps call | Auth required |
 |---|---|---|---|
 | `server_forgot_password/fp_request_reset.php` | `/fp_request_reset.php` | `POST /subscription/otp/request` (line 39) | none (phone must already exist) |
 | `server_forgot_password/fp_reset_password.php` | `/fp_reset_password.php` | `POST /subscription/otp/verify` (line 46) | OTP (`referenceNo` + `otp` from step 1), not a session token |
+
+**App call sites** — `app/lib/features/auth/services/forgot_password_service.dart`:
+
+| Line | Call | Hits |
+|---|---|---|
+| 24 | `_post('fp_request_reset.php', ...)` | `server_forgot_password/fp_request_reset.php` |
+| 27-32 | `_post('fp_reset_password.php', ...)` | `server_forgot_password/fp_reset_password.php` |
+| 45 | `http.post(Uri.parse('$_baseUrl/$endpoint'), ...)` | shared request builder |
+
+Base URL: `FORGOT_PASSWORD_BASE_URL` dart-define, defaulting to
+`https://ruetandroiddevelopers.com/ARIF(MRe)-forgot-password`
+(`forgot_password_service.dart:6-9`) — separate from `SERVER_BASE_URL` since
+this folder deploys to its own path.
+
+UI entry point: "Forgot password?" link on
+`app/lib/features/auth/screens/login_password_screen.dart`, which requests
+the OTP then pushes `app/lib/features/auth/screens/reset_password_screen.dart`
+(single screen: OTP + new password, submitted together).
 
 ---
 
