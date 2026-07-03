@@ -70,9 +70,9 @@ class UserAuthNotifier extends StateNotifier<UserAuthState> {
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      await _service.register(phone: phone, name: name, password: password);
-      final profile = await _service.fetchProfile(phone);
-      state = state.copyWith(isLoading: false, user: profile);
+      final user =
+          await _service.register(phone: phone, name: name, password: password);
+      state = state.copyWith(isLoading: false, user: user);
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: _service.mapError(e));
@@ -83,9 +83,8 @@ class UserAuthNotifier extends StateNotifier<UserAuthState> {
   Future<bool> login({required String phone, required String password}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      await _service.login(phone: phone, password: password);
-      final profile = await _service.fetchProfile(phone);
-      state = state.copyWith(isLoading: false, user: profile);
+      final user = await _service.login(phone: phone, password: password);
+      state = state.copyWith(isLoading: false, user: user);
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: _service.mapError(e));
