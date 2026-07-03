@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/theme_constants.dart';
-import '../../../auth/providers/auth_provider.dart';
-import '../../../auth/providers/firebase_auth_provider.dart';
+import '../../../auth/providers/user_auth_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -15,21 +14,19 @@ class ProfileScreen extends ConsumerWidget {
     final primary = theme.colorScheme.primary;
     final muted = isDark ? DarkColors.onSurfaceMuted : LightColors.onSurfaceMuted;
 
-    final fbState = ref.watch(firebaseAuthProvider);
-    final fbUser = fbState.user;
-    final bdappsPhone = ref.watch(authProvider).phone;
-    final displayName = fbUser?.displayName ?? '';
-    final email = fbUser?.email ?? '';
-    final hasName = displayName.isNotEmpty;
-    final isGoogleUser = fbUser?.providerData
-            .any((p) => p.providerId == 'google.com') ??
-        false;
+    final user = ref.watch(userAuthProvider).user;
+    final name = user?.name ?? '';
+    final phone = user?.phone ?? 'Not available';
+    final hasName = name.isNotEmpty;
+    final subscriptionLabel = user == null
+        ? 'Unknown'
+        : (user.isSubscribed ? 'Active' : 'Inactive');
+    final subscriptionExpiry = user?.subscriptionExpiry;
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            // ── App bar ─────────────────────────────────────────────────────
             Container(
               padding: const EdgeInsets.symmetric(
                   horizontal: AppSizes.paddingMd, vertical: 12),
@@ -62,64 +59,33 @@ class ProfileScreen extends ConsumerWidget {
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.all(AppSizes.paddingLg),
                 children: [
-                  // ── Avatar ──────────────────────────────────────────────────
                   Center(
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: 90,
-                          height: 90,
-                          decoration: BoxDecoration(
-                            color: primary,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: primary.withValues(alpha: 0.4),
-                                blurRadius: 24,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
+                    child: Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        color: primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: primary.withValues(alpha: 0.4),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
                           ),
-                          child: hasName
-                              ? Center(
-                                  child: Text(
-                                    displayName[0].toUpperCase(),
-                                    style:
-                                        theme.textTheme.displaySmall?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                )
-                              : const Icon(Icons.person_rounded,
-                                  color: Colors.white, size: 44),
-                        ),
-                        if (isGoogleUser)
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                    color: isDark
-                                        ? DarkColors.outline
-                                        : LightColors.outline,
-                                    width: 1.5),
+                        ],
+                      ),
+                      child: hasName
+                          ? Center(
+                              child: Text(
+                                name[0].toUpperCase(),
+                                style: theme.textTheme.displaySmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
-                              child: const Center(
-                                child: Text('G',
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFF4285F4))),
-                              ),
-                            ),
-                          ),
-                      ],
+                            )
+                          : const Icon(Icons.person_rounded,
+                              color: Colors.white, size: 44),
                     ),
                   ),
 
@@ -127,95 +93,43 @@ class ProfileScreen extends ConsumerWidget {
 
                   Center(
                     child: Text(
-                      hasName ? displayName : 'No name set',
+                      hasName ? name : 'No name set',
                       style: theme.textTheme.titleLarge
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                   ),
-                  if (email.isNotEmpty)
-                    Center(
-                      child: Text(email,
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(color: muted)),
-                    ),
-                  if (isGoogleUser)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF4285F4).withValues(alpha: 0.1),
-                            borderRadius:
-                                BorderRadius.circular(AppSizes.radiusPill),
-                          ),
-                          child: const Text('Google Account',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF4285F4),
-                                  fontWeight: FontWeight.w600)),
-                        ),
-                      ),
-                    ),
+                  Center(
+                    child: Text(phone,
+                        style: theme.textTheme.bodyMedium?.copyWith(color: muted)),
+                  ),
 
                   const SizedBox(height: AppSizes.paddingXl),
 
-                  // ── Account info ────────────────────────────────────────────
                   _SectionLabel('Account Details'),
                   const SizedBox(height: 8),
                   _InfoTile(
                     icon: Icons.phone_rounded,
-                    label: 'BdApps Mobile',
-                    value: bdappsPhone ?? 'Not available',
+                    label: 'Mobile Number',
+                    value: phone,
                     isDark: isDark,
-                    muted: bdappsPhone == null,
                     primary: primary,
                   ),
                   const SizedBox(height: AppSizes.paddingSm),
                   _InfoTile(
-                    icon: Icons.email_rounded,
-                    label: 'Email',
-                    value: email.isNotEmpty ? email : 'Not available',
+                    icon: Icons.verified_rounded,
+                    label: 'Subscription',
+                    value: subscriptionExpiry != null
+                        ? '$subscriptionLabel · expires ${_formatDate(subscriptionExpiry)}'
+                        : subscriptionLabel,
                     isDark: isDark,
-                    muted: email.isEmpty,
-                    primary: primary,
-                  ),
-                  const SizedBox(height: AppSizes.paddingSm),
-                  _InfoTile(
-                    icon: isGoogleUser
-                        ? Icons.account_circle_rounded
-                        : Icons.lock_outline_rounded,
-                    label: 'Sign-in Method',
-                    value: isGoogleUser ? 'Google Account' : 'Email & Password',
-                    isDark: isDark,
-                    muted: false,
                     primary: primary,
                   ),
 
                   const SizedBox(height: AppSizes.paddingXl),
 
-                  // ── Change password (email users only) ──────────────────────
-                  if (!isGoogleUser) ...[
-                    _SectionLabel('Security'),
-                    const SizedBox(height: 8),
-                    _ChangePasswordCard(isDark: isDark, primary: primary),
-                  ] else ...[
-                    _SectionLabel('Security'),
-                    const SizedBox(height: 8),
-                    _GooglePasswordNote(isDark: isDark, primary: primary),
-                  ],
-
-                  const SizedBox(height: AppSizes.paddingXl),
-
-                  // ── Account actions ──────────────────────────────────────────
                   _SectionLabel('Account'),
                   const SizedBox(height: 8),
-                  _AccountActions(
-                    isDark: isDark,
-                    primary: primary,
-                    isGoogleUser: isGoogleUser,
-                  ),
+                  const _AccountActions(),
 
                   const SizedBox(height: AppSizes.paddingXl),
                 ],
@@ -226,29 +140,26 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+
+  static String _formatDate(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 }
 
-// ── Account actions (Logout / Unsubscribe / Delete) ──────────────────────────
+// ── Account actions (Logout / Delete) ─────────────────────────────────────────
 
 class _AccountActions extends ConsumerWidget {
-  final bool isDark;
-  final Color primary;
-  final bool isGoogleUser;
-
-  const _AccountActions({
-    required this.isDark,
-    required this.primary,
-    required this.isGoogleUser,
-  });
+  const _AccountActions();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.colorScheme.primary;
     final surface = isDark ? DarkColors.surface : LightColors.surface;
     final divColor =
         isDark ? DarkColors.outlineVariant : LightColors.outlineVariant;
 
-    final authNotifier = ref.read(authProvider.notifier);
-    final fbNotifier = ref.read(firebaseAuthProvider.notifier);
+    final notifier = ref.read(userAuthProvider.notifier);
 
     return Container(
       decoration: BoxDecoration(
@@ -256,63 +167,29 @@ class _AccountActions extends ConsumerWidget {
         borderRadius: BorderRadius.circular(AppSizes.radiusCard),
       ),
       child: Column(children: [
-        // ── Logout ─────────────────────────────────────────────────────────
         _ActionTile(
           icon: Icons.logout_rounded,
           label: 'Logout',
-          subtitle: 'Sign out — subscription stays active',
+          subtitle: 'Sign out of this device',
           color: primary,
           isDark: isDark,
           onTap: () async {
             final ok = await _confirm(context,
                 title: 'Logout?',
-                message:
-                    'You will be signed out and redirected to the login screen. Your BdApps subscription remains active.',
+                message: 'You will be signed out and redirected to the login screen.',
                 confirmLabel: 'Logout');
-            if (ok) await fbNotifier.signOut();
+            if (ok) await notifier.logout();
           },
         ),
         Divider(height: 1, color: divColor),
 
-        // ── Unsubscribe ────────────────────────────────────────────────────
-        _ActionTile(
-          icon: Icons.unsubscribe_rounded,
-          label: 'Unsubscribe',
-          subtitle: 'Cancel BdApps subscription and sign out',
-          color: Colors.orange,
-          isDark: isDark,
-          onTap: () async {
-            final ok = await _confirm(context,
-                title: 'Unsubscribe?',
-                message:
-                    'Your BdApps subscription will be cancelled. You will need to subscribe again to use the app.',
-                confirmLabel: 'Unsubscribe',
-                destructive: true);
-            if (!ok || !context.mounted) return;
-            final unsubOk = await authNotifier.unsubscribe();
-            if (unsubOk) {
-              await fbNotifier.signOut();
-            } else if (context.mounted) {
-              final err = ref.read(authProvider).error;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(err ?? 'Unsubscribe failed')),
-              );
-            }
-          },
-        ),
-        Divider(height: 1, color: divColor),
-
-        // ── Delete Account ─────────────────────────────────────────────────
         _ActionTile(
           icon: Icons.delete_forever_rounded,
           label: 'Delete Account',
           subtitle: 'Permanently delete your account and all data',
           color: TagColors.missed,
           isDark: isDark,
-          onTap: () => _handleDelete(context, ref,
-              authNotifier: authNotifier,
-              fbNotifier: fbNotifier,
-              isGoogleUser: isGoogleUser),
+          onTap: () => _handleDelete(context, ref, notifier: notifier),
         ),
       ]),
     );
@@ -349,68 +226,39 @@ class _AccountActions extends ConsumerWidget {
   Future<void> _handleDelete(
     BuildContext context,
     WidgetRef ref, {
-    required AuthNotifier authNotifier,
-    required FirebaseAuthNotifier fbNotifier,
-    required bool isGoogleUser,
+    required UserAuthNotifier notifier,
   }) async {
-    String? password;
+    final ctrl = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          _warnBox('This will permanently delete your account and all data.'),
+          const SizedBox(height: 16),
+          TextField(
+            controller: ctrl,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: 'Enter your password to confirm',
+              prefixIcon: Icon(Icons.lock_outline_rounded),
+            ),
+          ),
+        ]),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: TagColors.missed),
+            child: const Text('Delete Account'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
 
-    if (!isGoogleUser) {
-      final ctrl = TextEditingController();
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Delete Account'),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            _warnBox(
-                'This will permanently delete your account, all data, and cancel your BdApps subscription.'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ctrl,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Enter your password to confirm',
-                prefixIcon: Icon(Icons.lock_outline_rounded),
-              ),
-            ),
-          ]),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel')),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              style: TextButton.styleFrom(foregroundColor: TagColors.missed),
-              child: const Text('Delete Account'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true || !context.mounted) return;
-      password = ctrl.text;
-    } else {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Delete Account'),
-          content: _warnBox(
-              'This will permanently delete your account, all data, and cancel your BdApps subscription. You will be asked to sign in with Google to confirm.'),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel')),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              style: TextButton.styleFrom(foregroundColor: TagColors.missed),
-              child: const Text('Delete Account'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true || !context.mounted) return;
-    }
-
-    // Loading overlay
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -434,13 +282,12 @@ class _AccountActions extends ConsumerWidget {
       ),
     );
 
-    await authNotifier.unsubscribe();
-    final deleted = await fbNotifier.deleteAccount(password: password);
+    final deleted = await notifier.deleteAccount(ctrl.text);
 
     if (context.mounted) Navigator.of(context).pop(); // close loader
 
     if (!deleted && context.mounted) {
-      final err = ref.read(firebaseAuthProvider).error;
+      final err = ref.read(userAuthProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(err ?? 'Account deletion failed'),
         backgroundColor: TagColors.missed,
@@ -521,404 +368,6 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-// ── Change password card ──────────────────────────────────────────────────────
-
-class _ChangePasswordCard extends ConsumerStatefulWidget {
-  final bool isDark;
-  final Color primary;
-
-  const _ChangePasswordCard({required this.isDark, required this.primary});
-
-  @override
-  ConsumerState<_ChangePasswordCard> createState() =>
-      _ChangePasswordCardState();
-}
-
-class _ChangePasswordCardState extends ConsumerState<_ChangePasswordCard>
-    with SingleTickerProviderStateMixin {
-  bool _expanded = false;
-  final _currentCtrl = TextEditingController();
-  final _newCtrl = TextEditingController();
-  final _confirmCtrl = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  bool _obscureCurrent = true;
-  bool _obscureNew = true;
-  bool _obscureConfirm = true;
-
-  @override
-  void dispose() {
-    _currentCtrl.dispose();
-    _newCtrl.dispose();
-    _confirmCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    final ok = await ref
-        .read(firebaseAuthProvider.notifier)
-        .changePassword(_currentCtrl.text, _newCtrl.text);
-    if (!mounted) return;
-    if (ok) {
-      _currentCtrl.clear();
-      _newCtrl.clear();
-      _confirmCtrl.clear();
-      setState(() => _expanded = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Row(children: [
-          Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-          SizedBox(width: 8),
-          Text('Password changed successfully'),
-        ]),
-        backgroundColor: TagColors.taken,
-      ));
-    } else {
-      final err = ref.read(firebaseAuthProvider).error;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(err ?? 'Password change failed'),
-        backgroundColor: TagColors.missed,
-      ));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isLoading = ref.watch(firebaseAuthProvider).isLoading;
-    final surface = widget.isDark ? DarkColors.surface : LightColors.surface;
-    final outline =
-        widget.isDark ? DarkColors.outline : LightColors.outline;
-    final muted = widget.isDark
-        ? DarkColors.onSurfaceMuted
-        : LightColors.onSurfaceMuted;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(AppSizes.radiusCard),
-        border: Border.all(
-          color: _expanded
-              ? widget.primary.withValues(alpha: 0.35)
-              : outline,
-        ),
-        boxShadow: _expanded
-            ? [
-                BoxShadow(
-                  color: widget.primary.withValues(alpha: 0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                )
-              ]
-            : null,
-      ),
-      child: Column(
-        children: [
-          // ── Header row ───────────────────────────────────────────────────
-          InkWell(
-            onTap: () => setState(() => _expanded = !_expanded),
-            borderRadius: BorderRadius.circular(AppSizes.radiusCard),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSizes.paddingMd),
-              child: Row(children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: widget.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-                  ),
-                  child: Icon(Icons.lock_reset_rounded,
-                      color: widget.primary, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Change Password',
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600)),
-                      Text('Update your account password',
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: muted)),
-                    ],
-                  ),
-                ),
-                AnimatedRotation(
-                  turns: _expanded ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 200),
-                  child:
-                      Icon(Icons.expand_more_rounded, color: muted, size: 22),
-                ),
-              ]),
-            ),
-          ),
-
-          // ── Expanded form ────────────────────────────────────────────────
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 220),
-            crossFadeState: _expanded
-                ? CrossFadeState.showFirst
-                : CrossFadeState.showSecond,
-            firstChild: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSizes.paddingMd, 0,
-                  AppSizes.paddingMd, AppSizes.paddingMd),
-              child: Form(
-                key: _formKey,
-                child: Column(children: [
-                  Divider(height: 1, color: outline),
-                  const SizedBox(height: AppSizes.paddingMd),
-
-                  // Current password
-                  _PassField(
-                    ctrl: _currentCtrl,
-                    hint: 'Current password',
-                    obscure: _obscureCurrent,
-                    onToggle: () =>
-                        setState(() => _obscureCurrent = !_obscureCurrent),
-                    surface: surface,
-                    outline: outline,
-                    muted: muted,
-                    theme: theme,
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Enter current password' : null,
-                  ),
-                  const SizedBox(height: AppSizes.paddingSm),
-
-                  // New password
-                  _PassField(
-                    ctrl: _newCtrl,
-                    hint: 'New password',
-                    obscure: _obscureNew,
-                    onToggle: () =>
-                        setState(() => _obscureNew = !_obscureNew),
-                    surface: surface,
-                    outline: outline,
-                    muted: muted,
-                    theme: theme,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Enter new password';
-                      if (v.length < 6) return 'Minimum 6 characters';
-                      if (v == _currentCtrl.text) {
-                        return 'New password must differ from current';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: AppSizes.paddingSm),
-
-                  // Confirm new password
-                  _PassField(
-                    ctrl: _confirmCtrl,
-                    hint: 'Confirm new password',
-                    obscure: _obscureConfirm,
-                    onToggle: () =>
-                        setState(() => _obscureConfirm = !_obscureConfirm),
-                    surface: surface,
-                    outline: outline,
-                    muted: muted,
-                    theme: theme,
-                    validator: (v) =>
-                        v != _newCtrl.text ? 'Passwords do not match' : null,
-                  ),
-                  const SizedBox(height: AppSizes.paddingMd),
-
-                  // Password strength hint
-                  _StrengthHint(password: _newCtrl.text, muted: muted, theme: theme),
-                  const SizedBox(height: AppSizes.paddingMd),
-
-                  // Submit
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      onPressed: isLoading ? null : _submit,
-                      icon: isLoading
-                          ? const SizedBox(
-                              width: 18, height: 18,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2.5))
-                          : const Icon(Icons.save_rounded, size: 18),
-                      label: Text(isLoading ? 'Updating…' : 'Update Password',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: widget.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                AppSizes.radiusPill)),
-                      ),
-                    ),
-                  ),
-                ]),
-              ),
-            ),
-            secondChild: const SizedBox.shrink(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Google password note ──────────────────────────────────────────────────────
-
-class _GooglePasswordNote extends StatelessWidget {
-  final bool isDark;
-  final Color primary;
-  const _GooglePasswordNote({required this.isDark, required this.primary});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.paddingMd),
-      decoration: BoxDecoration(
-        color: const Color(0xFF4285F4).withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(AppSizes.radiusCard),
-        border: Border.all(
-            color: const Color(0xFF4285F4).withValues(alpha: 0.2)),
-      ),
-      child: Row(children: [
-        const Text('G',
-            style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF4285F4))),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Google Account',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            Text(
-              'Your password is managed by Google. Visit myaccount.google.com to change it.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant),
-            ),
-          ]),
-        ),
-      ]),
-    );
-  }
-}
-
-// ── Password strength indicator ───────────────────────────────────────────────
-
-class _StrengthHint extends StatelessWidget {
-  final String password;
-  final Color muted;
-  final ThemeData theme;
-  const _StrengthHint(
-      {required this.password, required this.muted, required this.theme});
-
-  (String, Color, double) get _strength {
-    if (password.isEmpty) return ('', muted, 0);
-    int score = 0;
-    if (password.length >= 8) score++;
-    if (password.contains(RegExp(r'[A-Z]'))) score++;
-    if (password.contains(RegExp(r'[0-9]'))) score++;
-    if (password.contains(RegExp(r'[!@#\$&*~]'))) score++;
-    return switch (score) {
-      0 || 1 => ('Weak', TagColors.missed, 0.25),
-      2 => ('Fair', TagColors.snoozed, 0.55),
-      3 => ('Good', TagColors.taken, 0.8),
-      _ => ('Strong', TagColors.taken, 1.0),
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (password.isEmpty) return const SizedBox.shrink();
-    final (label, color, fraction) = _strength;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        Text('Strength: ',
-            style: theme.textTheme.labelSmall?.copyWith(color: muted)),
-        Text(label,
-            style: theme.textTheme.labelSmall
-                ?.copyWith(color: color, fontWeight: FontWeight.w700)),
-      ]),
-      const SizedBox(height: 4),
-      ClipRRect(
-        borderRadius: BorderRadius.circular(2),
-        child: LinearProgressIndicator(
-          value: fraction,
-          backgroundColor: color.withValues(alpha: 0.15),
-          valueColor: AlwaysStoppedAnimation(color),
-          minHeight: 4,
-        ),
-      ),
-    ]);
-  }
-}
-
-// ── Password field ────────────────────────────────────────────────────────────
-
-class _PassField extends StatelessWidget {
-  final TextEditingController ctrl;
-  final String hint;
-  final bool obscure;
-  final VoidCallback onToggle;
-  final Color surface, outline, muted;
-  final ThemeData theme;
-  final String? Function(String?)? validator;
-
-  const _PassField({
-    required this.ctrl,
-    required this.hint,
-    required this.obscure,
-    required this.onToggle,
-    required this.surface,
-    required this.outline,
-    required this.muted,
-    required this.theme,
-    this.validator,
-  });
-
-  @override
-  Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-          border: Border.all(color: outline),
-        ),
-        child: TextFormField(
-          controller: ctrl,
-          obscureText: obscure,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: muted),
-            prefixIcon:
-                Icon(Icons.lock_outline_rounded, color: muted, size: 18),
-            suffixIcon: IconButton(
-              icon: Icon(
-                  obscure
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  color: muted,
-                  size: 18),
-              onPressed: onToggle,
-            ),
-            border: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            errorBorder: InputBorder.none,
-            focusedErrorBorder: InputBorder.none,
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
-            isDense: true,
-          ),
-        ),
-      );
-}
-
-// ── Info tile ─────────────────────────────────────────────────────────────────
-
 class _SectionLabel extends StatelessWidget {
   final String text;
   const _SectionLabel(this.text);
@@ -942,7 +391,6 @@ class _InfoTile extends StatelessWidget {
   final String label;
   final String value;
   final bool isDark;
-  final bool muted;
   final Color primary;
 
   const _InfoTile({
@@ -951,7 +399,6 @@ class _InfoTile extends StatelessWidget {
     required this.value,
     required this.isDark,
     required this.primary,
-    this.muted = false,
   });
 
   @override
@@ -964,9 +411,7 @@ class _InfoTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
       ),
       child: Row(children: [
-        Icon(icon,
-            size: 20,
-            color: muted ? theme.colorScheme.onSurfaceVariant : primary),
+        Icon(icon, size: 20, color: primary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -975,12 +420,7 @@ class _InfoTile extends StatelessWidget {
               Text(label,
                   style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant)),
-              Text(value,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color:
-                        muted ? theme.colorScheme.onSurfaceVariant : null,
-                    fontStyle: muted ? FontStyle.italic : null,
-                  )),
+              Text(value, style: theme.textTheme.bodyMedium),
             ],
           ),
         ),
