@@ -7,7 +7,20 @@ import '../providers/auth_provider.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   final String phone;
-  const OtpScreen({super.key, required this.phone});
+
+  /// Called after the BDApps OTP itself verifies successfully. Return true
+  /// once the caller's own follow-up work (e.g. creating the Firestore user
+  /// via [userAuthProvider]) has also succeeded, to pop back to the root;
+  /// return false to stay on this screen and show [followUpError].
+  final Future<bool> Function()? onVerified;
+  final String Function()? followUpError;
+
+  const OtpScreen({
+    super.key,
+    required this.phone,
+    this.onVerified,
+    this.followUpError,
+  });
 
   @override
   ConsumerState<OtpScreen> createState() => _OtpScreenState();
@@ -17,6 +30,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   final List<TextEditingController> _ctrls =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _nodes = List.generate(6, (_) => FocusNode());
+  bool _finishing = false;
 
   @override
   void dispose() {
@@ -32,9 +46,25 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     final ok = await ref.read(authProvider.notifier).verifyOtp(_code);
     if (!mounted) return;
     if (ok) {
-      // Pop the entire auth navigator stack back to root.
-      // main.dart watches authProvider and will transition to the next flow step.
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      if (widget.onVerified == null) {
+        // Pop the entire auth navigator stack back to root.
+        // main.dart watches authProvider and will transition to the next flow step.
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        return;
+      }
+      setState(() => _finishing = true);
+      final done = await widget.onVerified!();
+      if (!mounted) return;
+      setState(() => _finishing = false);
+      if (done) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content:
+              Text(widget.followUpError?.call() ?? 'Could not create account.'),
+          backgroundColor: TagColors.missed,
+        ));
+      }
     } else {
       final error = ref.read(authProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -48,7 +78,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(authProvider).isLoading;
+    final isLoading = ref.watch(authProvider).isLoading || _finishing;
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final isDark = theme.brightness == Brightness.dark;
