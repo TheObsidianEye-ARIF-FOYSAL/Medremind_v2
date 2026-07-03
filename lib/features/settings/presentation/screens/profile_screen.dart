@@ -185,11 +185,11 @@ class _AccountActions extends ConsumerWidget {
 
         _ActionTile(
           icon: Icons.delete_forever_rounded,
-          label: 'Delete Account',
-          subtitle: 'Permanently delete your account and all data',
+          label: 'Unsubscribe',
+          subtitle: 'Cancel your BDApps subscription and delete your account',
           color: TagColors.missed,
           isDark: isDark,
-          onTap: () => _handleDelete(context, ref, notifier: notifier),
+          onTap: () => _handleUnsubscribe(context, ref, notifier: notifier),
         ),
       ]),
     );
@@ -223,27 +223,19 @@ class _AccountActions extends ConsumerWidget {
     return result == true;
   }
 
-  Future<void> _handleDelete(
+  Future<void> _handleUnsubscribe(
     BuildContext context,
     WidgetRef ref, {
     required UserAuthNotifier notifier,
   }) async {
-    final ctrl = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Account'),
+        title: const Text('Unsubscribe'),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          _warnBox('This will permanently delete your account and all data.'),
-          const SizedBox(height: 16),
-          TextField(
-            controller: ctrl,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Enter your password to confirm',
-              prefixIcon: Icon(Icons.lock_outline_rounded),
-            ),
-          ),
+          _warnBox(
+              'This will cancel your BDApps subscription and permanently delete your account and all data. '
+              "You'll need to register again to use the app."),
         ]),
         actions: [
           TextButton(
@@ -252,7 +244,7 @@ class _AccountActions extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(foregroundColor: TagColors.missed),
-            child: const Text('Delete Account'),
+            child: const Text('Unsubscribe'),
           ),
         ],
       ),
@@ -273,7 +265,7 @@ class _AccountActions extends ConsumerWidget {
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text('Deleting account…'),
+                  Text('Unsubscribing…'),
                 ]),
               ),
             ),
@@ -282,14 +274,14 @@ class _AccountActions extends ConsumerWidget {
       ),
     );
 
-    final deleted = await notifier.deleteAccount(ctrl.text);
+    final done = await notifier.unsubscribe();
 
     if (context.mounted) Navigator.of(context).pop(); // close loader
 
-    if (!deleted && context.mounted) {
+    if (!done && context.mounted) {
       final err = ref.read(userAuthProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(err ?? 'Account deletion failed'),
+        content: Text(err ?? 'Unsubscribe failed'),
         backgroundColor: TagColors.missed,
       ));
     }
