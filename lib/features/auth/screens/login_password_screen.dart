@@ -6,7 +6,7 @@ import '../providers/user_auth_provider.dart';
 import '../widgets/auth_form_widgets.dart';
 
 /// Second step for an existing phone number: password entry, verified
-/// server-side by the loginUser Cloud Function against the Firestore hash.
+/// server-side by medremind_login.php against the stored password hash.
 class LoginPasswordScreen extends ConsumerStatefulWidget {
   final String phone;
   const LoginPasswordScreen({super.key, required this.phone});
