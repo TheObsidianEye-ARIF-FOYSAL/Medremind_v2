@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class AppUser {
   final String phone;
   final String name;
@@ -17,14 +15,4 @@ class AppUser {
       subscriptionStatus &&
       (subscriptionExpiry == null ||
           subscriptionExpiry!.isAfter(DateTime.now()));
-
-  factory AppUser.fromFirestore(String phone, Map<String, dynamic> data) {
-    final expiry = data['subscriptionExpiry'];
-    return AppUser(
-      phone: phone,
-      name: (data['name'] ?? '').toString(),
-      subscriptionStatus: data['subscriptionStatus'] == true,
-      subscriptionExpiry: expiry is Timestamp ? expiry.toDate() : null,
-    );
-  }
 }
