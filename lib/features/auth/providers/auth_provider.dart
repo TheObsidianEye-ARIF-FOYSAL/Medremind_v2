@@ -1,31 +1,31 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/auth_service.dart';
 
 // ── State ──────────────────────────────────────────────────────────────────────
+//
+// This notifier only wraps the BDApps OTP send/verify HTTP calls used as the
+// phone-verification step during registration (see RegisterDetailsScreen and
+// OtpScreen). It intentionally holds no persisted session — identity and
+// login state live in [userAuthProvider] (Firestore-backed phone+password).
 
 class AuthState {
-  final bool isAuthenticated;
   final String? phone;
   final bool isLoading;
   final String? error;
 
   const AuthState({
-    this.isAuthenticated = false,
     this.phone,
     this.isLoading = false,
     this.error,
   });
 
   AuthState copyWith({
-    bool? isAuthenticated,
     String? phone,
     bool? isLoading,
     String? error,
   }) =>
       AuthState(
-        isAuthenticated: isAuthenticated ?? this.isAuthenticated,
         phone: phone ?? this.phone,
         isLoading: isLoading ?? this.isLoading,
         error: error,
@@ -37,17 +37,7 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _service;
 
-  AuthNotifier(this._service) : super(const AuthState()) {
-    _loadSession();
-  }
-
-  Future<void> _loadSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    final phone = prefs.getString('bdapps_phone');
-    if (phone != null) {
-      state = state.copyWith(isAuthenticated: true, phone: phone);
-    }
-  }
+  AuthNotifier(this._service) : super(const AuthState());
 
   Future<void> sendOtp(String phone) async {
     state = state.copyWith(isLoading: true, error: null);

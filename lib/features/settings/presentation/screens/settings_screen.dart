@@ -130,9 +130,8 @@ class SettingsScreen extends ConsumerWidget {
                       'daily dose groups with precise alarm times, track your medication '
                       'adherence through a colour-coded calendar, and review your full '
                       'dose history — all in one place.\n\n'
-                      'The app supports BdApps mobile subscription and Firebase account '
-                      'management, so your data stays secure whether you use a phone '
-                      'number or an email address. Alarms ring even when the screen is '
+                      'You sign in with your mobile number and a password, secured by '
+                      'Firebase and Cloud Firestore. Alarms ring even when the screen is '
                       'locked, and action buttons let you dismiss or snooze a reminder '
                       'without unlocking your phone.',
                       style: theme.textTheme.bodySmall?.copyWith(
