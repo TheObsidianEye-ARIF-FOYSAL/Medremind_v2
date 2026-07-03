@@ -80,12 +80,12 @@ class UserAuthService {
 
   Future<void> signOut() => _clearSession();
 
-  /// P4 Unsubscribe: opt the phone out via BDApps, and only once that
-  /// succeeds delete the server-side user row + local session.
+  /// P4 Unsubscribe: medremind_unsubscribe.php opts the phone out via BDApps
+  /// server-side and, only once that succeeds, deletes the user row. We just
+  /// clear the local session afterward.
   Future<void> unsubscribe(String phone) async {
     final token = _token;
     if (token == null) throw Exception('Not signed in');
-    await _bdapps.unsubscribe(phone);
     await _post('medremind_unsubscribe.php', {'phone': phone, 'token': token});
     await _clearSession();
   }
