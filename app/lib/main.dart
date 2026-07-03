@@ -12,7 +12,7 @@ import 'core/services/alarm_ring_watcher.dart';
 import 'core/services/alarm_service.dart';
 import 'core/services/notification_service.dart';
 import 'features/auth/providers/user_auth_provider.dart';
-import 'features/auth/screens/phone_entry_screen.dart';
+import 'features/auth/screens/welcome_landing_screen.dart';
 import 'features/onboarding/onboarding_intro_screen.dart';
 import 'features/onboarding/permission_onboarding_screen.dart';
 
@@ -156,7 +156,7 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
     if (_flow == null) {
       home = const Scaffold(body: Center(child: CircularProgressIndicator()));
     } else if (_flow == 'login') {
-      home = const PhoneEntryScreen();
+      home = const WelcomeLandingScreen();
     } else if (_flow == 'intro') {
       home = OnboardingIntroScreen(
         onDone: () async {
