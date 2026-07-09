@@ -1,5 +1,7 @@
 <?php
 
+require __DIR__ . '/bdapps_config.php';
+
 // MedRemind-specific OTP request, using MedRee's own BDApps credentials
 // (APP_138840). This app is currently approved for TESTING ONLY — BDApps
 // will only issue OTPs for their whitelisted test numbers on this app id
@@ -11,8 +13,8 @@ $user_mobile = $_POST['user_mobile'] ?? '';
 $user_mobile = 'tel:88' . $user_mobile;
 
 $requestData = array(
-    "applicationId" => "APP_138840",
-    "password" => "REDACTED_BDAPPS_API_KEY",
+    "applicationId" => BDAPPS_APP_ID,
+    "password" => BDAPPS_APP_PASSWORD,
     "subscriberId" => "$user_mobile",
     "applicationHash" => "MedRee",
     "applicationMetaData" => array(

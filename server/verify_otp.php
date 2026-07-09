@@ -1,5 +1,7 @@
 <?php
 
+require __DIR__ . '/bdapps_config.php';
+
 $date_= date("Y-m-d h:i:sa");
 
 $user_otp = $_POST['Otp'];
@@ -17,8 +19,8 @@ catch(Exception $e){
   
 // Request data
 $requestData = array(
-    "applicationId" => "APP_138840",
-    "password" => "REDACTED_BDAPPS_API_KEY",
+    "applicationId" => BDAPPS_APP_ID,
+    "password" => BDAPPS_APP_PASSWORD,
     "referenceNo" => "$referenceNo",
     "otp" => "$user_otp"
 );

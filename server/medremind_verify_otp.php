@@ -1,5 +1,7 @@
 <?php
 
+require __DIR__ . '/bdapps_config.php';
+
 // MedRemind-specific OTP verify, using MedRee's own BDApps credentials
 // (APP_138840). See medremind_send_otp.php's comment — testing-only app id.
 
@@ -7,8 +9,8 @@ $user_otp = $_POST['Otp'] ?? '';
 $referenceNo = $_POST['referenceNo'] ?? '';
 
 $requestData = array(
-    "applicationId" => "APP_138840",
-    "password" => "REDACTED_BDAPPS_API_KEY",
+    "applicationId" => BDAPPS_APP_ID,
+    "password" => BDAPPS_APP_PASSWORD,
     "referenceNo" => "$referenceNo",
     "otp" => "$user_otp"
 );

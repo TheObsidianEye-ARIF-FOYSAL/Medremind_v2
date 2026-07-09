@@ -1,4 +1,6 @@
 import 'package:alarm/alarm.dart';
+import 'package:device_preview/device_preview.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,10 +62,17 @@ void main() async {
     });
   });
 
-  runApp(ProviderScope(
+  final app = ProviderScope(
     overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
     child: const MedRemindApp(),
-  ));
+  );
+
+  // Device Preview lets a client browsing the web build pick a phone frame
+  // to view the app in, instead of seeing raw unconstrained browser-window
+  // dimensions. Never enabled for the real mobile app.
+  runApp(kIsWeb
+      ? DevicePreview(enabled: true, builder: (context) => app)
+      : app);
 }
 
 int? _pendingAlarmId;
@@ -180,7 +189,8 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
         darkTheme: darkTheme,
         themeMode: themeMode,
         routerConfig: appRouter,
-        builder: _responsiveBuilder,
+        locale: kIsWeb ? DevicePreview.locale(context) : null,
+        builder: _appBuilder,
       );
     }
 
@@ -194,9 +204,17 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
       darkTheme: darkTheme,
       themeMode: themeMode,
       home: home,
-      builder: _responsiveBuilder,
+      locale: kIsWeb ? DevicePreview.locale(context) : null,
+      builder: _appBuilder,
     );
   }
+}
+
+/// Chains the responsive layout builder with Device Preview's frame builder
+/// on web (native builds skip straight to `_responsiveBuilder`).
+Widget _appBuilder(BuildContext context, Widget? child) {
+  final responsive = _responsiveBuilder(context, child);
+  return kIsWeb ? DevicePreview.appBuilder(context, responsive) : responsive;
 }
 
 /// Applied app-wide (both the pre-login and main router `MaterialApp`s) so

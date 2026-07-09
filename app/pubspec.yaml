@@ -45,6 +45,8 @@ dependencies:
 
   # Audio preview in alarm sound picker
   audioplayers: ^6.0.0
+  device_preview: ^1.3.1
+  sqflite_common_ffi_web: ^1.1.2
 
 dev_dependencies:
   flutter_test:

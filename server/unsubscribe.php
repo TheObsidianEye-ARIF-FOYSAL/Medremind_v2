@@ -1,11 +1,13 @@
 <?php
 
+require __DIR__ . '/bdapps_config.php';
+
 ini_set('error_log', 'ussd-app-error.log');
 date_default_timezone_set('Asia/Dhaka');
 
 // BDApps credentials
-$appid = "APP_138840";
-$apppassword = "REDACTED_BDAPPS_API_KEY";
+$appid = BDAPPS_APP_ID;
+$apppassword = BDAPPS_APP_PASSWORD;
 
 // Get the current date/time for logging
 $date_ = date("Y-m-d h:i:sa");

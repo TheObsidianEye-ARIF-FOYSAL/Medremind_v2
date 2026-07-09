@@ -1,5 +1,7 @@
 <?php
 
+require __DIR__ . '/bdapps_config.php';
+
 require __DIR__ . '/medremind_db.php';
 
 // Manual/admin testing helper — mirrors the commented-out test snippet in
@@ -22,8 +24,8 @@ if (strlen($phone) !== 11) {
     medremind_send_json(['error' => 'Set $test_number above or pass ?phone=01XXXXXXXXX'], 400);
 }
 
-$appid = 'APP_138840';
-$apppassword = 'REDACTED_BDAPPS_API_KEY';
+$appid = BDAPPS_APP_ID;
+$apppassword = BDAPPS_APP_PASSWORD;
 $subscriberId = 'tel:88' . $phone;
 
 $requestData = [

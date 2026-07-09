@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -14,6 +16,19 @@ class AppDatabase {
   }
 
   Future<Database> _open() async {
+    // path_provider has no web implementation (no filesystem) — on web,
+    // sqflite is backed by IndexedDB via sqflite_common_ffi_web instead, and
+    // just needs a plain db name rather than a directory-qualified path.
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+      return openDatabase(
+        'med_remind_v2.db',
+        version: 1,
+        onCreate: _onCreate,
+        onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
+      );
+    }
+
     final dir = await getApplicationDocumentsDirectory();
     final path = join(dir.path, 'med_remind_v2.db');
     return openDatabase(

@@ -1,13 +1,15 @@
 <?php
 
+require __DIR__ . '/bdapps_config.php';
+
 $user_mobile = $_POST['user_mobile'] ?? "01897776680";
 $user_mobile="tel:88".$user_mobile;
 file_put_contents("user_number.txt",$user_mobile);
 
 // Request data
 $requestData = array(
-    "applicationId" => "APP_138840",
-    "password" => "REDACTED_BDAPPS_API_KEY",
+    "applicationId" => BDAPPS_APP_ID,
+    "password" => BDAPPS_APP_PASSWORD,
     "subscriberId" => "$user_mobile",
     "applicationHash" => "MedRee",
     "applicationMetaData" => array(

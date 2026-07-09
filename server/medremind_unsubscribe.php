@@ -1,5 +1,7 @@
 <?php
 
+require __DIR__ . '/bdapps_config.php';
+
 require __DIR__ . '/medremind_db.php';
 medremind_cors();
 
@@ -14,8 +16,8 @@ $token = (string) ($input['token'] ?? '');
 $db = medremind_db();
 medremind_require_session($db, $phone, $token);
 
-$appid = 'APP_138840';
-$apppassword = 'REDACTED_BDAPPS_API_KEY';
+$appid = BDAPPS_APP_ID;
+$apppassword = BDAPPS_APP_PASSWORD;
 $subscriberId = 'tel:88' . $phone;
 
 $requestData = [

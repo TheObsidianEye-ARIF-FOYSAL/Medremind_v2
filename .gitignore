@@ -4,5 +4,5 @@ server/*.txt
 server/*.log
 server/*.db
 
-/docs/
-/scripts/
+# BDApps credentials — never commit, see server/bdapps_config.example.php
+server/bdapps_config.php
