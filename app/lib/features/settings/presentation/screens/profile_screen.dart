@@ -247,8 +247,11 @@ class _AccountActions extends ConsumerWidget {
         title: const Text('Unsubscribe'),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           _warnBox(
-              'This will cancel your BDApps subscription and permanently delete your account and all data. '
-              "You'll need to register again to use the app."),
+              'This permanently deletes your account and all data. '
+              "You'll need to register again to use the app.\n\n"
+              'To also stop being billed by your mobile operator, send '
+              '"STOP mmrr" to 21213 from this phone — deleting your '
+              'account here does not cancel that billing subscription.'),
         ]),
         actions: [
           TextButton(

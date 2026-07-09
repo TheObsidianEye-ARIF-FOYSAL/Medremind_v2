@@ -1,0 +1,26 @@
+To: support@bdapps.com
+Subject: Request to move Application ID APP_138840 (MedRemind / MedRee) to Active Production
+
+Hello BDApps Support Team,
+
+We are developing an Android application called MedRemind (internally referred to as "MedRee" in our BDApps application hash) and have integrated the BDApps Subscription/OTP APIs using the following credentials:
+
+Application ID: APP_138840
+
+Our integration covers:
+- OTP request (/subscription/otp/request)
+- OTP verify (/subscription/otp/verify)
+- Subscription status check (/subscription/getstatus)
+- Unsubscribe / opt-out (/subscription/send with action=0)
+- Subscription notification webhook (for REGISTERED/UNREGISTERED status callbacks)
+
+We have completed development and internal testing, and confirmed the integration works correctly with BDApps' whitelisted test numbers. However, we've observed that real subscriber phone numbers are not being registered or unregistered when using this application ID, which we understand is expected behavior while the application is in "Testing" status.
+
+Could you please review our integration and move Application ID APP_138840 to Active Production status so that real subscriber numbers can be subscribed, charged, and unsubscribed correctly?
+
+Please let us know if you need any additional information, logs, or a demo of the integration to complete this review.
+
+Thank you,
+[Your name]
+[Your phone number]
+[Your organization / developer account name]
