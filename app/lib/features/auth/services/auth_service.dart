@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 //   flutter run --dart-define=SERVER_BASE_URL=https://your-server.com/path
 const _kDefaultBaseUrl = String.fromEnvironment(
   'SERVER_BASE_URL',
-  defaultValue: 'https://ruetandroiddevelopers.com/ARIF(MRe)',
+  defaultValue: 'https://ruetandroiddevelopers.com/ARIF(MR)',
 );
 
 class AuthService {

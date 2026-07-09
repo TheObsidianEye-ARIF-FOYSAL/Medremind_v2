@@ -36,7 +36,7 @@ Phone+password auth, backed by the new `medremind_*.php` endpoints. All requests
 | 132 | `http.post(Uri.parse('$_baseUrl/$endpoint'), ...)` | shared request builder used by all of the above |
 
 Base URL for both files: `SERVER_BASE_URL` dart-define, defaulting to
-`https://ruetandroiddevelopers.com/ARIF(MRe)` (`auth_service.dart:8-11`,
+`https://ruetandroiddevelopers.com/ARIF(MR)` (`auth_service.dart:8-11`,
 `user_auth_service.dart:9-12`).
 
 ---

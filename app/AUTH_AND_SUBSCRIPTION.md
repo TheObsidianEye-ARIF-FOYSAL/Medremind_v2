@@ -163,7 +163,7 @@ This app talks to a **custom PHP backend** (not a Firebase/Google product) at a 
 ```dart
 const _kDefaultBaseUrl = String.fromEnvironment(
   'SERVER_BASE_URL',
-  defaultValue: 'https://ruetandroiddevelopers.com/ARIF(MRe)',
+  defaultValue: 'https://ruetandroiddevelopers.com/ARIF(MR)',
 );
 ```
 
@@ -210,7 +210,7 @@ import 'package:http/http.dart' as http;
 
 const _kDefaultBaseUrl = String.fromEnvironment(
   'SERVER_BASE_URL',
-  defaultValue: 'https://ruetandroiddevelopers.com/ARIF(MRe)',
+  defaultValue: 'https://ruetandroiddevelopers.com/ARIF(MR)',
 );
 
 class AuthService {

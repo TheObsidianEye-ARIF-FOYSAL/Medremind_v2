@@ -198,9 +198,11 @@ class _IntroPageView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXl),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.paddingXl, vertical: AppSizes.paddingLg),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Icon circle
@@ -254,3 +256,4 @@ class _IntroPageView extends StatelessWidget {
     );
   }
 }
+
