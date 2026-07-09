@@ -36,14 +36,33 @@ class _RegisterDetailsScreenState extends ConsumerState<RegisterDetailsScreen> {
 
   Future<void> _sendOtp() async {
     if (!_formKey.currentState!.validate()) return;
-    await ref.read(authProvider.notifier).sendOtp(widget.phone);
+    final otpRequired = await ref.read(authProvider.notifier).sendOtp(widget.phone);
     if (!mounted) return;
-    final error = ref.read(authProvider).error;
-    if (error != null) {
+    if (otpRequired == null) {
+      final error = ref.read(authProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(error),
+        content: Text(error ?? 'Could not send OTP'),
         backgroundColor: TagColors.missed,
       ));
+      return;
+    }
+    if (!otpRequired) {
+      // BDApps already has this number subscribed (e.g. a whitelisted test
+      // number) — nothing to verify, so create the account directly.
+      final done = await ref.read(userAuthProvider.notifier).register(
+            phone: widget.phone,
+            name: _nameCtrl.text.trim(),
+            password: _passCtrl.text,
+          );
+      if (!mounted) return;
+      if (done) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(ref.read(userAuthProvider).error ?? 'Could not create account.'),
+          backgroundColor: TagColors.missed,
+        ));
+      }
       return;
     }
     Navigator.of(context).push(MaterialPageRoute(

@@ -6,10 +6,10 @@ import '../../../../core/theme/theme_constants.dart';
 import '../providers/forgot_password_provider.dart';
 import '../widgets/auth_form_widgets.dart';
 
-/// P5 Forgot password, step 2: the BDApps OTP for [phone] has already been
-/// requested (see ForgotPasswordNotifier.requestReset, called before this
-/// screen is pushed). User enters the OTP and a new password together —
-/// fp_reset_password.php verifies both in one call.
+/// P5 Forgot password, step 2: an OTP for [phone] has already been texted
+/// (see ForgotPasswordNotifier.requestReset, called before this screen is
+/// pushed). User enters the OTP and a new password together —
+/// medremind_fp_reset_password.php verifies both in one call.
 class ResetPasswordScreen extends ConsumerStatefulWidget {
   final String phone;
   const ResetPasswordScreen({super.key, required this.phone});

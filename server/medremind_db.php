@@ -22,6 +22,22 @@ function medremind_db(): PDO {
         session_token TEXT,
         session_created_at TEXT
     )");
+    // Added for the forgot-password flow (medremind_fp_request_reset.php /
+    // medremind_fp_reset_password.php), which mints its own OTP and texts it
+    // via BDApps' SMS-send API rather than BDApps' subscription OTP API
+    // (that one refuses to issue OTPs to already-subscribed numbers, which
+    // is every registered user).
+    foreach ([
+        'reset_reference' => 'TEXT',
+        'reset_code_hash' => 'TEXT',
+        'reset_expires_at' => 'TEXT',
+    ] as $column => $type) {
+        try {
+            $pdo->exec("ALTER TABLE users ADD COLUMN $column $type");
+        } catch (PDOException $e) {
+            // Column already exists — fine.
+        }
+    }
     return $pdo;
 }
 

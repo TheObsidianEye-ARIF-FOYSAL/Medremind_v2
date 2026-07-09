@@ -14,12 +14,12 @@ Line numbers are as of this commit — if you edit these files, re-check them.
 ## 1. Flutter app → PHP server
 
 ### `app/lib/features/auth/services/auth_service.dart`
-BDApps OTP calls, proxied through the server's `send_otp.php` / `verify_otp.php` / `unsubscribe.php`.
+BDApps OTP calls, proxied through the server's `medremind_send_otp.php` / `medremind_verify_otp.php` / `unsubscribe.php`.
 
 | Line | Call | Hits |
 |---|---|---|
-| 26 | `Uri.parse('$_baseUrl/send_otp.php')` | `server/send_otp.php` |
-| 62 | `Uri.parse('$_baseUrl/verify_otp.php')` | `server/verify_otp.php` |
+| 26 | `Uri.parse('$_baseUrl/medremind_send_otp.php')` | `server/medremind_send_otp.php` |
+| 62 | `Uri.parse('$_baseUrl/medremind_verify_otp.php')` | `server/medremind_verify_otp.php` |
 | 105 | `Uri.parse('$_baseUrl/unsubscribe.php')` | `server/unsubscribe.php` (generic opt-out; not the one used by the app's P4 flow — see below) |
 
 ### `app/lib/features/auth/services/user_auth_service.dart`
@@ -45,11 +45,14 @@ Base URL for both files: `SERVER_BASE_URL` dart-define, defaulting to
 
 | File : Line | BDApps endpoint | Purpose |
 |---|---|---|
-| `server/send_otp.php:25-27` | `POST /subscription/otp/request` | Send OTP for registration (P1) |
-| `server/verify_otp.php:30-32` | `POST /subscription/otp/verify` | Verify OTP entered by user (P1) |
+| `server/send_otp.php:25-27` | `POST /subscription/otp/request` | Old/shared OTP script — not called by med_remind_v2's app anymore |
+| `server/verify_otp.php:30-32` | `POST /subscription/otp/verify` | Old/shared OTP script — not called by med_remind_v2's app anymore |
+| `server/medremind_send_otp.php` | `POST /subscription/otp/request` | **Actual P1 registration OTP**, using MedRee's own credentials (`APP_138840`). BDApps returns `statusCode E1351` for numbers already subscribed (e.g. its whitelisted test numbers) — the server flags this as `alreadyRegistered: true` and the app skips straight to account creation without an OTP step |
+| `server/medremind_verify_otp.php` | `POST /subscription/otp/verify` | Verifies the OTP from `medremind_send_otp.php` |
 | `server/unsubscribe.php:68-70` | `POST /subscription/send` (`action:"0"`) | Generic opt-out — shared script, not called by med_remind_v2's app anymore |
 | `server/medremind_unsubscribe.php:30` | `POST /subscription/send` (`action:"0"`) | **Actual P4 unsubscribe path**: opt out via BDApps, then delete the user's row on success |
 | `server/medremind_admin_unsubscribe.php:38` | `POST /subscription/send` (`action:"0"`) | Manual/admin test script (not linked from the app) |
+| `server/medremind_fp_request_reset.php` | `POST /sms/send` | Self-issued OTP for password reset (P5) — see section 3 below for why this doesn't use `subscription/otp/*` |
 | `server/subscriptionNotification.php:32` | `POST /sms/send` | Sends a welcome SMS when BDApps calls back with `status == REGISTERED` |
 | `server/bdapps_cass_sdk.php:588` | `GET/POST /subscription/getstatus` | SDK helper class — subscription status check (not currently called by any med_remind_v2 endpoint) |
 | `server/bdapps_cass_sdk.php:604` | `POST /subscription/send` | SDK helper class — subscribe |
@@ -90,8 +93,15 @@ files.
 
 | File | Endpoint path | BDApps call | Auth required |
 |---|---|---|---|
-| `server/medremind_fp_request_reset.php` | `/medremind_fp_request_reset.php` | `POST /subscription/otp/request` | none (phone must already exist) |
-| `server/medremind_fp_reset_password.php` | `/medremind_fp_reset_password.php` | `POST /subscription/otp/verify` | OTP (`referenceNo` + `otp` from step 1), not a session token |
+| `server/medremind_fp_request_reset.php` | `/medremind_fp_request_reset.php` | `POST /sms/send` (self-issued OTP, texted directly) | none (phone must already exist) |
+| `server/medremind_fp_reset_password.php` | `/medremind_fp_reset_password.php` | none — verifies OTP against `reset_code_hash` in `medremind_users.db` | OTP (`referenceNo` + `otp` from step 1), not a session token |
+
+Forgot-password does **not** use BDApps' `subscription/otp/*` endpoints (unlike
+registration) — that endpoint refuses to issue an OTP to a subscriberId
+that's already subscribed (`statusCode` `E1351`), which is true of every
+registered user. Instead it mints its own 6-digit code, hashes it into
+`medremind_users.db` with a 10-minute expiry, and texts it via BDApps'
+`sms/send` API.
 
 **App call sites** — `app/lib/features/auth/services/forgot_password_service.dart`:
 
