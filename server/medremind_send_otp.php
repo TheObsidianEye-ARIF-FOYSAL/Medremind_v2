@@ -38,10 +38,6 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 
 $responseJson = curl_exec($ch);
 
-// TEMP DEBUG: log the raw BDApps response so we can see the real reason OTP
-// requests are failing. Remove this file_put_contents once diagnosed.
-file_put_contents(__DIR__ . '/send_otp_debug.log', date('Y-m-d H:i:s') . ' mobile=' . $user_mobile . ' raw=' . var_export($responseJson, true) . "\n", FILE_APPEND);
-
 if ($responseJson === false) {
     header('Content-Type: application/json');
     echo json_encode(['statusCode' => 'E1001', 'statusDetail' => 'cURL error: ' . curl_error($ch)]);
@@ -51,10 +47,17 @@ if ($responseJson === false) {
     if ($response === null) {
         echo json_encode(['statusCode' => 'E1002', 'statusDetail' => 'Invalid JSON in response: ' . $responseJson]);
     } else {
+        $statusCode = $response['statusCode'] ?? null;
+        // E1351 = subscriberId already subscribed to this application.
+        // BDApps' whitelisted test numbers for APP_138840 are pre-subscribed,
+        // so no OTP is ever issued for them — treat this as "already
+        // verified" so registration can proceed without an OTP step.
+        $alreadyRegistered = $statusCode === 'E1351';
         echo json_encode([
             'referenceNo' => $response['referenceNo'] ?? null,
-            'statusCode' => $response['statusCode'] ?? null,
+            'statusCode' => $statusCode,
             'statusDetail' => $response['statusDetail'] ?? null,
+            'alreadyRegistered' => $alreadyRegistered,
         ]);
     }
 }
