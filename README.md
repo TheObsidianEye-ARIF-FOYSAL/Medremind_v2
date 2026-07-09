@@ -8,7 +8,7 @@ through BDApps (Robi/Airtel direct-carrier billing).
 
 📄 **Full project overview:** [`docs/PROJECT_OVERVIEW.md`](docs/PROJECT_OVERVIEW.md)
 
-📘 **User guide (PDF):** [`docs/report_MR_app/medremind_user_guide.pdf`](docs/report_MR_app/medremind_user_guide.pdf)
+📘 **User guide (PDF):** https://theobsidianeye-arif-foysal.github.io/Medremind_v2/medremind_user_guide.pdf
 
 ---
 

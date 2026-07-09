@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "app/**"
+      - "docs/report_MR_app/medremind_user_guide.pdf"
       - ".github/workflows/deploy-web.yml"
   workflow_dispatch:
 
@@ -35,6 +36,9 @@ jobs:
       - name: Build web
         working-directory: app
         run: flutter build web --release --base-href /Medremind_v2/
+
+      - name: Copy user guide PDF into web output
+        run: cp docs/report_MR_app/medremind_user_guide.pdf app/build/web/medremind_user_guide.pdf
 
       - uses: actions/configure-pages@v5
 

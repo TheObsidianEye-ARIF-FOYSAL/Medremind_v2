@@ -11,7 +11,7 @@ helps patients and caregivers in Bangladesh never miss a dose.
 |---|---|
 | **Live web demo** | https://theobsidianeye-arif-foysal.github.io/Medremind_v2/ |
 | **Source code (GitHub)** | https://github.com/TheObsidianEye-ARIF-FOYSAL/Medremind_v2 |
-| **User guide (PDF, with screenshots)** | `docs/report_MR_app/medremind_user_guide.pdf` in the repo |
+| **User guide (PDF, with screenshots)** | https://theobsidianeye-arif-foysal.github.io/Medremind_v2/medremind_user_guide.pdf |
 
 The web demo rebuilds and redeploys automatically every time code is pushed
 to the `main` branch — always reflects the latest version.
