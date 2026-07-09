@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/theme_constants.dart';
-import '../providers/forgot_password_provider.dart';
 import '../providers/user_auth_provider.dart';
 import '../widgets/auth_form_widgets.dart';
-import 'reset_password_screen.dart';
 
 /// Second step for an existing phone number: password entry, verified
 /// server-side by medremind_login.php against the stored password hash.
@@ -46,28 +44,9 @@ class _LoginPasswordScreenState extends ConsumerState<LoginPasswordScreen> {
     }
   }
 
-  Future<void> _forgotPassword() async {
-    final ok = await ref
-        .read(forgotPasswordProvider.notifier)
-        .requestReset(widget.phone);
-    if (!mounted) return;
-    if (ok) {
-      Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => ResetPasswordScreen(phone: widget.phone),
-      ));
-    } else {
-      final error = ref.read(forgotPasswordProvider).error;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(error ?? 'Could not send OTP'),
-        backgroundColor: TagColors.missed,
-      ));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(userAuthProvider).isLoading ||
-        ref.watch(forgotPasswordProvider).isLoading;
+    final isLoading = ref.watch(userAuthProvider).isLoading;
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final isDark = theme.brightness == Brightness.dark;
@@ -147,14 +126,6 @@ class _LoginPasswordScreenState extends ConsumerState<LoginPasswordScreen> {
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                   validator: (v) => (v == null || v.isEmpty) ? 'Enter password' : null,
-                ),
-                const SizedBox(height: AppSizes.paddingSm),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: isLoading ? null : _forgotPassword,
-                    child: const Text('Forgot password?'),
-                  ),
                 ),
                 const SizedBox(height: AppSizes.paddingMd),
                 AuthPrimaryButton(

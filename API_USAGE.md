@@ -47,12 +47,11 @@ Base URL for both files: `SERVER_BASE_URL` dart-define, defaulting to
 |---|---|---|
 | `server/send_otp.php:25-27` | `POST /subscription/otp/request` | Old/shared OTP script — not called by med_remind_v2's app anymore |
 | `server/verify_otp.php:30-32` | `POST /subscription/otp/verify` | Old/shared OTP script — not called by med_remind_v2's app anymore |
-| `server/medremind_send_otp.php` | `POST /subscription/otp/request` | **Actual P1 registration OTP**, using MedRee's own credentials (`APP_138840`). BDApps returns `statusCode E1351` for numbers already subscribed (e.g. its whitelisted test numbers) — the server flags this as `alreadyRegistered: true` and the app skips straight to account creation without an OTP step |
+| `server/medremind_send_otp.php` | `POST /subscription/otp/request` | **Actual P1 registration OTP**, using MedRee's own credentials (`APP_138840`) |
 | `server/medremind_verify_otp.php` | `POST /subscription/otp/verify` | Verifies the OTP from `medremind_send_otp.php` |
 | `server/unsubscribe.php:68-70` | `POST /subscription/send` (`action:"0"`) | Generic opt-out — shared script, not called by med_remind_v2's app anymore |
 | `server/medremind_unsubscribe.php:30` | `POST /subscription/send` (`action:"0"`) | **Actual P4 unsubscribe path**: opt out via BDApps, then delete the user's row on success |
 | `server/medremind_admin_unsubscribe.php:38` | `POST /subscription/send` (`action:"0"`) | Manual/admin test script (not linked from the app) |
-| `server/medremind_fp_request_reset.php` | `POST /sms/send` | Self-issued OTP for password reset (P5) — see section 3 below for why this doesn't use `subscription/otp/*` |
 | `server/subscriptionNotification.php:32` | `POST /sms/send` | Sends a welcome SMS when BDApps calls back with `status == REGISTERED` |
 | `server/bdapps_cass_sdk.php:588` | `GET/POST /subscription/getstatus` | SDK helper class — subscription status check (not currently called by any med_remind_v2 endpoint) |
 | `server/bdapps_cass_sdk.php:604` | `POST /subscription/send` | SDK helper class — subscribe |
@@ -78,46 +77,9 @@ inside them):
 | `server/medremind_profile.php` | `/medremind_profile.php` | phone + session token (see `medremind_db.php:69` `medremind_require_session`) |
 | `server/medremind_unsubscribe.php` | `/medremind_unsubscribe.php` | phone + session token |
 | `server/medremind_change_password.php` | `/medremind_change_password.php` | phone + session token, plus current password |
-| `server/medremind_fp_request_reset.php` | `/medremind_fp_request_reset.php` | none (phone must already exist) |
-| `server/medremind_fp_reset_password.php` | `/medremind_fp_reset_password.php` | OTP (`referenceNo` + `otp`), not a session token |
 | `server/medremind_admin_unsubscribe.php` | `/medremind_admin_unsubscribe.php` | none — manual test tool, see warning comment at top of file |
 | `server/send_otp.php` | `/send_otp.php` | none |
 | `server/verify_otp.php` | `/verify_otp.php` | none |
-
-### Forgot password (`server/medremind_fp_*.php`) — same folder as everything else
-
-Consolidated into `server/` so all medremind endpoints (auth, change
-password, forgot password) deploy as one single folder; uses
-`server/medremind_db.php` directly, same as the other `medremind_*.php`
-files.
-
-| File | Endpoint path | BDApps call | Auth required |
-|---|---|---|---|
-| `server/medremind_fp_request_reset.php` | `/medremind_fp_request_reset.php` | `POST /sms/send` (self-issued OTP, texted directly) | none (phone must already exist) |
-| `server/medremind_fp_reset_password.php` | `/medremind_fp_reset_password.php` | none — verifies OTP against `reset_code_hash` in `medremind_users.db` | OTP (`referenceNo` + `otp` from step 1), not a session token |
-
-Forgot-password does **not** use BDApps' `subscription/otp/*` endpoints (unlike
-registration) — that endpoint refuses to issue an OTP to a subscriberId
-that's already subscribed (`statusCode` `E1351`), which is true of every
-registered user. Instead it mints its own 6-digit code, hashes it into
-`medremind_users.db` with a 10-minute expiry, and texts it via BDApps'
-`sms/send` API.
-
-**App call sites** — `app/lib/features/auth/services/forgot_password_service.dart`:
-
-| Line | Call | Hits |
-|---|---|---|
-| 22 | `_post('medremind_fp_request_reset.php', ...)` | `server/medremind_fp_request_reset.php` |
-| 25-30 | `_post('medremind_fp_reset_password.php', ...)` | `server/medremind_fp_reset_password.php` |
-| 43 | `http.post(Uri.parse('$_baseUrl/$endpoint'), ...)` | shared request builder |
-
-Base URL: `SERVER_BASE_URL` dart-define, same as the rest of
-`user_auth_service.dart` — no longer a separate deployment folder.
-
-UI entry point: "Forgot password?" link on
-`app/lib/features/auth/screens/login_password_screen.dart`, which requests
-the OTP then pushes `app/lib/features/auth/screens/reset_password_screen.dart`
-(single screen: OTP + new password, submitted together).
 
 ---
 

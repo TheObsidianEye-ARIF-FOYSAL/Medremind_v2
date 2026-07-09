@@ -48,17 +48,10 @@ if ($responseJson === false) {
     if ($response === null) {
         echo json_encode(['statusCode' => 'E1002', 'statusDetail' => 'Invalid JSON in response: ' . $responseJson]);
     } else {
-        $statusCode = $response['statusCode'] ?? null;
-        // E1351 = subscriberId is already subscribed to this application.
-        // BDApps whitelists test numbers as already-subscribed, so no OTP is
-        // ever issued for them — treat this as "already verified" instead of
-        // an error so registration can proceed without an OTP step.
-        $alreadyRegistered = $statusCode === 'E1351';
         echo json_encode([
             'referenceNo' => $response['referenceNo'] ?? null,
-            'statusCode' => $statusCode,
+            'statusCode' => $response['statusCode'] ?? null,
             'statusDetail' => $response['statusDetail'] ?? null,
-            'alreadyRegistered' => $alreadyRegistered,
         ]);
     }
 }

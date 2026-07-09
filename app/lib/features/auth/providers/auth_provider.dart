@@ -39,20 +39,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier(this._service) : super(const AuthState());
 
-  /// Returns true if an OTP was sent and the caller should show the OTP
-  /// screen; false if BDApps says the number is already subscribed and
-  /// there's nothing to verify (see [AuthService.sendOtp]). Returns null on
-  /// error (check [AuthState.error]).
-  Future<bool?> sendOtp(String phone) async {
+  Future<void> sendOtp(String phone) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final otpRequired = await _service.sendOtp(phone);
+      await _service.sendOtp(phone);
       state = state.copyWith(isLoading: false, phone: phone);
-      return otpRequired;
     } catch (e) {
       state = state.copyWith(
           isLoading: false, error: e.toString().replaceFirst('Exception: ', ''));
-      return null;
     }
   }
 

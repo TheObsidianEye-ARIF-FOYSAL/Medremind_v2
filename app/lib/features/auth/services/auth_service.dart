@@ -19,11 +19,7 @@ class AuthService {
 
   // ── OTP flow ──────────────────────────────────────────────────────────────
 
-  /// Returns true if an OTP was actually sent and [verifyOtp] must be called
-  /// next. Returns false if BDApps reports the number as already subscribed
-  /// (E1351 — true for its whitelisted test numbers), in which case there is
-  /// no OTP to enter and the caller should skip straight past the OTP step.
-  Future<bool> sendOtp(String phone) async {
+  Future<void> sendOtp(String phone) async {
     final normalized = _normalize(phone);
     final response = await http
         .post(
@@ -45,11 +41,7 @@ class AuthService {
         (map['referenceNo'] ?? map['reference_no'] ?? '').toString().trim();
     if (ref.isNotEmpty) {
       _referenceByPhone[normalized] = ref;
-      return true;
-    }
-
-    if (map['alreadyRegistered'] == true) {
-      return false;
+      return;
     }
 
     final code = (map['statusCode'] ?? 'UNKNOWN').toString();
