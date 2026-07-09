@@ -2,6 +2,16 @@
 
 require __DIR__ . '/bdapps_config.php';
 
+// CORS: see medremind_send_otp.php's comment — needed for the Flutter web
+// (GitHub Pages) build to receive this response at all.
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 // MedRemind-specific OTP verify, using MedRee's own BDApps credentials
 // (APP_138840). See medremind_send_otp.php's comment — testing-only app id.
 

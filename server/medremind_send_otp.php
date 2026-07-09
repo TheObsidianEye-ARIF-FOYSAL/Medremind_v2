@@ -2,6 +2,18 @@
 
 require __DIR__ . '/bdapps_config.php';
 
+// CORS: the Flutter web build (GitHub Pages demo) calls this from a
+// different origin than the PHP host, so the browser needs these headers
+// on every response (including the OPTIONS preflight) or it blocks the
+// reply before the app ever sees it.
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 // MedRemind-specific OTP request, using MedRee's own BDApps credentials
 // (APP_138840). This app is currently approved for TESTING ONLY — BDApps
 // will only issue OTPs for their whitelisted test numbers on this app id
