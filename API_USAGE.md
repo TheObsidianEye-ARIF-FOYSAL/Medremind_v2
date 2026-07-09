@@ -45,11 +45,11 @@ Base URL for both files: `SERVER_BASE_URL` dart-define, defaulting to
 
 | File : Line | BDApps endpoint | Purpose |
 |---|---|---|
-| `server/send_otp.php:25-27` | `POST /subscription/otp/request` | Old/shared OTP script — not called by med_remind_v2's app anymore |
-| `server/verify_otp.php:30-32` | `POST /subscription/otp/verify` | Old/shared OTP script — not called by med_remind_v2's app anymore |
+| `server/send_otp.php:25-27` | `POST /subscription/otp/request` | Old OTP script, not called by the app anymore — now also on `APP_138840` for consistency, but dead code |
+| `server/verify_otp.php:30-32` | `POST /subscription/otp/verify` | Old OTP script, not called by the app anymore — now also on `APP_138840`, but dead code |
 | `server/medremind_send_otp.php` | `POST /subscription/otp/request` | **Actual P1 registration OTP**, using MedRee's own credentials (`APP_138840`) |
 | `server/medremind_verify_otp.php` | `POST /subscription/otp/verify` | Verifies the OTP from `medremind_send_otp.php` |
-| `server/unsubscribe.php:68-70` | `POST /subscription/send` (`action:"0"`) | Generic opt-out — shared script, not called by med_remind_v2's app anymore |
+| `server/unsubscribe.php:68-70` | `POST /subscription/send` (`action:"0"`) | Old opt-out script, not called by the app anymore — now also on `APP_138840`, but dead code |
 | `server/medremind_unsubscribe.php:30` | `POST /subscription/send` (`action:"0"`) | **Actual P4 unsubscribe path**: opt out via BDApps, then delete the user's row on success |
 | `server/medremind_admin_unsubscribe.php:38` | `POST /subscription/send` (`action:"0"`) | Manual/admin test script (not linked from the app) |
 | `server/subscriptionNotification.php:32` | `POST /sms/send` | Sends a welcome SMS when BDApps calls back with `status == REGISTERED` |
@@ -89,7 +89,15 @@ inside them):
   Firebase API calls left in the app. `app/functions/` is now dead code kept
   around only in case you want to reference the old Cloud Functions logic;
   it's not deployed or called by anything.
-- `server/unsubscribe.php`, `server/send_otp.php`, `server/verify_otp.php` are
-  shared with other apps (e.g. drink_water) — don't repurpose them for
-  med_remind_v2-only logic; add a new `medremind_*.php` file instead, same
-  pattern as the existing ones.
+- `server/unsubscribe.php`, `server/send_otp.php`, `server/verify_otp.php`,
+  `server/subscriptionNotification.php` are old scripts copied over from
+  other projects (e.g. VenueLock) — they live in this project's own
+  `server/` folder (not a shared deployment) and are on `APP_138840`
+  credentials, but the app itself calls `medremind_send_otp.php` /
+  `medremind_verify_otp.php` / `medremind_unsubscribe.php` instead. Keep
+  adding new `medremind_*.php` files for new endpoints rather than repurposing
+  these.
+- See `server/BDAPPS_INTEGRATION.md` for a language-agnostic writeup of how
+  the BDApps API itself works (endpoints, request/response shapes, status
+  codes) — useful if you ever need to reimplement this server in something
+  other than PHP.

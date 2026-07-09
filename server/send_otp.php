@@ -6,15 +6,15 @@ file_put_contents("user_number.txt",$user_mobile);
 
 // Request data
 $requestData = array(
-    "applicationId" => "APP_128956",
-    "password" => "REDACTED_BDAPPS_PASSWORD",
+    "applicationId" => "APP_138840",
+    "password" => "REDACTED_BDAPPS_API_KEY",
     "subscriberId" => "$user_mobile",
-    "applicationHash" => "BMI Calculator",
+    "applicationHash" => "MedRee",
     "applicationMetaData" => array(
         "client" => "MOBILEAPP",
-        "device" => "Samsung S10",
-        "os" => "android 8",
-        "appCode" => "https://play.google.com/store/apps/details?id=lk.dialog.megarunlor"
+        "device" => "Android",
+        "os" => "android",
+        "appCode" => "MedRee"
     )
 );
 

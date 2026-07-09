@@ -4,8 +4,8 @@ ini_set('error_log', 'ussd-app-error.log');
 require 'bdapps_cass_sdk.php';
 date_default_timezone_set('Asia/Dhaka');
 
-$appid = "APP_128956";
-$apppassword = "REDACTED_BDAPPS_PASSWORD";
+$appid = "APP_138840";
+$apppassword = "REDACTED_BDAPPS_API_KEY";
 $logger = new Logger();
 
 function readSMSNotification() {

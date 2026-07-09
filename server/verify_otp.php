@@ -17,8 +17,8 @@ catch(Exception $e){
   
 // Request data
 $requestData = array(
-    "applicationId" => "APP_128956",
-    "password" => "REDACTED_BDAPPS_PASSWORD",
+    "applicationId" => "APP_138840",
+    "password" => "REDACTED_BDAPPS_API_KEY",
     "referenceNo" => "$referenceNo",
     "otp" => "$user_otp"
 );
