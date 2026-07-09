@@ -4,5 +4,5 @@ server/*.txt
 server/*.log
 server/*.db
 
-docs/
-scripts/
+/docs/
+/scripts/
