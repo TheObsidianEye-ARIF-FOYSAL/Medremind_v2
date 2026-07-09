@@ -34,15 +34,25 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 ));
 
 $responseJson = curl_exec($ch);
+
+// TEMP DEBUG: log the raw BDApps response so we can see the real reason OTP
+// requests are failing. Remove this file_put_contents once diagnosed.
+file_put_contents(__DIR__ . '/send_otp_debug.log', date('Y-m-d H:i:s') . ' mobile=' . $user_mobile . ' raw=' . var_export($responseJson, true) . "\n", FILE_APPEND);
+
 if ($responseJson === false) {
-    echo "cURL error: " . curl_error($ch);
+    header('Content-Type: application/json');
+    echo json_encode(['statusCode' => 'E1001', 'statusDetail' => 'cURL error: ' . curl_error($ch)]);
 } else {
     $response = json_decode($responseJson, true);
+    header('Content-Type: application/json');
     if ($response === null) {
-        echo "Invalid JSON in response: " . $responseJson;
+        echo json_encode(['statusCode' => 'E1002', 'statusDetail' => 'Invalid JSON in response: ' . $responseJson]);
     } else {
-        $referenceNo = array('referenceNo' => $response["referenceNo"] ?? null);
-        echo json_encode($referenceNo);
+        echo json_encode([
+            'referenceNo' => $response['referenceNo'] ?? null,
+            'statusCode' => $response['statusCode'] ?? null,
+            'statusDetail' => $response['statusDetail'] ?? null,
+        ]);
     }
 }
 

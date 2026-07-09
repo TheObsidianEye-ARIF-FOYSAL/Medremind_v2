@@ -28,15 +28,23 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 ));
 
 $responseJson = curl_exec($ch);
+
+// TEMP DEBUG: same as medremind_send_otp.php — remove once diagnosed.
+file_put_contents(__DIR__ . '/verify_otp_debug.log', date('Y-m-d H:i:s') . ' ref=' . $referenceNo . ' raw=' . var_export($responseJson, true) . "\n", FILE_APPEND);
+
+header('Content-Type: application/json');
 if ($responseJson === false) {
-    echo "cURL error: " . curl_error($ch);
+    echo json_encode(['statusCode' => 'E1001', 'statusDetail' => 'cURL error: ' . curl_error($ch)]);
 } else {
     $response = json_decode($responseJson, true);
     if ($response === null) {
-        echo "Invalid JSON in response: " . $responseJson;
+        echo json_encode(['statusCode' => 'E1002', 'statusDetail' => 'Invalid JSON in response: ' . $responseJson]);
     } else {
-        $subscriptionStatus = array('subscriptionStatus' => $response["subscriptionStatus"] ?? null);
-        echo json_encode($subscriptionStatus);
+        echo json_encode([
+            'subscriptionStatus' => $response['subscriptionStatus'] ?? null,
+            'statusCode' => $response['statusCode'] ?? null,
+            'statusDetail' => $response['statusDetail'] ?? null,
+        ]);
     }
 }
 

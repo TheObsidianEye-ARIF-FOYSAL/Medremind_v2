@@ -55,6 +55,11 @@ if ($responseJson === false) {
 $response = json_decode($responseJson, true);
 $referenceNo = is_array($response) ? ($response['referenceNo'] ?? null) : null;
 
+// TEMP DEBUG: log the raw BDApps response so we can see exactly what comes
+// back for an already-subscribed number. Remove this file_put_contents once
+// the "already registered" issue is diagnosed.
+file_put_contents(__DIR__ . '/fp_debug.log', date('Y-m-d H:i:s') . ' phone=' . $phone . ' raw=' . $responseJson . "\n", FILE_APPEND);
+
 if (!$referenceNo) {
     $detail = is_array($response) ? ($response['statusDetail'] ?? 'Unable to request OTP') : 'Unable to request OTP';
     medremind_send_json(['error' => $detail], 502);
