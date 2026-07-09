@@ -46,8 +46,14 @@ if ($responseJson === false) {
 $response = json_decode($responseJson, true);
 $statusCode = is_array($response) ? ($response['statusCode'] ?? null) : null;
 $subStatus = is_array($response) ? strtoupper((string) ($response['subscriptionStatus'] ?? '')) : '';
+$statusDetail = is_array($response) ? (string) ($response['statusDetail'] ?? '') : '';
+// BDApps returns this ambiguous combined message ("Format of the address is
+// invalid or User Already UnRegistered") when the subscriberId is already
+// unregistered — treat that as success too, since the end state we want
+// (unregistered + local row gone) is already true.
+$alreadyUnregistered = stripos($statusDetail, 'Already UnRegistered') !== false;
 
-if ($statusCode === 'S1000' || $subStatus === 'UNREGISTERED') {
+if ($statusCode === 'S1000' || $subStatus === 'UNREGISTERED' || $alreadyUnregistered) {
     $delete = $db->prepare('DELETE FROM users WHERE phone = ?');
     $delete->execute([$phone]);
     medremind_send_json(['success' => true]);

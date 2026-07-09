@@ -54,10 +54,13 @@ if ($responseJson === false) {
 $response = json_decode($responseJson, true);
 $statusCode = is_array($response) ? ($response['statusCode'] ?? null) : null;
 $subStatus = is_array($response) ? strtoupper((string) ($response['subscriptionStatus'] ?? '')) : '';
+$statusDetail = is_array($response) ? (string) ($response['statusDetail'] ?? '') : '';
+// Same "already unregistered" quirk handled in medremind_unsubscribe.php.
+$alreadyUnregistered = stripos($statusDetail, 'Already UnRegistered') !== false;
 
 $db = medremind_db();
 
-if ($statusCode === 'S1000' || $subStatus === 'UNREGISTERED') {
+if ($statusCode === 'S1000' || $subStatus === 'UNREGISTERED' || $alreadyUnregistered) {
     $delete = $db->prepare('DELETE FROM users WHERE phone = ?');
     $delete->execute([$phone]);
     medremind_send_json([

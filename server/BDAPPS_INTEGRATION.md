@@ -151,6 +151,7 @@ Response on success: `statusCode: "S1000"`, and usually
 |---|---|
 | `S1000` | Success |
 | `E1356` | subscriberId is **not registered** under this `applicationId` — you tried to unsubscribe someone who was never (or no longer) subscribed under that app id. Check you're using the right `applicationId` for this subscriber before assuming this is a bug. |
+| (no code, `statusDetail` contains "Format of the address is invalid or User Already UnRegistered") | An ambiguous message BDApps returns for `action: "0"` when the subscriberId is **already unregistered**. In practice this means the end state you wanted is already true — treat it as success (delete the local row / clear the session) rather than surfacing it as a failure. |
 
 ### 3.4 `POST /sms/send` — send a plain SMS
 
