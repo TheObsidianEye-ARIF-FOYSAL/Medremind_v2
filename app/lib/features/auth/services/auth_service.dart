@@ -23,7 +23,7 @@ class AuthService {
     final normalized = _normalize(phone);
     final response = await http
         .post(
-          Uri.parse('$_baseUrl/send_otp.php'),
+          Uri.parse('$_baseUrl/medremind_send_otp.php'),
           headers: const {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Accept': 'application/json',
@@ -59,7 +59,7 @@ class AuthService {
 
     final response = await http
         .post(
-          Uri.parse('$_baseUrl/verify_otp.php'),
+          Uri.parse('$_baseUrl/medremind_verify_otp.php'),
           headers: const {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Accept': 'application/json',
