@@ -14,8 +14,8 @@ $token = (string) ($input['token'] ?? '');
 $db = medremind_db();
 medremind_require_session($db, $phone, $token);
 
-$appid = 'APP_138840';
-$apppassword = 'REDACTED_BDAPPS_API_KEY';
+$appid = 'APP_128956';
+$apppassword = 'REDACTED_BDAPPS_PASSWORD';
 $subscriberId = 'tel:88' . $phone;
 
 $requestData = [
