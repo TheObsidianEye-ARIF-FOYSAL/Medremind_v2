@@ -2,18 +2,18 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-// Deployed separately from the main SERVER_BASE_URL folder (server/) — see
-// server_forgot_password/fp_config.php for why it must share the same
+// Deployed alongside the rest of the medremind_*.php endpoints under
+// SERVER_BASE_URL (server/) — see server/medremind_db.php for the shared
 // medremind_users.db.
 const _kDefaultBaseUrl = String.fromEnvironment(
-  'FORGOT_PASSWORD_BASE_URL',
-  defaultValue: 'https://ruetandroiddevelopers.com/ARIF(MRe)-forgot-password',
+  'SERVER_BASE_URL',
+  defaultValue: 'https://ruetandroiddevelopers.com/ARIF(MRe)',
 );
 
 /// P5 Forgot password: request a BDApps OTP for a phone that's already
 /// registered, then submit the OTP + new password together to reset it.
-/// Talks to server_forgot_password/fp_request_reset.php and
-/// fp_reset_password.php.
+/// Talks to server/medremind_fp_request_reset.php and
+/// medremind_fp_reset_password.php.
 class ForgotPasswordService {
   final String _baseUrl;
 
@@ -21,7 +21,7 @@ class ForgotPasswordService {
       : _baseUrl = _sanitize(baseUrl ?? _kDefaultBaseUrl);
 
   Future<String> requestReset(String phone) async {
-    final map = await _post('fp_request_reset.php', {'phone': phone});
+    final map = await _post('medremind_fp_request_reset.php', {'phone': phone});
     return map['referenceNo'] as String;
   }
 
@@ -31,7 +31,7 @@ class ForgotPasswordService {
     required String otp,
     required String newPassword,
   }) async {
-    await _post('fp_reset_password.php', {
+    await _post('medremind_fp_reset_password.php', {
       'phone': phone,
       'referenceNo': referenceNo,
       'otp': otp,

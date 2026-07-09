@@ -5,8 +5,9 @@ medremind_cors();
 
 // Change password for an already-logged-in user (knows their current
 // password) — different from the medremind_unsubscribe.php family and from
-// server_forgot_password/'s OTP-based reset (P5), which is for a user who
-// forgot their password and isn't logged in.
+// medremind_fp_request_reset.php / medremind_fp_reset_password.php's
+// OTP-based reset (P5), which is for a user who forgot their password and
+// isn't logged in.
 $input = medremind_json_input();
 $phone = medremind_normalize_phone((string) ($input['phone'] ?? ''));
 $token = (string) ($input['token'] ?? '');

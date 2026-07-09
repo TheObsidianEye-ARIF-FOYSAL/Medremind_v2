@@ -75,32 +75,34 @@ inside them):
 | `server/medremind_profile.php` | `/medremind_profile.php` | phone + session token (see `medremind_db.php:69` `medremind_require_session`) |
 | `server/medremind_unsubscribe.php` | `/medremind_unsubscribe.php` | phone + session token |
 | `server/medremind_change_password.php` | `/medremind_change_password.php` | phone + session token, plus current password |
+| `server/medremind_fp_request_reset.php` | `/medremind_fp_request_reset.php` | none (phone must already exist) |
+| `server/medremind_fp_reset_password.php` | `/medremind_fp_reset_password.php` | OTP (`referenceNo` + `otp`), not a session token |
 | `server/medremind_admin_unsubscribe.php` | `/medremind_admin_unsubscribe.php` | none — manual test tool, see warning comment at top of file |
 | `server/send_otp.php` | `/send_otp.php` | none |
 | `server/verify_otp.php` | `/verify_otp.php` | none |
 
-### Forgot password (`server_forgot_password/`) — separate deployment folder
+### Forgot password (`server/medremind_fp_*.php`) — same folder as everything else
 
-Shares the same `medremind_users.db` as `server/` — see the path note at the
-top of `server_forgot_password/fp_config.php:20`.
+Consolidated into `server/` so all medremind endpoints (auth, change
+password, forgot password) deploy as one single folder; uses
+`server/medremind_db.php` directly, same as the other `medremind_*.php`
+files.
 
 | File | Endpoint path | BDApps call | Auth required |
 |---|---|---|---|
-| `server_forgot_password/fp_request_reset.php` | `/fp_request_reset.php` | `POST /subscription/otp/request` (line 39) | none (phone must already exist) |
-| `server_forgot_password/fp_reset_password.php` | `/fp_reset_password.php` | `POST /subscription/otp/verify` (line 46) | OTP (`referenceNo` + `otp` from step 1), not a session token |
+| `server/medremind_fp_request_reset.php` | `/medremind_fp_request_reset.php` | `POST /subscription/otp/request` | none (phone must already exist) |
+| `server/medremind_fp_reset_password.php` | `/medremind_fp_reset_password.php` | `POST /subscription/otp/verify` | OTP (`referenceNo` + `otp` from step 1), not a session token |
 
 **App call sites** — `app/lib/features/auth/services/forgot_password_service.dart`:
 
 | Line | Call | Hits |
 |---|---|---|
-| 24 | `_post('fp_request_reset.php', ...)` | `server_forgot_password/fp_request_reset.php` |
-| 27-32 | `_post('fp_reset_password.php', ...)` | `server_forgot_password/fp_reset_password.php` |
-| 45 | `http.post(Uri.parse('$_baseUrl/$endpoint'), ...)` | shared request builder |
+| 22 | `_post('medremind_fp_request_reset.php', ...)` | `server/medremind_fp_request_reset.php` |
+| 25-30 | `_post('medremind_fp_reset_password.php', ...)` | `server/medremind_fp_reset_password.php` |
+| 43 | `http.post(Uri.parse('$_baseUrl/$endpoint'), ...)` | shared request builder |
 
-Base URL: `FORGOT_PASSWORD_BASE_URL` dart-define, defaulting to
-`https://ruetandroiddevelopers.com/ARIF(MRe)-forgot-password`
-(`forgot_password_service.dart:6-9`) — separate from `SERVER_BASE_URL` since
-this folder deploys to its own path.
+Base URL: `SERVER_BASE_URL` dart-define, same as the rest of
+`user_auth_service.dart` — no longer a separate deployment folder.
 
 UI entry point: "Forgot password?" link on
 `app/lib/features/auth/screens/login_password_screen.dart`, which requests

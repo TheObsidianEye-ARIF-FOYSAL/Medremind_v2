@@ -1,37 +1,37 @@
 <?php
 
-require __DIR__ . '/fp_config.php';
-fp_cors();
+require __DIR__ . '/medremind_db.php';
+medremind_cors();
 
 // Step 1 of forgot-password: phone must already be registered, then we ask
-// BDApps to send an OTP (same request shape as server/send_otp.php). The
+// BDApps to send an OTP (same request shape as medremind_send_otp.php). The
 // client holds onto the returned referenceNo and sends it back, along with
-// the OTP and new password, to fp_reset_password.php.
+// the OTP and new password, to medremind_fp_reset_password.php.
 
-$input = fp_json_input();
-$phone = fp_normalize_phone((string) ($input['phone'] ?? ''));
+$input = medremind_json_input();
+$phone = medremind_normalize_phone((string) ($input['phone'] ?? ''));
 
 if (strlen($phone) !== 11) {
-    fp_send_json(['error' => 'Enter a valid 11-digit phone number'], 400);
+    medremind_send_json(['error' => 'Enter a valid 11-digit phone number'], 400);
 }
 
-$db = fp_db();
+$db = medremind_db();
 $stmt = $db->prepare('SELECT 1 FROM users WHERE phone = ?');
 $stmt->execute([$phone]);
 if (!$stmt->fetchColumn()) {
-    fp_send_json(['error' => 'No account found for this phone number'], 404);
+    medremind_send_json(['error' => 'No account found for this phone number'], 404);
 }
 
 $requestData = [
-    'applicationId' => BDAPPS_APP_ID,
-    'password' => BDAPPS_APP_PASSWORD,
+    'applicationId' => 'APP_138840',
+    'password' => 'REDACTED_BDAPPS_API_KEY',
     'subscriberId' => 'tel:88' . $phone,
-    'applicationHash' => 'BMI Calculator',
+    'applicationHash' => 'MedRee',
     'applicationMetaData' => [
         'client' => 'MOBILEAPP',
-        'device' => 'Samsung S10',
-        'os' => 'android 8',
-        'appCode' => 'https://play.google.com/store/apps/details?id=lk.dialog.megarunlor',
+        'device' => 'Android',
+        'os' => 'android',
+        'appCode' => 'MedRee',
     ],
 ];
 $requestJson = json_encode($requestData);
@@ -49,7 +49,7 @@ $curlError = curl_error($ch);
 curl_close($ch);
 
 if ($responseJson === false) {
-    fp_send_json(['error' => 'OTP request failed: ' . $curlError], 502);
+    medremind_send_json(['error' => 'OTP request failed: ' . $curlError], 502);
 }
 
 $response = json_decode($responseJson, true);
@@ -57,7 +57,7 @@ $referenceNo = is_array($response) ? ($response['referenceNo'] ?? null) : null;
 
 if (!$referenceNo) {
     $detail = is_array($response) ? ($response['statusDetail'] ?? 'Unable to request OTP') : 'Unable to request OTP';
-    fp_send_json(['error' => $detail], 502);
+    medremind_send_json(['error' => $detail], 502);
 }
 
-fp_send_json(['referenceNo' => $referenceNo]);
+medremind_send_json(['referenceNo' => $referenceNo]);
