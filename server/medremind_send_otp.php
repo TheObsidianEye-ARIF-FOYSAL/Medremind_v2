@@ -1,26 +1,25 @@
 <?php
 
-// MedRemind-specific OTP request. Uses the same shared BDApps credentials as
-// the other *.php scripts (and as VenueLock/BMI Calculator's server code) —
-// APP_138840 (MedRee's own newly-approved app) is only cleared for testing
-// with BDApps' whitelisted numbers, so it rejects everything else; the
-// shared APP_128956 app is already in production and works for any number.
-// Kept as a separate file (not send_otp.php) only so the shared script used
-// by other apps is untouched.
+// MedRemind-specific OTP request, using MedRee's own BDApps credentials
+// (APP_138840). This app is currently approved for TESTING ONLY — BDApps
+// will only issue OTPs for their whitelisted test numbers on this app id
+// until "Active Production" is requested. Kept separate from send_otp.php
+// so the shared script (used by other apps, e.g. VenueLock/BMI Calculator
+// under APP_128956) is untouched.
 
 $user_mobile = $_POST['user_mobile'] ?? '';
 $user_mobile = 'tel:88' . $user_mobile;
 
 $requestData = array(
-    "applicationId" => "APP_128956",
-    "password" => "REDACTED_BDAPPS_PASSWORD",
+    "applicationId" => "APP_138840",
+    "password" => "REDACTED_BDAPPS_API_KEY",
     "subscriberId" => "$user_mobile",
-    "applicationHash" => "BMI Calculator",
+    "applicationHash" => "MedRee",
     "applicationMetaData" => array(
         "client" => "MOBILEAPP",
-        "device" => "Samsung S10",
-        "os" => "android 8",
-        "appCode" => "https://play.google.com/store/apps/details?id=lk.dialog.megarunlor"
+        "device" => "Android",
+        "os" => "android",
+        "appCode" => "MedRee"
     )
 );
 

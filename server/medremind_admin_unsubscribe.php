@@ -22,8 +22,8 @@ if (strlen($phone) !== 11) {
     medremind_send_json(['error' => 'Set $test_number above or pass ?phone=01XXXXXXXXX'], 400);
 }
 
-$appid = 'APP_128956';
-$apppassword = 'REDACTED_BDAPPS_PASSWORD';
+$appid = 'APP_138840';
+$apppassword = 'REDACTED_BDAPPS_API_KEY';
 $subscriberId = 'tel:88' . $phone;
 
 $requestData = [
