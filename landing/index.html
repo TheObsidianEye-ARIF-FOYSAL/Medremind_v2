@@ -208,6 +208,32 @@
   .step h4{font-size:16px;font-weight:700;margin-bottom:4px;}
   .step p{font-size:14px;color:var(--text-muted);}
 
+  /* Resources */
+  .resources{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;}
+  .resource-card{
+    background:var(--surface);border:1px solid var(--outline);border-radius:var(--radius-lg);
+    padding:32px;display:flex;flex-direction:column;gap:16px;
+    transition:transform .2s,box-shadow .2s,border-color .2s;
+    position:relative;overflow:hidden;
+  }
+  .resource-card::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:4px;
+    background:linear-gradient(90deg,var(--primary),var(--orange));
+  }
+  .resource-card:hover{transform:translateY(-4px);box-shadow:0 20px 44px -16px rgba(0,0,0,.22);border-color:var(--primary);}
+  .resource-icon{
+    width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+    font-size:26px;background:var(--surface-variant);
+  }
+  .resource-card h3{font-size:19px;font-weight:800;}
+  .resource-card p{font-size:14px;color:var(--text-muted);flex-grow:1;}
+  .resource-link{
+    display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--primary);
+    padding-top:4px;
+  }
+  .resource-link .arrow{transition:transform .15s;}
+  .resource-card:hover .resource-link .arrow{transform:translateX(4px);}
+
   /* CTA banner */
   .cta-banner{
     max-width:1120px;margin:0 auto;border-radius:var(--radius-xl);
@@ -253,7 +279,7 @@
       <a href="#features">Features</a>
       <a href="#doses">Dose Groups</a>
       <a href="#how">How it works</a>
-      <a href="./medremind_user_guide.pdf">User Guide</a>
+      <a href="#resources">Resources</a>
     </div>
     <div class="nav-actions">
       <a class="btn btn-primary btn-sm js-apk-btn" href="https://github.com/TheObsidianEye-ARIF-FOYSAL/Medremind_v2/releases/latest/download/MedRemind.apk" download>⬇️ Download APK</a>
@@ -397,6 +423,28 @@
           <p>Get full-screen alarms at the right time, mark doses as Taken/Snoozed/Skipped, and track your history.</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section id="resources" class="band">
+    <div class="section-head">
+      <span class="eyebrow">📚 Resources</span>
+      <h2>Learn more about MedRemind</h2>
+      <p>Read the full project writeup or grab the complete user guide before you get started.</p>
+    </div>
+    <div class="resources">
+      <a class="resource-card" href="https://github.com/TheObsidianEye-ARIF-FOYSAL/Medremind_v2/blob/main/docs/PROJECT_OVERVIEW.md" target="_blank" rel="noopener">
+        <div class="resource-icon" style="background:rgba(108,92,231,.15);">📋</div>
+        <h3>Project Overview</h3>
+        <p>The full breakdown of what MedRemind does, how it's built, and the architecture behind the app — straight from the source repo.</p>
+        <span class="resource-link">View on GitHub <span class="arrow">→</span></span>
+      </a>
+      <a class="resource-card" href="./medremind_user_guide.pdf" target="_blank" rel="noopener">
+        <div class="resource-icon" style="background:rgba(255,140,66,.15);">📘</div>
+        <h3>User Guide</h3>
+        <p>A step-by-step manual covering the medicine cabinet, dose groups, daily planner, alarms, and settings.</p>
+        <span class="resource-link">Open PDF <span class="arrow">→</span></span>
+      </a>
     </div>
   </section>
 
