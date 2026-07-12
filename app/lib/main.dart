@@ -13,6 +13,7 @@ import 'core/repositories/dose_group_repository.dart';
 import 'core/services/alarm_ring_watcher.dart';
 import 'core/services/alarm_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/utils/mobile_web_detector.dart';
 import 'features/auth/providers/user_auth_provider.dart';
 import 'features/auth/screens/welcome_landing_screen.dart';
 import 'features/onboarding/onboarding_intro_screen.dart';
@@ -67,13 +68,17 @@ void main() async {
     child: const MedRemindApp(),
   );
 
-  // Device Preview lets a client browsing the web build pick a phone frame
-  // to view the app in, instead of seeing raw unconstrained browser-window
-  // dimensions. Never enabled for the real mobile app.
-  runApp(kIsWeb
+  // Device Preview lets a client browsing the web build on a desktop/laptop
+  // pick a phone frame to view the app in. Skipped for the real mobile app
+  // and for the web build when opened (or installed as a PWA) on a phone,
+  // where it should just fill the screen like a native app.
+  runApp(_devicePreviewEnabled
       ? DevicePreview(enabled: true, builder: (context) => app)
       : app);
 }
+
+/// True only for the web build running on a desktop/laptop browser.
+final bool _devicePreviewEnabled = kIsWeb && !isMobileWebBrowser();
 
 int? _pendingAlarmId;
 
@@ -189,7 +194,7 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
         darkTheme: darkTheme,
         themeMode: themeMode,
         routerConfig: appRouter,
-        locale: kIsWeb ? DevicePreview.locale(context) : null,
+        locale: _devicePreviewEnabled ? DevicePreview.locale(context) : null,
         builder: _appBuilder,
       );
     }
@@ -204,7 +209,7 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
       darkTheme: darkTheme,
       themeMode: themeMode,
       home: home,
-      locale: kIsWeb ? DevicePreview.locale(context) : null,
+      locale: _devicePreviewEnabled ? DevicePreview.locale(context) : null,
       builder: _appBuilder,
     );
   }
@@ -214,7 +219,9 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
 /// on web (native builds skip straight to `_responsiveBuilder`).
 Widget _appBuilder(BuildContext context, Widget? child) {
   final responsive = _responsiveBuilder(context, child);
-  return kIsWeb ? DevicePreview.appBuilder(context, responsive) : responsive;
+  return _devicePreviewEnabled
+      ? DevicePreview.appBuilder(context, responsive)
+      : responsive;
 }
 
 /// Applied app-wide (both the pre-login and main router `MaterialApp`s) so
