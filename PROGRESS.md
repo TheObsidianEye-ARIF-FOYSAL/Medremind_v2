@@ -3,6 +3,46 @@
 Running log of work done on this repo, so work can be picked back up without
 re-deriving context. Newest entries on top.
 
+## 2026-07-13
+
+- **Fixed alarm not stopping when a dose is marked Taken.** Root cause was in
+  `app/lib/main.dart`: the full-screen `ActiveAlarmScreen` (which owns the
+  Taken/Snooze/Skip buttons that call `alarmService.cancelAlarm`) was only
+  ever navigated to once, during the app's very first cold-start flow
+  resolution (`_resolveFlow()`'s one-time `_handlePendingAlarm()` call). If
+  an alarm rang while the app was already open/resumed — the normal case —
+  `Alarm.ringStream` fired and started the ring/auto-snooze cycle, but
+  nothing navigated to the alarm screen, so there was no "Taken" button
+  wired to that specific ringing alarm and it just kept looping.
+  - Fix: added a top-level `_appReady` flag, set once `_flow == true` is
+    first reached. The `Alarm.ringStream` listener (`main.dart:59-` now)
+    checks it on every ring: if the app's flow is already resolved, it
+    navigates to `ActiveAlarmScreen` immediately; otherwise it falls back to
+    the old `_pendingAlarmId` + `_handlePendingAlarm()` path for the
+    cold-start case.
+  - **Related bug fixed in the same trace**:
+    `reminder_review_screen.dart:182-187` called
+    `alarmService.scheduleAlarm(...)` without passing `groupId`, so
+    `_saveGroupMapping` never ran for that alarm id. `getGroupIdForAlarm`
+    later returned `null`, `doseGroupId` arrived empty at
+    `ActiveAlarmScreen`, and the dose-log update silently no-opped (dose
+    never actually marked Taken in the DB) even on the rare occasions the
+    screen did open and `cancelAlarm` fired correctly. Added the missing
+    `groupId: group.id` argument.
+  - Verified with `flutter analyze` on both changed files (no issues). Not
+    yet manually verified on-device with a real ringing alarm — next step
+    if this recurs.
+
+- **Investigated "GitHub landing page has no link to app description/user
+  manual"**: turned out to be a false alarm on the docs side —
+  `README.md` and `landing/index.html` both already link to
+  `docs/PROJECT_OVERVIEW.md` and the hosted user-guide PDF. The actual gap
+  is the GitHub repo's **About sidebar** (top-right of the repo page),
+  which currently shows "No description, website, or topics provided." —
+  a repo *setting*, not something fixable via a file edit. **Open item**:
+  user (or Claude, if given details) needs to set a description + the
+  GitHub Pages URL as "website" via repo page → gear icon next to About.
+
 ## 2026-07-12
 
 - **Added a marketing landing page**, separate from the Flutter web app, so
@@ -161,3 +201,9 @@ re-deriving context. Newest entries on top.
       (`app/android/app/build.gradle.kts:31`) before this APK gets wide
       distribution — later switching keys breaks in-place updates for
       anyone who already installed the debug-signed build.
+- [ ] Manually verify the alarm-stop fix (2026-07-13) on a real device: let
+      an alarm ring while the app is open, confirm it navigates to
+      `ActiveAlarmScreen` and that tapping Taken actually silences it and
+      marks the dose in history.
+- [ ] Set the GitHub repo's About sidebar (description + website URL) —
+      currently empty; not fixable via code, needs a repo-settings edit.
