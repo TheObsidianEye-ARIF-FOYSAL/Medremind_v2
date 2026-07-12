@@ -36,16 +36,22 @@ jobs:
 
       - name: Build web
         working-directory: app
-        run: flutter build web --release --base-href /Medremind_v2/
+        run: flutter build web --release --base-href /Medremind_v2/app/
 
-      - name: Copy user guide PDF into web output
-        run: cp docs/report_MR_app/medremind_user_guide.pdf app/build/web/medremind_user_guide.pdf
+      - name: Assemble Pages site (landing page at root, Flutter app under /app)
+        run: |
+          mkdir -p site
+          cp -r landing/. site/
+          mkdir -p site/app
+          cp -r app/build/web/. site/app/
+          cp docs/report_MR_app/medremind_user_guide.pdf site/medremind_user_guide.pdf
+          cp docs/report_MR_app/medremind_user_guide.pdf site/app/medremind_user_guide.pdf
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: app/build/web
+          path: site
 
   deploy:
     needs: build
