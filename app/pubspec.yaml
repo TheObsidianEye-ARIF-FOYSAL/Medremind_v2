@@ -2,7 +2,7 @@ name: med_remind_v2
 description: "MedRemind v2 — Medicine Reminder App"
 publish_to: 'none'
 
-version: 2.0.0+1
+version: 2.9.13+1
 
 environment:
   sdk: ^3.4.0
