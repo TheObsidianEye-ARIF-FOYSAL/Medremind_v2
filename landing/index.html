@@ -76,6 +76,28 @@
   .btn-outline{background:transparent;border:1.5px solid var(--outline);color:var(--text);}
   .btn-outline:hover{border-color:var(--primary);color:var(--primary);}
   .btn-sm{padding:9px 18px;font-size:14px;}
+  .btn[hidden]{display:none !important;}
+  .subtext-link{font-size:13px;color:var(--text-muted);text-decoration:underline;text-underline-offset:3px;}
+  .subtext-link:hover{color:var(--primary);}
+
+  /* iOS install modal */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;
+    display:flex;align-items:flex-end;justify-content:center;
+  }
+  .modal-overlay[hidden]{display:none;}
+  .modal-card{
+    background:var(--surface);width:100%;max-width:420px;border-radius:24px 24px 0 0;
+    padding:28px 24px 32px;box-shadow:0 -10px 40px rgba(0,0,0,.3);
+  }
+  @media (min-width:640px){
+    .modal-overlay{align-items:center;}
+    .modal-card{border-radius:24px;}
+  }
+  .modal-card h3{font-size:18px;font-weight:800;margin-bottom:14px;}
+  .modal-card ol{padding-left:20px;font-size:14px;color:var(--text-muted);display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+  .modal-card ol b{color:var(--text);}
+  .modal-card .btn{width:100%;}
 
   /* Hero */
   .hero{padding:88px 24px 40px;position:relative;overflow:hidden;}
@@ -254,7 +276,8 @@
       <a href="#how">How it works</a>
       <a href="./medremind_user_guide.pdf">User Guide</a>
     </div>
-    <a class="btn btn-primary btn-sm" href="./app/">Open Web App</a>
+    <a class="btn btn-primary btn-sm js-install-btn" href="./app/" hidden>📲 Install App</a>
+    <a class="btn btn-outline btn-sm js-open-btn" href="./app/">Open Web App</a>
   </nav>
 </header>
 
@@ -266,8 +289,9 @@
         <h1>Never miss a dose <span>again</span>.</h1>
         <p>MedRemind is a smart medicine reminder built for patients and caregivers in Bangladesh — full-screen alarms, dose groups, and adherence tracking that actually works.</p>
         <div class="hero-cta">
-          <a class="btn btn-primary" href="./app/">🚀 Launch Web App</a>
-          <a class="btn btn-outline" href="./medremind_user_guide.pdf">📘 Read the User Guide</a>
+          <a class="btn btn-primary js-install-btn" href="./app/" hidden>📲 Install App</a>
+          <a class="btn btn-primary js-open-btn" href="./app/">🚀 Open Web App</a>
+          <a class="btn btn-outline" href="./medremind_user_guide.pdf">📘 User Guide</a>
         </div>
         <div class="hero-trust">
           <span class="avatars"><span>👵</span><span>👨‍⚕️</span><span>👩</span></span>
@@ -410,9 +434,10 @@
   <section>
     <div class="cta-banner">
       <h2>Ready to take control of your medication?</h2>
-      <p>Try the free web demo right now — no install required.</p>
-      <div class="hero-cta">
-        <a class="btn btn-primary" href="./app/">🚀 Launch Web App</a>
+      <p>Install MedRemind on your phone, or try it instantly in your browser.</p>
+      <div class="hero-cta" style="justify-content:center;">
+        <a class="btn btn-primary js-install-btn" href="./app/" hidden>📲 Install App</a>
+        <a class="btn btn-primary js-open-btn" href="./app/">🚀 Open Web App</a>
         <a class="btn btn-outline" href="https://github.com/TheObsidianEye-ARIF-FOYSAL/Medremind_v2">⭐ View on GitHub</a>
       </div>
     </div>
@@ -430,6 +455,79 @@
     <div class="foot-copy">© 2026 MedRemind. Built for patients and caregivers in Bangladesh.</div>
   </div>
 </footer>
+
+<div class="modal-overlay" id="iosInstallModal" hidden>
+  <div class="modal-card">
+    <h3>📲 Install MedRemind on iPhone</h3>
+    <ol>
+      <li>Tap the <b>Share</b> button in Safari's toolbar.</li>
+      <li>Scroll down and tap <b>Add to Home Screen</b>.</li>
+      <li>Tap <b>Add</b> — MedRemind now opens like a real app.</li>
+    </ol>
+    <button class="btn btn-primary" id="iosInstallClose" type="button">Got it</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var installBtns = document.querySelectorAll('.js-install-btn');
+  var openBtns = document.querySelectorAll('.js-open-btn');
+  var iosModal = document.getElementById('iosInstallModal');
+  var deferredPrompt = null;
+
+  var ua = navigator.userAgent.toLowerCase();
+  var isIOS = /iphone|ipad|ipod/.test(ua);
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  function setInstallable(on){
+    installBtns.forEach(function(b){ b.hidden = !on; });
+    openBtns.forEach(function(b){ b.hidden = on; });
+  }
+
+  if (isStandalone) {
+    setInstallable(false);
+  } else if (isIOS) {
+    setInstallable(true);
+  }
+
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    setInstallable(true);
+  });
+
+  window.addEventListener('appinstalled', function(){
+    deferredPrompt = null;
+    setInstallable(false);
+  });
+
+  installBtns.forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      if (deferredPrompt) {
+        e.preventDefault();
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function(choice){
+          deferredPrompt = null;
+          if (choice.outcome === 'accepted') setInstallable(false);
+        });
+      } else if (isIOS) {
+        e.preventDefault();
+        iosModal.hidden = false;
+      }
+      // else: no native prompt available (e.g. desktop without support) —
+      // let the link fall through and open the web app normally.
+    });
+  });
+
+  var closeBtn = document.getElementById('iosInstallClose');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function(){ iosModal.hidden = true; });
+  }
+  iosModal.addEventListener('click', function(e){
+    if (e.target === iosModal) iosModal.hidden = true;
+  });
+})();
+</script>
 
 </body>
 </html>
