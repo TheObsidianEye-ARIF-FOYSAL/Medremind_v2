@@ -71,3 +71,8 @@ flutter_launcher_icons:
   adaptive_icon_background: "#FFFFFF"
   adaptive_icon_foreground: "assets/icon/MedRemind.png"
   remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: "assets/icon/MedRemind.png"
+    background_color: "#6C5CE7"
+    theme_color: "#6C5CE7"
