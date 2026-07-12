@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "app/**"
+      - "landing/**"
       - "docs/report_MR_app/medremind_user_guide.pdf"
       - ".github/workflows/deploy-web.yml"
   workflow_dispatch:
