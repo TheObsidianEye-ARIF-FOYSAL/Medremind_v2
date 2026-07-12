@@ -1,0 +1,41 @@
+name: Build and publish Android APK
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.44.1"
+
+      - name: Install dependencies
+        working-directory: app
+        run: flutter pub get
+
+      - name: Build universal release APK
+        working-directory: app
+        run: flutter build apk --release
+
+      - name: Rename APK
+        run: cp app/build/app/outputs/flutter-apk/app-release.apk MedRemind.apk
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # A fixed asset name lets the landing page link to a stable URL:
+          # https://github.com/<owner>/<repo>/releases/latest/download/MedRemind.apk
+          files: MedRemind.apk
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'apk-latest' }}
+          name: ${{ github.ref_type == 'tag' && github.ref_name || 'Latest APK build' }}
