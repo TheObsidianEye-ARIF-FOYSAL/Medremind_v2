@@ -5,6 +5,13 @@ re-deriving context. Newest entries on top.
 
 ## 2026-07-13
 
+- **Added a "Resources" section to `landing/index.html`** with two styled
+  cards linking to `docs/PROJECT_OVERVIEW.md` on GitHub (project
+  description) and the hosted `medremind_user_guide.pdf` (user manual),
+  each opening in a new tab. Replaced the old bare "User Guide" nav link
+  with a "Resources" nav link pointing at the new `#resources` section
+  (footer link to the PDF left as-is).
+
 - **Added an in-app "User Manual" link** (`app/lib/features/settings/presentation/screens/settings_screen.dart`,
   About section) — turned out the landing page and README already linked the
   hosted user-guide PDF fine, but the actual gap the user meant was that the
