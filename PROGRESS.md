@@ -3,6 +3,85 @@
 Running log of work done on this repo, so work can be picked back up without
 re-deriving context. Newest entries on top.
 
+## 2026-07-12
+
+- **Added a marketing landing page**, separate from the Flutter web app, so
+  GitHub Pages root is no longer the raw app:
+  - New `landing/index.html` (self-contained, no build step) — hero with a
+    real app screenshot in a phone-frame mockup (cropped from
+    `docs/report_MR_app/screenshots/16_home_dose_card.png`, saved as
+    `landing/assets/app-screenshot.png`), features grid, dose-group colour
+    band, "how it works" steps, CTA banner, footer. Styled with the app's
+    actual brand palette (`#6C5CE7` purple) and logo
+    (`landing/assets/logo.png`, copied from `app/assets/icon/MedRemind.png`).
+  - `.github/workflows/deploy-web.yml` reworked: Flutter now builds with
+    `--base-href /Medremind_v2/app/` (was `/Medremind_v2/`), and a new
+    "Assemble Pages site" step composes `site/` = `landing/` at the root +
+    built app under `site/app/`. User guide PDF copied to both locations.
+  - Result: `https://theobsidianeye-arif-foysal.github.io/Medremind_v2/` is
+    now the landing page; the actual app lives at `.../Medremind_v2/app/`.
+
+- **Device Preview now skipped on mobile web.** Previously `kIsWeb` alone
+  gated `DevicePreview` (see `app/lib/main.dart`), so it showed even when the
+  web app was opened/installed on a phone. Added
+  `app/lib/core/utils/mobile_web_detector*.dart` (conditional `dart:html`
+  import, checks user-agent + screen width) and a `_devicePreviewEnabled =
+  kIsWeb && !isMobileWebBrowser()` flag in `main.dart` — phones now get a
+  normal full-screen app; only desktop/laptop browsers get the device-frame
+  picker.
+
+- **Fixed missing app icon on PWA install.** `flutter_launcher_icons` in
+  `app/pubspec.yaml` only had `android`/`ios` enabled, so `app/web/icons/*`
+  and `app/web/favicon.png` were still Flutter's default template icons.
+  Added a `web:` block pointing at `assets/icon/MedRemind.png` and reran
+  `dart run flutter_launcher_icons`. Also fixed stale "med_remind_v2 / A new
+  Flutter project" branding in `app/web/index.html` and
+  `app/web/manifest.json` → now says "MedRemind" throughout, with
+  `theme_color`/`background_color` set to the brand purple.
+
+- **Fixed missing install button after the landing-page split.** Splitting
+  root into landing + `/app/` meant the root had no manifest/service-worker,
+  so browsers stopped offering "Install" there (previously the whole root
+  *was* the installable PWA). Added `landing/manifest.json` (same MedRemind
+  icons, `start_url: "./app/"` so installing from the root launches straight
+  into the app, not the marketing page) and matching manifest/icon/
+  theme-color tags in `landing/index.html`.
+
+- **Added an explicit in-page Install flow** (`beforeinstallprompt` handling
+  + iOS "Add to Home Screen" instructions modal) since relying on the
+  browser's own install UI wasn't discoverable enough. Iterated on layout a
+  couple of times per feedback — landed on exactly two buttons per section
+  (primary action + "Try in Browser"), grouped in a `.nav-actions` wrapper in
+  the header (they'd been direct flex children of a `space-between` nav,
+  which visually broke).
+
+- **Root cause of "notifications/alarms broken, can't create dose group"
+  after installing the *web* app**: browsers heavily sandbox PWA
+  notification/exact-alarm APIs — this is a fundamental web-vs-native gap,
+  not a bug to patch. Decision: ship a real APK instead of pushing users to
+  the PWA for the full experience.
+  - Added `.github/workflows/release-apk.yml` — builds a universal
+    `flutter build apk --release` and publishes it as a GitHub Release asset
+    named `MedRemind.apk` (via `softprops/action-gh-release`), triggered by
+    pushing a `v*` tag or manual `workflow_dispatch` (the latter rolls a
+    floating `apk-latest` release).
+  - Landing page's primary CTA is now **"⬇️ Download APK"**
+    (`https://github.com/TheObsidianEye-ARIF-FOYSAL/Medremind_v2/releases/latest/download/MedRemind.apk`)
+    on Android/desktop, with a small "allow installs from this browser"
+    note. iOS (no APK equivalent) automatically falls back to the PWA
+    "Install App" flow instead — handled via user-agent check in the same
+    script that runs the install-prompt logic.
+  - Note left as-is: `app/android/app/build.gradle.kts` still signs release
+    builds with the **debug key** (pre-existing `TODO`). Fine for sideloaded
+    APKs; if a proper release keystore is added later, users will need to
+    uninstall the old APK first since Android blocks updates across
+    different signing keys.
+  - Bumped `app/pubspec.yaml` version `2.0.0+1` → `2.9.13+1` per request,
+    tagged and pushed `v2.9.13` (after deleting an earlier `v2.0.0` tag/
+    push). **Open item:** the orphaned `v2.0.0` GitHub Release (if the
+    workflow had already run for it) needs manual deletion from the
+    Releases page — deleting the git tag doesn't remove it.
+
 ## 2026-07-10
 
 - **BDApps server backend rebuilt** in `server/` (had been deleted from disk,
@@ -73,3 +152,12 @@ re-deriving context. Newest entries on top.
 - [ ] `medremind_verify_otp.php` still writes a `verify_otp_debug.log` file
       on every call (marked "TEMP DEBUG... remove once diagnosed" in the
       code) — not yet cleaned up.
+- [ ] Confirm `release-apk.yml` finished successfully for tag `v2.9.13` and
+      that `.../releases/latest/download/MedRemind.apk` actually resolves —
+      check the Actions tab.
+- [ ] Manually delete the orphaned `v2.0.0` GitHub Release (tag was deleted
+      locally/remotely, but the Release entry itself isn't auto-removed).
+- [ ] Decide whether to move release signing off the debug key
+      (`app/android/app/build.gradle.kts:31`) before this APK gets wide
+      distribution — later switching keys breaks in-place updates for
+      anyone who already installed the debug-signed build.

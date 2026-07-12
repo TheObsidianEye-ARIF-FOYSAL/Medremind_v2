@@ -184,6 +184,7 @@ class ReminderReviewScreen extends ConsumerWidget {
       scheduledAt: scheduled,
       title: '💊 ${group.label} reminder',
       body: '${group.items.length} medicine(s) — ${_mealText(group.mealRelation)}',
+      groupId: group.id,
     );
 
     if (context.mounted) {

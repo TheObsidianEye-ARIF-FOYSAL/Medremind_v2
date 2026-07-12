@@ -53,13 +53,24 @@ void main() async {
   } catch (_) {}
 
   // Capture the ringing alarm id so the app can navigate to the full-screen
-  // ActiveAlarmScreen (Dismiss/Snooze/Skip) once it resumes. Also start the
-  // centralized ring→auto-snooze→auto-skip cycle, which runs independently
-  // of whether the full-screen screen actually launches.
+  // ActiveAlarmScreen (Dismiss/Snooze/Skip). Also start the centralized
+  // ring→auto-snooze→auto-skip cycle, which runs independently of whether
+  // the full-screen screen actually launches.
   Alarm.ringStream.stream.listen((s) {
-    _pendingAlarmId = s.id;
     alarmService.getGroupIdForAlarm(s.id).then((groupId) {
       alarmRingWatcher.onRing(s.id, groupId ?? '');
+      // If the app's main flow is already resolved (app open/resumed), go
+      // straight to the alarm screen. Otherwise stash the id so
+      // _handlePendingAlarm can open it once flow resolution finishes
+      // (cold start / launched-from-notification case).
+      if (_appReady) {
+        appRouter.go(AppRoutes.activeAlarm, extra: {
+          'alarmId': s.id,
+          'doseGroupId': groupId ?? '',
+        });
+      } else {
+        _pendingAlarmId = s.id;
+      }
     });
   });
 
@@ -81,6 +92,7 @@ void main() async {
 final bool _devicePreviewEnabled = kIsWeb && !isMobileWebBrowser();
 
 int? _pendingAlarmId;
+bool _appReady = false;
 
 // ── App root ──────────────────────────────────────────────────────────────────
 
@@ -125,6 +137,7 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
       setState(() => _flow = 'perm');
     } else {
       setState(() => _flow = true);
+      _appReady = true;
       _handlePendingAlarm();
     }
   }
