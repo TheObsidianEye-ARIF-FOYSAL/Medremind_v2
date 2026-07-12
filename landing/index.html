@@ -275,6 +275,9 @@
           <a class="btn btn-primary js-ios-install-btn" href="./app/" hidden>📲 Install App</a>
           <a class="btn btn-outline js-open-btn" href="./app/">🌐 Try in Browser</a>
         </div>
+        <p class="js-apk-note" style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">
+          Android may ask to allow installs from this browser — that's expected, tap <b>Settings → Allow</b>.
+        </p>
         <div class="hero-trust">
           <span class="avatars"><span>👵</span><span>👨‍⚕️</span><span>👩</span></span>
           <span>Trusted by patients &amp; caregivers across Bangladesh</span>
@@ -439,52 +442,27 @@
 
 <script>
 (function(){
-  var installBtns = document.querySelectorAll('.js-install-btn');
+  // Android/desktop: the "Download APK" button (visible by default in HTML)
+  // is the primary install path — it's the native app, so alarms and
+  // notification permissions work correctly, unlike the browser PWA.
+  // iOS has no APK equivalent, so it falls back to "Add to Home Screen".
+  var apkBtns = document.querySelectorAll('.js-apk-btn');
+  var iosBtns = document.querySelectorAll('.js-ios-install-btn');
   var iosModal = document.getElementById('iosInstallModal');
-  var deferredPrompt = null;
 
   var ua = navigator.userAgent.toLowerCase();
   var isIOS = /iphone|ipad|ipod/.test(ua);
-  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-  // "Try in Browser" always stays visible; only "Install App" toggles —
-  // so there are exactly two distinct actions on the page, never duplicates.
-  function setInstallable(on){
-    installBtns.forEach(function(b){ b.hidden = !on; });
+  if (isIOS) {
+    apkBtns.forEach(function(b){ b.hidden = true; });
+    iosBtns.forEach(function(b){ b.hidden = false; });
+    document.querySelectorAll('.js-apk-note').forEach(function(n){ n.hidden = true; });
   }
 
-  if (isStandalone) {
-    setInstallable(false);
-  } else if (isIOS) {
-    setInstallable(true);
-  }
-
-  window.addEventListener('beforeinstallprompt', function(e){
-    e.preventDefault();
-    deferredPrompt = e;
-    setInstallable(true);
-  });
-
-  window.addEventListener('appinstalled', function(){
-    deferredPrompt = null;
-    setInstallable(false);
-  });
-
-  installBtns.forEach(function(btn){
+  iosBtns.forEach(function(btn){
     btn.addEventListener('click', function(e){
-      if (deferredPrompt) {
-        e.preventDefault();
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(function(choice){
-          deferredPrompt = null;
-          if (choice.outcome === 'accepted') setInstallable(false);
-        });
-      } else if (isIOS) {
-        e.preventDefault();
-        iosModal.hidden = false;
-      }
-      // else: no native prompt available (e.g. desktop without support) —
-      // let the link fall through and open the web app normally.
+      e.preventDefault();
+      iosModal.hidden = false;
     });
   });
 
