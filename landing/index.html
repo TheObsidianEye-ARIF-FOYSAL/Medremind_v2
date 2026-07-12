@@ -60,12 +60,13 @@
     backdrop-filter:blur(10px);
     border-bottom:1px solid var(--outline);
   }
-  nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1120px;margin:0 auto;}
+  nav{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;row-gap:10px;padding:14px 24px;max-width:1120px;margin:0 auto;}
   .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;}
   .brand img{width:32px;height:32px;border-radius:8px;}
   .nav-links{display:flex;gap:28px;font-size:15px;font-weight:500;}
   .nav-links a{color:var(--text-muted);transition:color .15s;}
   .nav-links a:hover{color:var(--primary);}
+  .nav-actions{display:flex;align-items:center;gap:10px;}
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
     padding:12px 24px;border-radius:100px;font-weight:600;font-size:15px;
@@ -254,8 +255,10 @@
       <a href="#how">How it works</a>
       <a href="./medremind_user_guide.pdf">User Guide</a>
     </div>
-    <a class="btn btn-primary btn-sm js-install-btn" href="./app/" hidden>📲 Install App</a>
-    <a class="btn btn-outline btn-sm js-open-btn" href="./app/">🌐 Try in Browser</a>
+    <div class="nav-actions">
+      <a class="btn btn-primary btn-sm js-install-btn" href="./app/" hidden>📲 Install App</a>
+      <a class="btn btn-outline btn-sm js-open-btn" href="./app/">🌐 Try in Browser</a>
+    </div>
   </nav>
 </header>
 
