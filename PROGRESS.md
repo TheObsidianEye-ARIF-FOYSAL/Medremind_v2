@@ -5,6 +5,19 @@ re-deriving context. Newest entries on top.
 
 ## 2026-07-13
 
+- **Confirmed the released APK does NOT yet contain today's alarm fix.**
+  This repo has an auto-commit hook, so the `main.dart`/`reminder_review_screen.dart`
+  alarm fix and the `settings_screen.dart` user-manual-link change landed on
+  `main` automatically (commit `8b7e8c2`, "landing page 23") without an
+  explicit commit step. But `.github/workflows/release-apk.yml` only builds
+  and publishes `MedRemind.apk` on a `v*` tag push or manual
+  `workflow_dispatch` — plain pushes to `main` don't trigger it. The last
+  tag is still `v2.9.13`, built before the alarm fix, so
+  `.../releases/latest/download/MedRemind.apk` currently serves the old,
+  buggy build. **Open item**: push a new version tag (e.g. `v2.9.14`,
+  bumping `app/pubspec.yaml`) or manually run the workflow_dispatch to cut a
+  new APK release with the fix.
+
 - **Added a "Resources" section to `landing/index.html`** with two styled
   cards linking to `docs/PROJECT_OVERVIEW.md` on GitHub (project
   description) and the hosted `medremind_user_guide.pdf` (user manual),
@@ -225,3 +238,7 @@ re-deriving context. Newest entries on top.
       marks the dose in history.
 - [ ] Set the GitHub repo's About sidebar (description + website URL) —
       currently empty; not fixable via code, needs a repo-settings edit.
+- [ ] Cut a new APK release (tag `v2.9.14`+ or manual workflow_dispatch) so
+      `.../releases/latest/download/MedRemind.apk` actually contains the
+      2026-07-13 alarm-stop fix — current live download is still the
+      pre-fix `v2.9.13` build.
