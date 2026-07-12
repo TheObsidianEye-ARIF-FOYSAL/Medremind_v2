@@ -5,6 +5,17 @@ re-deriving context. Newest entries on top.
 
 ## 2026-07-13
 
+- **Added an in-app "User Manual" link** (`app/lib/features/settings/presentation/screens/settings_screen.dart`,
+  About section) — turned out the landing page and README already linked the
+  hosted user-guide PDF fine, but the actual gap the user meant was that the
+  *app itself* (the thing you land in from "Try in Browser" / the APK) had
+  no way to reach the manual or a written description beyond a short About
+  card. Added `url_launcher: ^6.3.1` to `pubspec.yaml` and a "User Manual"
+  nav tile that opens
+  `https://theobsidianeye-arif-foysal.github.io/Medremind_v2/medremind_user_guide.pdf`
+  in the external browser/PDF viewer (`LaunchMode.externalApplication`) —
+  verified the hosted PDF resolves (not a 404). `flutter analyze` clean.
+
 - **Fixed alarm not stopping when a dose is marked Taken.** Root cause was in
   `app/lib/main.dart`: the full-screen `ActiveAlarmScreen` (which owns the
   Taken/Snooze/Skip buttons that call `alarmService.cancelAlarm`) was only

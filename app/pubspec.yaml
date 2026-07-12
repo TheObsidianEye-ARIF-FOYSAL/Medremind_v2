@@ -40,6 +40,9 @@ dependencies:
   # HTTP client (BdApps auth)
   http: ^1.2.2
 
+  # Open the hosted user-guide PDF from Settings
+  url_launcher: ^6.3.1
+
   # Keep screen on during alarm
   wakelock_plus: ^1.1.4
 

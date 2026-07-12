@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/navigation/app_transitions.dart';
 import '../../../../core/providers/app_settings_provider.dart';
@@ -11,6 +12,9 @@ import 'notifications_alarms_screen.dart';
 import 'alarm_sound_screen.dart';
 
 export '../providers/settings_provider.dart' show userNameProvider;
+
+const _userManualUrl =
+    'https://theobsidianeye-arif-foysal.github.io/Medremind_v2/medremind_user_guide.pdf';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -87,6 +91,22 @@ class SettingsScreen extends ConsumerWidget {
 
             // ── About section ───────────────────────────────────────────────
             SettingsSectionHeader('About', icon: Icons.info_outline_rounded),
+            const SizedBox(height: AppSizes.paddingMd),
+
+            // User manual link
+            SettingsCard(
+              isDark: isDark,
+              child: _NavTile(
+                icon: Icons.menu_book_rounded,
+                iconColor: const Color(0xFFFF8C42),
+                label: 'User Manual',
+                subtitle: 'Full guide to using MedRemind (PDF)',
+                isDark: isDark,
+                onTap: () => launchUrl(Uri.parse(_userManualUrl),
+                    mode: LaunchMode.externalApplication),
+              ),
+            ),
+
             const SizedBox(height: AppSizes.paddingMd),
 
             // App description card
