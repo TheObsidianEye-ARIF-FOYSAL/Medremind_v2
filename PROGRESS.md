@@ -5,6 +5,43 @@ re-deriving context. Newest entries on top.
 
 ## 2026-07-13
 
+- **BDApps compliance audit + partial fixes** for `landing/index.html`
+  (checklist: name consistency, landing page, pricing display, platform
+  info, subscribe/unsubscribe, logout, SMS link type, security, FAQ/user
+  guide/subscription-response package). Findings: name/landing-page/
+  subscribe-unsubscribe/logout all PASS; several FAIL/gaps found and
+  partially fixed:
+  - **Fixed**: landing page's "Download APK" button (3 occurrences) pointed
+    at a GitHub Releases URL — BDApps explicitly rejects Google
+    Drive/GitHub links, requires a working APK or Play Store URL. Changed
+    to `https://ruetandroiddevelopers.com/ARIF(MR)/MedRemind.apk` (self-hosted
+    on the same PHP host as the backend). **User still needs to actually
+    upload `MedRemind.apk` to that path** — link will 404 until then.
+  - **Fixed**: landing page had zero pricing or platform text (login screen
+    already showed "৳2 +VAT+SD+SC per day" / "Supported: Android" but
+    landing page didn't match). Added a line under the hero CTA:
+    "Subscription: ৳2 + VAT + SD + SC per day. Platform: Android (web
+    preview also available in-browser)." — matches the in-app wording.
+  - **Not fixed, flagged for user**: `server/subscriptionNotification.php`
+    sends a **leftover SMS template from a different app** ("BMIc"
+    branding, Bengali text "BMIc-তে সাবস্ক্রাইব করার জন্য ধন্যবাদ!") with a
+    `shorturl.at` link — doesn't mention MedRemind at all and isn't a
+    direct APK/Play Store link. User asked to skip editing this for now
+    but it must be fixed before submission (BDApps requires the
+    subscription response SMS to include category + a working APK/Play
+    Store link).
+  - **Still missing** (not code-fixable, paperwork): no FAQ document found
+    anywhere in the repo (BDApps requires one, filename matching App ID,
+    sent to support@bdapps.com); no separate "Subscription Response
+    Message" document/package. User guide PDF does exist
+    (`docs/report_MR_app/medremind_user_guide.pdf`).
+  - Also noted from earlier audit: release APK still signed with the debug
+    key (`app/android/app/build.gradle.kts`), pre-existing TODO, not a
+    user-facing risk but worth resolving before wide distribution.
+  - Regenerated `MedReminder_upload.zip` (server test-copy package) with
+    the fixed landing page; user needs to re-upload/re-extract it over
+    `ruetandroiddevelopers.com/ARIF(MR)/MedReminder/`.
+
 - **Added a `/MedReminder/` test-copy deployment**, separate from the main
   `/app/` build, per request ("build another web so I can test the web
   version, base href `/MedReminder/`, landing page then app").
