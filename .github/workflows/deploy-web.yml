@@ -47,6 +47,18 @@ jobs:
           cp docs/report_MR_app/medremind_user_guide.pdf site/medremind_user_guide.pdf
           cp docs/report_MR_app/medremind_user_guide.pdf site/app/medremind_user_guide.pdf
 
+      - name: Build web (MedReminder test copy)
+        working-directory: app
+        run: flutter build web --release --base-href /Medremind_v2/MedReminder/app/
+
+      - name: Assemble MedReminder test copy (landing page, then app)
+        run: |
+          mkdir -p site/MedReminder/app
+          cp -r landing/. site/MedReminder/
+          cp -r app/build/web/. site/MedReminder/app/
+          cp docs/report_MR_app/medremind_user_guide.pdf site/MedReminder/medremind_user_guide.pdf
+          cp docs/report_MR_app/medremind_user_guide.pdf site/MedReminder/app/medremind_user_guide.pdf
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
