@@ -37,7 +37,7 @@ function readSMSNotification() {
             $address = $subscriberId;
 
             // Your app download link
-            $message = "BMIc-তে সাবস্ক্রাইব করার জন্য ধন্যবাদ! অ্যাপটি ডাউনলোড করতে ক্লিক করুন: https://shorturl.at/G2D8Y";
+            $message = "MedRee- তে সাবস্ক্রাইব করার জন্য ধন্যবাদ! অ্যাপটি ডাউনলোড করতে ক্লিক করুন: https://shorturl.at/G2D8Y";
 
             $response = $sender->sms($message, $address);
 
