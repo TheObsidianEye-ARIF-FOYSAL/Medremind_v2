@@ -5,4 +5,4 @@ server/*.log
 server/*.db
 
 # BDApps credentials — never commit, see server/bdapps_config.example.php
-server/bdapps_config.php
+server/bdapps_config.php/MedReminder/

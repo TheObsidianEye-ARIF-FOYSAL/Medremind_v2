@@ -5,6 +5,34 @@ re-deriving context. Newest entries on top.
 
 ## 2026-07-13
 
+- **Added a `/MedReminder/` test-copy deployment**, separate from the main
+  `/app/` build, per request ("build another web so I can test the web
+  version, base href `/MedReminder/`, landing page then app").
+  - First verified the web app itself is healthy: `flutter analyze` clean
+    (only 2 pre-existing infos about `dart:html` in
+    `mobile_web_detector_web.dart`), and `flutter build web --release
+    --base-href /MedReminder/app/` compiles with no errors.
+  - `.github/workflows/deploy-web.yml` now has a second build+assemble step
+    pair that produces `site/MedReminder/` (landing page copied to
+    `site/MedReminder/`, app built with `--base-href
+    /Medremind_v2/MedReminder/app/` copied to `site/MedReminder/app/`) in
+    the same Pages deploy as the main site — same landing→app ordering as
+    the primary `/` → `/app/` structure, just under an extra path prefix so
+    it's reachable at `.../Medremind_v2/MedReminder/` without disturbing the
+    live main site.
+  - Locally built and smoke-tested (served via `python -m http.server`,
+    both `MedReminder/index.html` and `MedReminder/app/index.html` returned
+    200) before removing the generated output from the working tree — it's
+    a build artifact like `app/build/`, so added `/MedReminder/` to
+    `.gitignore` rather than committing the ~30k generated files (the
+    auto-commit hook had already picked them up once; reverted that via
+    `git rm`).
+  - **Not yet verified**: this test copy hasn't been exercised through an
+    actual Pages deploy yet — next push to `main` (or manual
+    `workflow_dispatch`) will build it; check
+    `https://theobsidianeye-arif-foysal.github.io/Medremind_v2/MedReminder/`
+    afterward.
+
 - **Confirmed the released APK does NOT yet contain today's alarm fix.**
   This repo has an auto-commit hook, so the `main.dart`/`reminder_review_screen.dart`
   alarm fix and the `settings_screen.dart` user-manual-link change landed on
