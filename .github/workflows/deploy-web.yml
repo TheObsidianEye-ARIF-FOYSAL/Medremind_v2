@@ -7,6 +7,7 @@ on:
       - "app/**"
       - "landing/**"
       - "docs/report_MR_app/medremind_user_guide.pdf"
+      - "docs/PROJECT_OVERVIEW.pdf"
       - ".github/workflows/deploy-web.yml"
   workflow_dispatch:
 
@@ -45,7 +46,9 @@ jobs:
           mkdir -p site/app
           cp -r app/build/web/. site/app/
           cp docs/report_MR_app/medremind_user_guide.pdf site/medremind_user_guide.pdf
+          cp docs/PROJECT_OVERVIEW.pdf site/PROJECT_OVERVIEW.pdf
           cp docs/report_MR_app/medremind_user_guide.pdf site/app/medremind_user_guide.pdf
+          cp docs/PROJECT_OVERVIEW.pdf site/app/PROJECT_OVERVIEW.pdf
 
       - name: Build web (MedReminder test copy)
         working-directory: app
@@ -57,7 +60,9 @@ jobs:
           cp -r landing/. site/MedReminder/
           cp -r app/build/web/. site/MedReminder/app/
           cp docs/report_MR_app/medremind_user_guide.pdf site/MedReminder/medremind_user_guide.pdf
+          cp docs/PROJECT_OVERVIEW.pdf site/MedReminder/PROJECT_OVERVIEW.pdf
           cp docs/report_MR_app/medremind_user_guide.pdf site/MedReminder/app/medremind_user_guide.pdf
+          cp docs/PROJECT_OVERVIEW.pdf site/MedReminder/app/PROJECT_OVERVIEW.pdf
 
       - uses: actions/configure-pages@v5
 

@@ -6,7 +6,7 @@ through BDApps (Robi/Airtel direct-carrier billing).
 
 🔗 **Live web demo:** https://theobsidianeye-arif-foysal.github.io/Medremind_v2/
 
-📄 **Full project overview:** [`docs/PROJECT_OVERVIEW.md`](docs/PROJECT_OVERVIEW.md)
+📄 **Full project overview (PDF):** [`docs/PROJECT_OVERVIEW.pdf`](docs/PROJECT_OVERVIEW.pdf)
 
 📘 **User guide (PDF):** https://theobsidianeye-arif-foysal.github.io/Medremind_v2/medremind_user_guide.pdf
 
@@ -20,7 +20,7 @@ through BDApps (Robi/Airtel direct-carrier billing).
 - **Home dashboard, Daily Planner, and History** — track today's doses and adherence over time with a colour-coded calendar heatmap.
 - **Phone + password auth** — verified once via SMS OTP at registration.
 
-See [`docs/PROJECT_OVERVIEW.md`](docs/PROJECT_OVERVIEW.md) for the full breakdown.
+See [`docs/PROJECT_OVERVIEW.pdf`](docs/PROJECT_OVERVIEW.pdf) for the full breakdown.
 
 ---
 

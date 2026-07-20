@@ -3,7 +3,46 @@
 Running log of work done on this repo, so work can be picked back up without
 re-deriving context. Newest entries on top.
 
-## 2026-07-13
+## 2026-07-13 (cont'd — BDApps APK hosting troubleshooting)
+
+- **Fixed leftover wrong-app branding in `server/subscriptionNotification.php`**:
+  the subscription-confirmation SMS template said "BMIc-তে সাবস্ক্রাইব করার
+  জন্য..." (a different app's name, "BMI Calculator") instead of MedRemind.
+  Changed to "MedRee- তে সাবস্ক্রাইব করার জন্য ধন্যবাদ...". Confirmed via
+  grep this was the only "BMIc" occurrence anywhere in `server/`.
+  - **Still open**: the message's download link is still
+    `https://shorturl.at/G2D8Y` — a shortener of unknown/likely-wrong
+    destination (probably still points at the old BMIc app). Needs to
+    become a direct link to the self-hosted `MedRemind.apk` once that's
+    actually live. Also flagged: message says "MedRee" not "MedRemind" —
+    user should confirm that's intentional, since BDApps requires
+    APK name and app name to be "identical or closely aligned."
+  - This edit is uncommitted locally (`server/subscriptionNotification.php`
+    modified, not yet staged/committed).
+
+- **Diagnosed "APK download not working" on
+  `https://ruetandroiddevelopers.com/ARIF(MR)/MedRemind.apk`**: confirmed
+  via direct `curl` against the live server (not just browser) that the
+  URL genuinely 404s, while sibling PHP files in the same folder
+  (`medremind_send_otp.php`) return 200 and the folder itself is reachable
+  — so it's not a routing/CORS/browser-cache issue, the file itself isn't
+  present at that exact path/name. Likely cause: user built with `flutter
+  build apk --split-per-abi`, which produces three
+  architecture-specific files (`app-armeabi-v7a-release.apk`,
+  `app-arm64-v8a-release.apk`, `app-x86_64-release.apk` in
+  `app/build/app/outputs/flutter-apk/`) — none named `MedRemind.apk`, and
+  none of them alone covers all devices the way a single public download
+  link implies.
+  - **Recommended fix, not yet done**: rebuild with plain `flutter build
+    apk --release` (no `--split-per-abi`) to get one universal
+    `app-release.apk`, rename it to `MedRemind.apk`, upload to
+    `ARIF(MR)/` on the PHP host. This matches what `.github/workflows/
+    release-apk.yml` already produces for the GitHub Releases build, so
+    the two hosting locations (self-hosted PHP server + GitHub Releases)
+    stay consistent.
+  - **Open item**: confirm the universal APK is actually uploaded and
+    `curl -I https://ruetandroiddevelopers.com/ARIF(MR)/MedRemind.apk`
+    returns 200 before considering this resolved.
 
 - **BDApps compliance audit + partial fixes** for `landing/index.html`
   (checklist: name consistency, landing page, pricing display, platform
